@@ -1,227 +1,307 @@
-// Lightweight, stylized avatar built from the same preset definition as the companion portrait.
-// Head + upper body + hands only (P0). Head and hands follow real XR poses when available; anything
-// else is labelled as app animation, never presented as measured body motion.
+// The person across the table, built from the shared sculpted character kit (src/shared/character.ts) —
+// the same model, outfit and materials the companion renders as their portrait.
+//
+// Compatible with the previous Avatar3D interface (root, head, leftHand/rightHand anchors, setPresence,
+// setPose, playGesture, update, dispose), so table-relative networking is unchanged. Presence is always
+// labelled: live (tracked head/hands from the network), recorded (a voice note is playing), simulated
+// (sample mode) or away. Authored idle motion (breathing, blinks, glances, rest poses, gestures) is kept
+// separate from tracking: a tracked head or hand always wins over idle animation and gestures.
 
-import {
-  CapsuleGeometry, Color, Euler, Group, Mesh, MeshStandardMaterial, Quaternion, SphereGeometry, TorusGeometry, Vector3, CylinderGeometry,
-} from 'three';
+import { Euler, Group, type Material, type Mesh, type Object3D, Quaternion, Vector3 } from 'three';
+import { type CharacterKit, CharacterModel } from '../shared/character';
 import type { AvatarDefinition } from '../shared/contracts';
-import { CanvasPanel, COLORS, FONT, roundRect } from './ui3d';
-
-const mat = (color: string | number, rough = 0.85) => new MeshStandardMaterial({ color: new Color(color), roughness: rough });
+import { COLORS, FittedPill } from './ui3d';
 
 export type PresenceKind = 'live' | 'recorded' | 'simulated' | 'away';
+export type RestPose = 'table' | 'chin';
+
+/** The seat the character's pelvis rests on, in table space (metres, radians; yaw 0 faces +Z, the viewer). */
+export interface Seat {
+  x: number;
+  y: number;
+  z: number;
+  yaw: number;
+}
+
+/** Character units -> metres. The kit is sculpted slightly small; this brings it to adult seated scale. */
+export const AVATAR_SCALE = 1.2;
+const TABLE_RADIUS = 0.54;
+/** A remote participant's head when seated at their own table, mirrored to our far side (table space). */
+const TRACKED_ORIGIN = new Vector3(0, 0.43, -0.8);
+const UP = new Vector3(0, 1, 0);
+
+const _v1 = new Vector3();
+const _v2 = new Vector3();
+const _q1 = new Quaternion();
+const _e = new Euler(0, 0, 0, 'YXZ');
 
 export class Avatar3D {
+  /** Table space, at the seat. Contains the (rotated, scaled) body and the presence badge. */
   readonly root = new Group();
-  readonly head = new Group();
   readonly body = new Group();
-  readonly leftHand: Mesh;
-  readonly rightHand: Mesh;
-  readonly label: CanvasPanel;
-  private targetHead = { p: new Vector3(0, 1.12, 0), q: new Quaternion() };
-  private targetLeft = new Vector3(-0.2, 0.75, 0.3);
-  private targetRight = new Vector3(0.2, 0.75, 0.3);
+  readonly character: CharacterModel;
+  readonly head: Object3D;
+  readonly leftHand: Object3D;
+  readonly rightHand: Object3D;
+  readonly label: FittedPill;
+  presence: PresenceKind = 'simulated';
+  rest: RestPose = 'table';
+  /** Which side of the head the presence badge sits on (layout picks the side with room). */
+  badgeSide: 'right' | 'left' = 'right';
+  /** Table-space point the person attends to when their head is not tracked (the viewer, the screen…). */
+  readonly attention = new Vector3(0, 0.45, 0.8);
   private tracked = false;
+  private readonly trackedHeadP = new Vector3();
+  private readonly trackedHeadQ = new Quaternion();
+  private readonly trackedHand = [new Vector3(), new Vector3()];
+  private readonly hasTrackedHand = [false, false];
+  private readonly restHand = [new Vector3(), new Vector3()];
+  private readonly restHandQ = [new Quaternion(), new Quaternion()];
+  private readonly restOriented = [false, false];
+  private readonly restLean = new Vector3();
+  private readonly lean = new Vector3();
+  private readonly headQ = new Quaternion();
+  private readonly gaze = new Vector3();
   private wave = 0;
+  private tableTop = 0;
+  private tableEdge = 0.35;
+  private opacity = 1;
+  private materials: Material[] = [];
 
-  constructor(def: AvatarDefinition, readonly name: string) {
-    const skin = mat(def.skin, 0.7);
-    const top = mat(def.top, 0.95);
-    const hair = mat(def.hairColor, 0.8);
-
-    // Body
-    const torso = new Mesh(new CapsuleGeometry(0.17, 0.26, 6, 16), top);
-    torso.scale.set(1.15, 1, 0.75);
-    torso.position.y = -0.36;
-    const neck = new Mesh(new CylinderGeometry(0.045, 0.05, 0.08, 12), skin);
-    neck.position.y = -0.14;
-    this.body.add(torso, neck);
-    if (def.accessory === 'scarf') {
-      const scarf = new Mesh(new TorusGeometry(0.075, 0.03, 8, 20), mat('#c98f3a'));
-      scarf.rotation.x = Math.PI / 2;
-      scarf.position.y = -0.17;
-      this.body.add(scarf);
-    }
-
-    // Head
-    const skull = new Mesh(new SphereGeometry(0.1, 24, 18), skin);
-    skull.scale.set(0.95, 1.12, 0.98);
-    this.head.add(skull);
-    const eyeMat = mat('#2b2222', 0.4);
-    for (const x of [-0.035, 0.035]) {
-      const eye = new Mesh(new SphereGeometry(0.012, 10, 8), eyeMat);
-      eye.position.set(x, 0.012, 0.092);
-      eye.scale.set(1, 1.2, 0.6);
-      this.head.add(eye);
-    }
-    const smile = new Mesh(new TorusGeometry(0.026, 0.004, 6, 16, Math.PI), mat('#8a4a3a'));
-    smile.position.set(0, -0.04, 0.094);
-    smile.rotation.z = Math.PI;
-    this.head.add(smile);
-    for (const x of [-0.06, 0.06]) {
-      const cheek = new Mesh(new SphereGeometry(0.016, 8, 6), new MeshStandardMaterial({ color: '#e58f7a', transparent: true, opacity: 0.35 }));
-      cheek.position.set(x, -0.02, 0.083);
-      cheek.scale.z = 0.3;
-      this.head.add(cheek);
-    }
-    this.addHair(def, hair);
-    this.addAccessory(def);
-
-    // Hands
-    this.leftHand = new Mesh(new SphereGeometry(0.04, 14, 10), skin);
-    this.rightHand = new Mesh(new SphereGeometry(0.04, 14, 10), skin);
-    this.leftHand.scale.set(1, 0.6, 1.3);
-    this.rightHand.scale.set(1, 0.6, 1.3);
-
-    this.root.add(this.body, this.head, this.leftHand, this.rightHand);
-
-    this.label = new CanvasPanel(0.42, 0.075);
-    this.label.mesh.position.y = 0.26;
-    this.head.add(this.label.mesh);
+  constructor(kit: CharacterKit, def: AvatarDefinition, readonly name: string, seat: Seat, seed = 2) {
+    this.character = new CharacterModel(kit, def, seed);
+    this.head = this.character.head;
+    this.leftHand = this.character.leftWrist;
+    this.rightHand = this.character.rightWrist;
+    this.root.name = `avatar-${name}`;
+    this.root.position.set(seat.x, seat.y, seat.z);
+    this.body.rotation.y = seat.yaw;
+    this.body.scale.setScalar(AVATAR_SCALE);
+    this.body.add(this.character.root);
+    this.label = new FittedPill(0.78, 0.085, 20);
+    // the badge is interface: always legible, never hidden inside the hair or head
+    this.label.mesh.material.depthTest = false;
+    this.root.add(this.body, this.label.mesh);
+    this.character.root.traverse((o) => {
+      const m = (o as Mesh).material as Material | undefined;
+      if (m && !this.materials.includes(m)) this.materials.push(m);
+    });
+    this.measureTable(seat);
+    this.setRest('table');
+    this.character.gazeTarget = this.gaze;
     this.setPresence('simulated');
-    this.applyImmediately();
   }
 
-  private addHair(def: AvatarDefinition, hair: MeshStandardMaterial) {
-    const cap = (scaleY: number, y: number) => {
-      const m = new Mesh(new SphereGeometry(0.106, 24, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), hair);
-      m.scale.set(1, scaleY, 1.02);
-      m.position.y = y;
-      m.rotation.x = -0.25;
-      return m;
-    };
-    switch (def.hair) {
-      case 'short':
-      case 'buzz':
-        this.head.add(cap(def.hair === 'buzz' ? 0.95 : 1.05, 0.02));
-        break;
-      case 'wavy':
-      case 'long': {
-        this.head.add(cap(1.1, 0.02));
-        const back = new Mesh(new CapsuleGeometry(0.1, def.hair === 'long' ? 0.18 : 0.08, 6, 12), hair);
-        back.position.set(0, def.hair === 'long' ? -0.1 : -0.05, -0.04);
-        back.scale.set(1.15, 1, 0.7);
-        this.head.add(back);
-        break;
-      }
-      case 'bun': {
-        this.head.add(cap(1.02, 0.02));
-        const bun = new Mesh(new SphereGeometry(0.045, 14, 10), hair);
-        bun.position.set(0, 0.11, -0.05);
-        this.head.add(bun);
-        break;
-      }
-      case 'curly':
-        for (let i = 0; i < 14; i++) {
-          const a = (i / 14) * Math.PI * 2;
-          const puff = new Mesh(new SphereGeometry(0.04, 10, 8), hair);
-          puff.position.set(Math.cos(a) * 0.085, 0.06 + Math.sin(i * 1.7) * 0.02, Math.sin(a) * 0.075 - 0.01);
-          this.head.add(puff);
-        }
-        break;
-      default:
-        break;
-    }
+  /** Where the table top and its near edge are in character space, for rest poses that touch the table. */
+  private measureTable(seat: Seat) {
+    this.tableTop = -seat.y / AVATAR_SCALE;
+    // first intersection of the character's forward ray with the table's rim (table space, XZ)
+    const fx = Math.sin(seat.yaw);
+    const fz = Math.cos(seat.yaw);
+    const b = 2 * (seat.x * fx + seat.z * fz);
+    const c = seat.x * seat.x + seat.z * seat.z - TABLE_RADIUS * TABLE_RADIUS;
+    const disc = b * b - 4 * c;
+    const t = disc > 0 ? (-b - Math.sqrt(disc)) / 2 : 0.4;
+    this.tableEdge = Math.max(0.2, t / AVATAR_SCALE);
   }
 
-  private addAccessory(def: AvatarDefinition) {
-    if (def.accessory === 'glasses') {
-      for (const x of [-0.036, 0.036]) {
-        const lens = new Mesh(new TorusGeometry(0.022, 0.0035, 6, 18), mat('#2a2a2a', 0.4));
-        lens.position.set(x, 0.012, 0.1);
-        this.head.add(lens);
-      }
-    } else if (def.accessory === 'earrings') {
-      for (const x of [-0.098, 0.098]) {
-        const ring = new Mesh(new SphereGeometry(0.009, 8, 6), new MeshStandardMaterial({ color: '#d8b24a', metalness: 0.7, roughness: 0.3 }));
-        ring.position.set(x, -0.05, 0.01);
-        this.head.add(ring);
-      }
-    } else if (def.accessory === 'cap') {
-      const brim = new Mesh(new CylinderGeometry(0.08, 0.08, 0.008, 16, 1, false, 0, Math.PI), mat(def.top));
-      brim.position.set(0, 0.07, 0.07);
-      brim.rotation.y = Math.PI / 2;
-      this.head.add(brim);
+  /** Seated rest pose: forearms on the table, or chin resting on one hand (the other arm on the table). */
+  setRest(pose: RestPose) {
+    this.rest = pose;
+    const top = this.tableTop + 0.022;
+    const edge = this.tableEdge + 0.045;
+    if (pose === 'chin') {
+      // viewer-left hand (index 0) under the chin, elbow forward and down toward the table
+      this.restHand[0].set(-0.022, 0.392, 0.17);
+      this.restHandQ[0].copy(handBasis(_v1.set(0.28, 1, -0.32), _v2.set(0.45, 0.1, -1)));
+      this.restOriented[0] = true;
+      this.character.setPole(0, _v1.set(-0.15, -0.8, 0.75));
+      this.restHand[1].set(0.15, top, edge + 0.02);
+      this.restOriented[1] = false;
+      this.character.setPole(1, null);
+      this.restLean.set(-0.012, 0, 0.05);
+    } else {
+      this.restHand[0].set(-0.13, top, edge);
+      this.restHand[1].set(0.14, top, edge + 0.015);
+      this.restOriented[0] = this.restOriented[1] = false;
+      this.character.setPole(0, null);
+      this.character.setPole(1, null);
+      this.restLean.set(0, 0, 0.025);
     }
   }
 
   setPresence(kind: PresenceKind, detail?: string) {
+    this.presence = kind;
     const text = {
       live: `${this.name} · Here now`,
       recorded: `${this.name} · Recorded message${detail ? ` · ${detail}` : ''}`,
       simulated: `${this.name} · Simulated (sample)`,
       away: `${this.name} · Not here right now`,
     }[kind];
-    const dot = { live: '#58c27d', recorded: COLORS.gold, simulated: '#9aa5a0', away: '#9aa5a0' }[kind];
-    this.label.draw((ctx, W, H) => {
-      ctx.font = `600 ${H * 0.46}px ${FONT}`;
-      const tw = Math.min(W - 20, ctx.measureText(text).width + H * 1.3);
-      const x = (W - tw) / 2;
-      ctx.fillStyle = 'rgba(22,28,26,0.86)';
-      roundRect(ctx, x, 2, tw, H - 4, (H - 4) / 2);
-      ctx.fill();
-      ctx.fillStyle = dot;
-      ctx.beginPath();
-      ctx.arc(x + H * 0.5, H / 2, H * 0.16, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, x + H * 0.85, H / 2 + 1, tw - H);
-    });
-    for (const m of [this.body, this.head, this.leftHand, this.rightHand]) m.traverse((o) => {
-      const material = (o as Mesh).material as MeshStandardMaterial | undefined;
-      if (material && 'opacity' in material && o !== this.label.mesh) {
-        material.transparent = kind === 'away';
-        material.opacity = kind === 'away' ? 0.35 : 1;
-      }
-    });
+    const dot = { live: '#58c27d', recorded: COLORS.gold, simulated: '#b8c2bd', away: '#9aa5a0' }[kind];
+    this.label.set(text, { dot });
+    this.setOpacity(kind === 'away' ? 0.38 : 1);
   }
 
-  /** Pose in the avatar's parent space (table-relative). */
-  setPose(head: { p: number[]; q: number[] }, left?: { p: number[] } | null, right?: { p: number[] } | null, tracked = true) {
-    this.targetHead.p.fromArray(head.p);
-    this.targetHead.q.fromArray(head.q);
-    if (left) this.targetLeft.fromArray(left.p);
-    if (right) this.targetRight.fromArray(right.p);
+  private setOpacity(opacity: number) {
+    if (opacity === this.opacity) return;
+    this.opacity = opacity;
+    for (const m of this.materials) {
+      m.transparent = opacity < 1;
+      m.opacity = opacity;
+      m.depthWrite = opacity >= 1;
+      m.needsUpdate = true;
+    }
+  }
+
+  /**
+   * Networked pose in table space (already mirrored to our far side). Positions are re-based on this seat so
+   * the person stays in the chair: their head offset from a nominal seated head becomes a lean, and their
+   * hands keep the same offset from their head. `tracked` false means the pose came from a 2D pointer, not a
+   * headset, so it drives nothing but presence.
+   */
+  setPose(head: { p: number[]; q: number[] }, left?: { p: number[]; q?: number[] } | null, right?: { p: number[]; q?: number[] } | null, tracked = true) {
     this.tracked = tracked;
+    if (!tracked) {
+      this.hasTrackedHand[0] = this.hasTrackedHand[1] = false;
+      return;
+    }
+    this.trackedHeadP.fromArray(head.p);
+    this.trackedHeadQ.fromArray(head.q);
+    const hands = [left, right];
+    for (let i = 0; i < 2; i++) {
+      const h = hands[i];
+      this.hasTrackedHand[i] = !!h;
+      if (h) {
+        this.trackedHand[i].fromArray(h.p);
+      }
+    }
   }
 
   playGesture(name: string | null | undefined) {
     if (name === 'wave') this.wave = 2.2;
   }
 
-  private applyImmediately() {
-    this.head.position.copy(this.targetHead.p);
-    this.head.quaternion.copy(this.targetHead.q);
+  /** Table space -> character space (the body's local frame). */
+  private toCharacter(p: Vector3, out: Vector3) {
+    return out.copy(p).sub(this.root.position).applyAxisAngle(UP, -this.body.rotation.y).divideScalar(AVATAR_SCALE);
   }
 
-  /** Interpolate toward the latest network pose (10-20 Hz in, 72-90 Hz out) and add gentle idle motion. */
-  update(dt: number, t: number) {
-    const k = 1 - Math.exp(-dt * 12);
-    this.head.position.lerp(this.targetHead.p, k);
-    this.head.quaternion.slerp(this.targetHead.q, k);
-    if (!this.tracked) this.head.position.y += Math.sin(t * 1.4) * 0.0015; // breathing animation (app animation)
-    const yaw = new Euler().setFromQuaternion(this.head.quaternion, 'YXZ').y;
-    this.body.position.set(this.head.position.x, this.head.position.y, this.head.position.z);
-    this.body.rotation.y = yaw;
-    this.leftHand.position.lerp(this.targetLeft, k);
-    this.rightHand.position.lerp(this.targetRight, k);
-    if (this.wave > 0) {
-      this.wave -= dt;
-      const up = new Vector3(0.2 + Math.sin(this.wave * 9) * 0.035, 0.02, 0.1).applyEuler(new Euler(0, yaw, 0));
-      this.rightHand.position.copy(this.head.position).add(up);
+  /**
+   * Per-frame update (allocation-free). `viewer` is the viewer's head in table space, used to turn the
+   * presence badge toward them; on a flat screen pass `flatQ` (the camera's orientation in table space) so
+   * the badge lies parallel to the image plane and its text never keystones.
+   */
+  update(dt: number, t: number, viewer?: Vector3, flatQ?: Quaternion) {
+    const c = this.character;
+    const yaw = this.body.rotation.y;
+    if (this.tracked) {
+      // measured head: orientation relative to the body, position offset becomes a (clamped) lean
+      _q1.setFromAxisAngle(UP, -yaw).multiply(this.trackedHeadQ);
+      this.headQ.copy(_q1);
+      this.toCharacter(_v1.copy(this.trackedHeadP).sub(TRACKED_ORIGIN).add(this.root.position), this.lean);
+      this.lean.clampScalar(-0.12, 0.12);
+      this.gaze.set(0, 0.6, 2).applyQuaternion(this.headQ);
+    } else {
+      // authored attention: look toward the attention point with a slow, small idle drift
+      this.toCharacter(this.attention, this.gaze);
+      const dx = this.gaze.x;
+      const dy = this.gaze.y - 0.6;
+      const dz = this.gaze.z;
+      const look = Math.max(-0.6, Math.min(0.6, Math.atan2(dx, dz) + Math.sin(t * 0.37) * 0.05));
+      const pitch = Math.max(-0.3, Math.min(0.35, -Math.atan2(dy, Math.hypot(dx, dz)) + Math.sin(t * 0.23) * 0.025));
+      const roll = this.rest === 'chin' ? 0.14 : Math.sin(t * 0.31) * 0.03;
+      this.headQ.setFromEuler(_e.set(pitch, look, roll, 'YXZ'));
+      this.lean.copy(this.restLean);
+    }
+    c.setHead(this.headQ, this.lean);
+
+    // hands: tracked hands win; otherwise the rest pose, with the wave gesture on the viewer-right hand
+    for (let i = 0; i < 2; i++) {
+      const idx = i as 0 | 1;
+      if (this.tracked && this.hasTrackedHand[i]) {
+        // keep the measured hand-to-head offset, re-based on this avatar's head. Orientation stays relaxed:
+        // grip-space axes differ between hand tracking and controllers and are not verified on device yet.
+        _v2.copy(this.trackedHand[i]).sub(this.trackedHeadP);
+        c.head.getWorldPosition(_v1);
+        this.root.parent?.worldToLocal(_v1);
+        this.toCharacter(_v1.add(_v2), _v1);
+        c.setHand(idx, _v1, null);
+      } else if (i === 1 && this.wave > 0 && !(this.tracked && this.hasTrackedHand[1])) {
+        this.wave = Math.max(0, this.wave - dt);
+        _v1.set(0.2 + Math.sin(this.wave * 9) * 0.035, 0.62, 0.12);
+        c.setHand(1, _v1, handBasis(_v2.set(-0.1, 1, 0.1), _q1Vec.set(0, 0, 1)) );
+      } else {
+        c.setHand(idx, this.restHand[i], this.restOriented[i] ? this.restHandQ[i] : null);
+      }
+    }
+    c.update(dt, t);
+
+    // presence badge: beside the head at eye level, clear of the hair, turned toward the viewer
+    c.head.getWorldPosition(_v1);
+    this.root.worldToLocal(_v1);
+    const side = this.badgeSide === 'right' ? 1 : -1;
+    this.label.mesh.position.set(_v1.x + side * (0.2 + this.label.width / 2), _v1.y + 0.16, _v1.z + 0.05);
+    if (flatQ) this.label.mesh.quaternion.copy(flatQ);
+    else if (viewer) {
+      const lx = viewer.x - (this.root.position.x + this.label.mesh.position.x);
+      const ly = viewer.y - (this.root.position.y + this.label.mesh.position.y);
+      const lz = viewer.z - (this.root.position.z + this.label.mesh.position.z);
+      this.label.mesh.rotation.set(-Math.atan2(ly, Math.hypot(lx, lz)), Math.atan2(lx, lz), 0, 'YXZ');
     }
   }
 
-  dispose() {
-    this.root.traverse((o) => {
-      const m = o as Mesh;
-      m.geometry?.dispose();
-      const material = m.material as MeshStandardMaterial | MeshStandardMaterial[] | undefined;
-      if (Array.isArray(material)) material.forEach((x) => x.dispose());
-      else material?.dispose();
-    });
-    this.label.dispose();
+  /** Badge corners in world space (for safe-area checks). */
+  labelCorners(out: Vector3[]) {
+    const w = this.label.width / 2;
+    const h = this.label.height / 2;
+    const m = this.label.mesh;
+    m.updateWorldMatrix(true, false);
+    const s = m.scale;
+    out[0].set(-w / s.x, -h / s.y, 0).applyMatrix4(m.matrixWorld);
+    out[1].set(w / s.x, -h / s.y, 0).applyMatrix4(m.matrixWorld);
+    out[2].set(w / s.x, h / s.y, 0).applyMatrix4(m.matrixWorld);
+    out[3].set(-w / s.x, h / s.y, 0).applyMatrix4(m.matrixWorld);
+    return out;
   }
+
+  dispose() {
+    this.character.dispose();
+    this.label.dispose();
+    this.root.removeFromParent();
+  }
+}
+
+const _q1Vec = new Vector3();
+const _bx = new Vector3();
+const _by = new Vector3();
+const _bz = new Vector3();
+const _bq = new Quaternion();
+
+/** Hand orientation (character space) from a finger direction and the direction the palm faces. */
+function handBasis(fingers: Vector3, palm: Vector3): Quaternion {
+  // matches CharacterModel's hand frame: fingers along local -Y, the back of the hand along local +Z
+  _by.copy(fingers).normalize().negate();
+  _bz.copy(palm).normalize().negate();
+  _bz.addScaledVector(_by, -_bz.dot(_by)).normalize();
+  _bx.crossVectors(_by, _bz);
+  const m00 = _bx.x, m01 = _by.x, m02 = _bz.x;
+  const m10 = _bx.y, m11 = _by.y, m12 = _bz.y;
+  const m20 = _bx.z, m21 = _by.z, m22 = _bz.z;
+  // rotation matrix -> quaternion (same as Quaternion.setFromRotationMatrix, without a Matrix4)
+  const trace = m00 + m11 + m22;
+  if (trace > 0) {
+    const s = 0.5 / Math.sqrt(trace + 1);
+    _bq.set((m21 - m12) * s, (m02 - m20) * s, (m10 - m01) * s, 0.25 / s);
+  } else if (m00 > m11 && m00 > m22) {
+    const s = 2 * Math.sqrt(1 + m00 - m11 - m22);
+    _bq.set(0.25 * s, (m01 + m10) / s, (m02 + m20) / s, (m21 - m12) / s);
+  } else if (m11 > m22) {
+    const s = 2 * Math.sqrt(1 + m11 - m00 - m22);
+    _bq.set((m01 + m10) / s, 0.25 * s, (m12 + m21) / s, (m02 - m20) / s);
+  } else {
+    const s = 2 * Math.sqrt(1 + m22 - m00 - m11);
+    _bq.set((m02 + m20) / s, (m12 + m21) / s, 0.25 * s, (m10 - m01) / s);
+  }
+  return _bq;
 }

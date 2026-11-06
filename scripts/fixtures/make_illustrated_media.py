@@ -24,8 +24,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter
 
-ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "web" / "public" / "sample"
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(__file__).resolve().parent / "out"  # illustrated test fixtures only; the app uses web/public/assets/sample
 W, H = 1280, 800
 SS = 2  # supersampling factor
 

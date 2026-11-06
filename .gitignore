@@ -23,3 +23,9 @@ Thumbs.db
 
 # Claude Code local state
 .claude/settings.local.json
+
+# Third-party source assets (downloaded by scripts/assets/fetch_polyhaven.py; only derivatives are committed)
+.asset-cache/
+
+# Illustrated test fixtures (scripts/fixtures/make_illustrated_media.py)
+scripts/fixtures/out/

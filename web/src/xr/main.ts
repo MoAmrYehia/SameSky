@@ -1,41 +1,77 @@
-// SameSky's hands-first room (Meta Quest 3/3S via IWSDK, with desktop/phone fallback in the same page).
+// SameSky's hands-first room (Meta Quest 3/3S via IWSDK, with a desktop/phone fallback in the same page).
 //
 // Defining interaction: an object with a message waiting inside it. Pick up the glowing cup and the
 // recorded voice note plays from the cup itself (spatial audio) with captions; place a reply beside it
 // and it waits for the next visit. Frames and postcards open their photo/clip on the shared screen.
+//
+// Composition: the shared screen floats toward the left, the person across sits in the armchair to the
+// right, the cup and its waiting-message label sit in the foreground, and one compact dock rests at the
+// table edge. In a headset these are anchored in table space at comfortable reach — the user's head pose is
+// never moved to force a composition. On a desktop or phone the same anchors are fitted to the viewport and
+// checked against a safe area (window.__sameskySafeArea, used by scripts/capture.mjs).
+//
+// Rendering: PMREM image-based light from a CC0 interior HDR (IWSDK IBLTexture), Neutral tone mapping,
+// one bounded soft shadow light, unlit (toneMapped:false) interface panels, sRGB-tagged colour textures.
+// Per-frame code is allocation-free; canvases are redrawn only when their content changes.
 
+import '@fontsource-variable/figtree';
 import {
-  AudioSource, AudioUtils, createSystem, DistanceGrabbable, type Entity, Grabbed, Hovered, MovementMode, OneHandGrabbable,
-  ReferenceSpaceType, SessionMode, World,
+  AudioSource, AudioUtils, createSystem, DistanceGrabbable, type Entity, Grabbed, Hovered, IBLTexture, MovementMode,
+  OneHandGrabbable, ReferenceSpaceType, SessionMode, World,
 } from '@iwsdk/core';
 import {
-  AudioListener, CanvasTexture, Color, Euler, Group, Mesh, MeshBasicMaterial, PlaneGeometry, Quaternion, RingGeometry, SRGBColorSpace,
-  type Texture, Vector3, VideoTexture,
+  AudioListener, CanvasTexture, Color, Euler, Group, LoadingManager, Mesh, MeshBasicMaterial, NeutralToneMapping, type Object3D,
+  PCFSoftShadowMap, PlaneGeometry, Quaternion, SRGBColorSpace, type Texture, TextureLoader, Vector3, VideoTexture,
 } from 'three';
-import { avatarDataUrl } from '../shared/avatar';
 import { cueAt, loadCaptions, type Cue } from '../shared/captions';
-import type { Award, Me, Moment, Recap, Reply, Room, RoomObject } from '../shared/contracts';
+import { type CharacterKit, loadCharacterKit } from '../shared/character';
+import type { AvatarDefinition, Award, Me, Moment, Recap, Reply, Room, RoomObject } from '../shared/contracts';
 import { currentMode, dataSource, SampleSource, storedToken } from '../shared/data';
+import { buildKeepsake, texturesReady } from '../shared/keepsakes3d';
+import { renderPortrait } from '../shared/portrait';
 import { SAMPLE_PEOPLE } from '../shared/sample';
 import { cityOf } from '../shared/tz';
 import { Avatar3D } from './avatar3d';
-import { buildEnvironment } from './env';
+import { buildEnvironment, contactShadow, type RoomEnvironment, TABLE } from './env';
 import { LiveSession, type PoseMessage } from './live';
-import { buildKeepsake, buildMemoryObject, infoCard, loadTexture, type MemoryObject } from './objects';
-import { Button, CanvasPanel, COLORS, FONT, guardInput, makePressable, pill, pressables, registerPressable, roundRect, wrapText } from './ui3d';
+import { buildMemoryObject, infoCard, type MemoryObject } from './objects';
+import {
+  Button, CanvasPanel, COLORS, drawIcon, FittedCard, FittedPill, FONT, glass, guardInput, hitBox, loadUiFont, makePressable, type Pressable,
+  pressables, registerPressable, roundRect, wrapText,
+} from './ui3d';
+
+declare global {
+  interface Window {
+    __sameskyReady?: boolean;
+    __sameskySafeArea?: () => SafeAreaReport;
+  }
+}
 
 const params = new URLSearchParams(location.search);
 const mode: 'sample' | 'live' = params.get('mode') === 'sample' ? 'sample' : params.get('mode') === 'live' || (currentMode() === 'live' && storedToken()) ? 'live' : 'sample';
 const ds = dataSource(mode);
 const debug = params.has('debug');
+/** Deterministic captures: idle animation runs at a fixed time and nobody blinks mid-shot. */
+const capture = params.has('capture');
+/**
+ * ?preview=xr — documentation aid without a headset: applies the headset (table-space) layout and renders
+ * from a seated head position with a Quest-like field of view. Not a substitute for on-device testing.
+ */
+let xrPreview = false;
+const CAPTURE_T = 4.2;
+const touch = matchMedia('(pointer: coarse)').matches;
 const $ = (id: string) => document.getElementById(id)!;
 const status = (text: string) => { $('status').textContent = text; };
+const verb = () => (world?.renderer.xr.isPresenting ? 'Pinch' : touch ? 'Tap' : 'Click');
+const fmt = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 
 let world: World;
+let env: RoomEnvironment;
+let kit: CharacterKit;
 let me: Me;
 let room: Room;
 let moments: Moment[] = [];
@@ -52,35 +88,72 @@ let partnerLastSeen = 0;
 let partnerKind: 'live' | 'simulated' | 'recorded' | 'away' = 'simulated';
 const onboardingKey = `samesky.onboarding.${mode}`;
 let onboarding = (() => { try { return localStorage.getItem(onboardingKey) ?? 'cup'; } catch { return 'cup'; } })();
+const load = { loaded: 0, total: 0, errors: [] as string[] };
 
 // ---------------------------------------------------------------------------
-// Boot
+// Boot: data and heavy assets load in parallel, with visible progress and a recoverable error state
 // ---------------------------------------------------------------------------
+
+function setProgress(fraction: number) {
+  const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
+  ($('load-bar') as HTMLElement).style.width = `${pct}%`;
+  $('load').setAttribute('aria-valuenow', String(pct));
+}
+
+function showLoadError(message: string) {
+  $('overlay').hidden = false;
+  $('overlay-tag').textContent = 'The room didn’t load';
+  $('overlay-text').textContent = message;
+  $('overlay-text').classList.add('error-text');
+  $('load').hidden = true;
+  ($('enter-2d') as HTMLButtonElement).hidden = true;
+  ($('enter-vr') as HTMLButtonElement).hidden = true;
+  const retry = $('retry') as HTMLButtonElement;
+  retry.hidden = false;
+  retry.onclick = () => location.reload();
+  $('overlay-hint').textContent = 'Your moments are safe — only the room’s 3D files failed to download. The companion still works.';
+}
 
 async function boot() {
-  $('mode-tag').textContent = mode === 'sample' ? 'Sample · nothing leaves this browser' : 'Signed in';
+  if (mode === 'sample') $('mode-tag').innerHTML = 'Sample · fictional people<span class="tag-long"> · nothing leaves this browser</span>';
+  else $('mode-tag').textContent = 'Signed in';
+  const enter2d = $('enter-2d') as HTMLButtonElement;
   if (mode === 'live' && !storedToken()) {
     $('overlay-tag').textContent = 'Sign-in needed';
     $('overlay-text').textContent = 'Open the companion to sign in, or try the sample room.';
-    ($('enter-2d') as HTMLButtonElement).textContent = 'Try the sample room';
-    $('enter-2d').onclick = () => { location.href = '/room.html?mode=sample'; };
+    $('load').hidden = true;
+    enter2d.disabled = false;
+    enter2d.textContent = 'Try the sample room';
+    enter2d.onclick = () => { location.href = '/room.html?mode=sample'; };
     return;
   }
+
+  // Heavy downloads start immediately, alongside the data requests.
+  const manager = new LoadingManager();
+  manager.onStart = (_u, loaded, total) => { load.loaded = loaded; load.total = total; };
+  manager.onProgress = (_u, loaded, total) => { load.loaded = loaded; load.total = total; setProgress(loaded / Math.max(1, total)); };
+  manager.onError = (url) => load.errors.push(url);
+  const assets = Promise.all([buildEnvironment(manager), loadCharacterKit(manager), loadUiFont()]);
+  assets.catch(() => undefined); // awaited (and reported) below
+
   let rooms: Room[];
   try {
     [me, rooms] = await Promise.all([ds.me(), ds.rooms()]);
   } catch (e) {
-    $('overlay-text').textContent = e instanceof Error ? e.message : 'Could not load your room.';
+    showLoadError(e instanceof Error ? e.message : 'Could not load your room.');
     return;
   }
   const picked = rooms.find((r) => r.id === params.get('room')) ?? rooms.find((r) => r.kind === 'direct') ?? rooms[0];
   if (!picked) {
     $('overlay-text').textContent = 'You don’t have a room yet. Create one in the companion first.';
+    $('load').hidden = true;
     return;
   }
   room = picked;
+  const names = room.members.map((m) => m.displayName).join(' + ');
   $('overlay-tag').textContent = mode === 'sample' ? 'Sample day · fictional people' : room.name;
-  $('welcome-title').textContent = room.kind === 'direct' ? `${room.members.map((m) => m.displayName).join(' + ')}` : room.name;
+  $('welcome-title').textContent = room.kind === 'direct' ? names : room.name;
+  $('hud-audience-text').textContent = room.kind === 'direct' ? `Private · ${names}` : `Circle · ${room.name}`;
 
   const [archive, objects, aw] = await Promise.all([ds.archive(room.id), ds.objects(room.id), ds.awards(room.id)]);
   recap = archive[0] ?? null;
@@ -93,73 +166,123 @@ async function boot() {
     xr: { sessionMode: SessionMode.ImmersiveVR, referenceSpace: ReferenceSpaceType.LocalFloor, features: { handTracking: true }, offer: 'none' },
     features: { grabbing: { useHandPinchForGrab: true }, locomotion: false },
     input: { canvasPointerEvents: true },
-    render: { fov: 62, near: 0.02, far: 40, camera: { position: [0, 1.18, 0.12], lookAt: [0, 0.86, -0.85] } },
+    render: { fov: 58, near: 0.02, far: 40, camera: { position: [0, 1.24, 0.16], lookAt: [0, 0.9, -0.9] } },
   });
-  world.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  placeDesktopCamera();
-  world.scene.background = new Color(0x15110f);
+  const renderer = world.renderer;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // IWSDK sets the output colour space only; tone mapping and shadows are tuned for this room.
+  renderer.toneMapping = NeutralToneMapping;
+  renderer.toneMappingExposure = 0.92;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = PCFSoftShadowMap;
+  world.scene.background = new Color(0x2a211b);
+  // Image-based light: a CC0 interior HDR, prefiltered through PMREM by IWSDK's EnvironmentSystem.
+  world.activeLevel.value.addComponent(IBLTexture, { src: '/assets/env/lounge_1k.hdr', intensity: 0.7 });
 
-  const env = buildEnvironment();
+  try {
+    [env, kit] = await assets;
+  } catch (e) {
+    console.error(e);
+    showLoadError('Part of the room (furniture or the avatar model) could not be downloaded. Check the connection and try again.');
+    return;
+  }
+
   roomEntity = world.createTransformEntity(new Group(), { persistent: true });
   roomEntity.object3D!.add(env.root);
   env.root.remove(env.table);
   tableEntity = world.createTransformEntity(env.table, { parent: roomEntity });
 
   world.registerSystem(RoomSystem);
-  if (debug) (window as unknown as Record<string, unknown>).__samesky = { world, pressables, memory, activate };
   buildScreen();
   buildDock();
-  buildShelf();
+  buildKeepsakes();
   await placeObjects(objects);
   setupPartner();
-  buildHints();
+  buildLabels();
+  placeDesktopCamera();
+  window.addEventListener('resize', () => requestAnimationFrame(placeDesktopCamera));
+  // the 2D header can change height (fonts, wrapping): keep the safe area current
+  let hudH = 0;
+  new ResizeObserver(() => {
+    const h = Math.round($('hud').getBoundingClientRect().height);
+    if (h !== hudH) { hudH = h; requestAnimationFrame(placeDesktopCamera); }
+  }).observe($('hud'));
+  window.__sameskySafeArea = safeArea;
+  if (debug) (window as unknown as Record<string, unknown>).__samesky = { world, env, pressables, memory, activate, partner, safeArea, placeDesktopCamera, screen, dock };
 
   // XR availability + entry.
   const xrOk = await navigator.xr?.isSessionSupported('immersive-vr').catch(() => false);
   const enterVr = $('enter-vr') as HTMLButtonElement;
-  enterVr.hidden = !xrOk;
   enterVr.onclick = () => {
     unlockAudio();
     $('overlay').hidden = true;
     world.launchXR();
   };
-  $('enter-2d').onclick = () => {
+  enter2d.onclick = () => {
     unlockAudio();
     $('overlay').hidden = true;
-    status('Click objects to open them. On a Quest, use “Enter in VR”.');
-    window.setTimeout(() => status(''), 6000);
   };
-  if (!xrOk) $('overlay-hint').textContent = 'This browser has no VR headset available, so the room opens on this screen. Click to select.';
+  if (!xrOk) $('overlay-hint').textContent = `This browser has no VR headset available, so the room opens on this screen. ${touch ? 'Tap' : 'Click'} things to open them.`;
 
   world.renderer.xr.addEventListener('sessionstart', () => {
     guardInput(1200);
     const session = world.renderer.xr.getSession();
     session?.addEventListener('inputsourceschange', () => guardInput(600)); // tracking loss/regain never fires a selection
     session?.addEventListener('visibilitychange', () => guardInput(800));
+    applyXrLayout();
+    refreshVerbs();
     window.setTimeout(recenter, 300);
   });
   world.renderer.xr.addEventListener('sessionend', () => {
     $('overlay').hidden = false;
     roomEntity.object3D!.position.set(0, 0, 0);
     roomEntity.object3D!.rotation.set(0, 0, 0);
+    refreshVerbs();
     window.setTimeout(placeDesktopCamera, 50);
   });
 
   if (params.get('session') && mode === 'live') void joinLive(params.get('session')!);
   if (params.get('watch') === '1') {
     const clip = moments.find((m) => m.kind === 'clip');
-    if (clip) window.setTimeout(() => showMoment(clip, { together: true }), 800);
+    if (clip) window.setTimeout(() => showMoment(clip, { together: true }), 400);
   }
+
+  // Ready: every queued download done (or failed), textures decoded, IBL prefiltered, a couple of frames drawn.
+  const started = performance.now();
+  while (performance.now() - started < 90_000) {
+    await texturesReady();
+    if (load.loaded >= load.total && world.scene.environment) break;
+    await new Promise((r) => setTimeout(r, 120));
+  }
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  placeDesktopCamera();
+  $('load').hidden = true;
+  enterVr.hidden = !xrOk;
+  enter2d.disabled = false;
+  enter2d.textContent = 'Stay on this screen';
+  if (load.errors.length) $('overlay-hint').textContent = `Some textures didn’t load (${load.errors.length}); the room still works. Reload to try again.`;
+  if (params.get('preview') === 'xr') enterXrPreview();
+  window.__sameskyReady = true;
 }
 
-/** Seated eye height, looking at the far side of the table: the same framing a phone/desktop participant gets. */
-function placeDesktopCamera() {
-  if (world.renderer.xr.isPresenting) return;
-  const player = world.camera.parent;
-  player?.position.set(0, 0, 0);
-  player?.rotation.set(0, 0, 0);
-  world.camera.position.set(0, 1.22, 0.2);
-  world.camera.lookAt(0, 0.95, -0.9);
+function enterXrPreview() {
+  xrPreview = true;
+  const cam = world.camera;
+  cam.fov = 78;
+  cam.updateProjectionMatrix();
+  const table = tableEntity.object3D!;
+  table.updateMatrixWorld(true);
+  cam.position.copy(table.localToWorld(SEATED_HEAD.clone()));
+  cam.lookAt(0, 0.98, -0.85);
+  cam.updateMatrixWorld(true);
+  applyXrLayout();
+  $('mode-tag').textContent = 'Headset layout preview · seated eye position · not an on-device capture';
+}
+
+/** Hints say "pinch" in a headset and "click"/"tap" on a screen: redraw them when the mode changes. */
+function refreshVerbs() {
+  setOnboarding(onboarding);
+  if (!screen.current && !story && !voice) setScreenIdle();
 }
 
 function unlockAudio() {
@@ -169,16 +292,22 @@ function unlockAudio() {
 }
 
 // ---------------------------------------------------------------------------
-// The shared screen: photos, clips, recap story, captions
+// The shared screen: one glass panel with its header, media, captions and transport inside it
 // ---------------------------------------------------------------------------
+
+const SCREEN_W = 0.84;
+const SCREEN_H = 0.6;
+const MEDIA_W = 0.78;
+const MEDIA_H = (MEDIA_W * 9) / 16;
 
 interface Screen {
   group: Group;
   entity: Entity;
+  bg: CanvasPanel;
   media: Mesh<PlaneGeometry, MeshBasicMaterial>;
   header: CanvasPanel;
   captions: CanvasPanel;
-  progress: CanvasPanel;
+  transport: CanvasPanel;
   play: Button;
   video: HTMLVideoElement;
   texture: Texture | null;
@@ -187,90 +316,153 @@ interface Screen {
   driftMs: number | null;
 }
 let screen: Screen;
+const mediaLoader = new TextureLoader();
+let maskTexture: CanvasTexture | null = null;
+
+/** Rounded-corner alpha mask for the media (alphaTest, so the media stays opaque and unsorted). */
+function roundedMask() {
+  if (maskTexture) return maskTexture;
+  const c = document.createElement('canvas');
+  c.width = 320;
+  c.height = 180;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 320, 180);
+  ctx.fillStyle = '#fff';
+  roundRect(ctx, 0, 0, 320, 180, 12);
+  ctx.fill();
+  maskTexture = new CanvasTexture(c);
+  return maskTexture;
+}
 
 function buildScreen() {
   const group = new Group();
-  // Floating to the left of the table (as in the concept art) so the person across stays visible.
-  group.position.set(-0.5, 0.56, -0.42);
-  group.rotation.set(0.04, 0.5, 0);
-  group.scale.setScalar(0.92);
+  group.name = 'shared-screen';
   const entity = world.createTransformEntity(group, { parent: tableEntity });
-  const bezel = new Mesh(new PlaneGeometry(0.98, 0.6), new MeshBasicMaterial({ color: 0x141a19, transparent: true, opacity: 0.92 }));
-  bezel.position.z = -0.004;
-  const media = new Mesh(new PlaneGeometry(0.92, 0.5175), new MeshBasicMaterial({ color: 0xffffff, toneMapped: false }));
-  media.position.y = 0.0;
-  const header = new CanvasPanel(0.98, 0.08);
-  header.mesh.position.set(0, 0.34, 0);
-  const captions = new CanvasPanel(0.92, 0.09);
-  captions.mesh.position.set(0, -0.2, 0.004);
-  const progress = new CanvasPanel(0.6, 0.03);
-  progress.mesh.position.set(0.12, -0.34, 0.002);
-  group.add(bezel, media, header.mesh, captions.mesh, progress.mesh);
+  const bg = new CanvasPanel(SCREEN_W, SCREEN_H, { pxPerM: 700, renderOrder: 1 });
+  bg.draw((ctx, W, H) => glass(ctx, 2, 2, W - 4, H - 4, H * 0.075, { tint: 'rgba(58, 50, 44, 0.52)', highlight: 0.22, border: 'rgba(255,255,255,0.55)' }));
+  bg.mesh.position.z = -0.004;
+  const media = new Mesh(new PlaneGeometry(MEDIA_W, MEDIA_H), new MeshBasicMaterial({ color: 0xffffff, toneMapped: false, alphaMap: roundedMask(), alphaTest: 0.5 }));
+  const header = new CanvasPanel(MEDIA_W, 0.068, { renderOrder: 2 });
+  header.mesh.position.set(0, 0.258, 0.001);
+  const captions = new CanvasPanel(MEDIA_W - 0.05, 0.078, { renderOrder: 3 });
+  captions.mesh.position.set(0, -0.162, 0.004);
+  const transport = new CanvasPanel(0.5, 0.05, { renderOrder: 2 });
+  transport.mesh.position.set(0.14, -0.26, 0.002);
+  group.add(bg.mesh, media, header.mesh, captions.mesh, transport.mesh);
   const video = document.createElement('video');
   video.playsInline = true;
   video.crossOrigin = 'anonymous';
   video.preload = 'auto';
-  screen = { group, entity, media, header, captions, progress, play: null as unknown as Button, video, texture: null, current: null, together: false, driftMs: null };
-  screen.play = new Button(world, entity, { label: 'Play our day', icon: 'play', width: 0.3, height: 0.085, primary: true }, () => togglePlay());
-  screen.play.panel.mesh.position.set(-0.3, -0.35, 0.004);
+  screen = { group, entity, bg, media, header, captions, transport, play: null as unknown as Button, video, texture: null, current: null, together: false, driftMs: null };
+  screen.play = new Button(world, entity, { label: 'Play our day', icon: 'play', width: 0.25, height: 0.056, primary: true }, () => togglePlay());
+  screen.play.panel.mesh.position.set(-0.255, -0.26, 0.004);
   setScreenIdle();
   video.addEventListener('ended', () => { if (story) nextStep(); else drawProgress(); });
 }
 
-function drawHeader(title: string, sub: string, together = false) {
+let headerKey = '';
+function drawHeader(title: string, right: string, rightIcon: string | null = null, rightColor: string = COLORS.onGlassMuted) {
+  const key = `${title}|${right}|${rightIcon}|${rightColor}`;
+  if (key === headerKey) return;
+  headerKey = key;
   screen.header.draw((ctx, W, H) => {
-    ctx.fillStyle = 'rgba(20,26,25,0.92)';
-    roundRect(ctx, 0, 0, W, H, H * 0.4);
-    ctx.fill();
-    ctx.fillStyle = '#fff';
-    ctx.font = `700 ${H * 0.4}px ${FONT}`;
     ctx.textBaseline = 'middle';
-    ctx.fillText(title, H * 0.5, H * 0.5, W * 0.6);
-    ctx.fillStyle = '#c9d6cd';
-    ctx.font = `500 ${H * 0.3}px ${FONT}`;
-    ctx.textAlign = 'right';
-    ctx.fillText(sub, W - H * 0.5, H * 0.5, W * 0.38);
-    if (together) {
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#9fd3ae';
-      ctx.fillText('● Watching together', W * 0.52, H * 0.5);
+    ctx.textAlign = 'left';
+    drawIcon(ctx, 'screen', H * 0.32, H * 0.5, H * 0.62, '#ffffff');
+    ctx.font = `600 ${Math.round(H * 0.34)}px ${FONT}`;
+    const rightW = right ? ctx.measureText(right).width + (rightIcon ? H * 0.62 : 0) : 0;
+    const maxTitle = W - H * 0.85 - rightW - H * 0.5;
+    let size = Math.round(H * 0.46);
+    ctx.font = `700 ${size}px ${FONT}`;
+    while (ctx.measureText(title).width > maxTitle && size > H * 0.3) ctx.font = `700 ${--size}px ${FONT}`;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(title, H * 0.82, H * 0.52);
+    if (right) {
+      ctx.font = `600 ${Math.round(H * 0.34)}px ${FONT}`;
+      ctx.fillStyle = rightColor;
+      ctx.textAlign = 'right';
+      ctx.fillText(right, W - 2, H * 0.53);
+      if (rightIcon) drawIcon(ctx, rightIcon, W - 2 - ctx.measureText(right).width - H * 0.36, H * 0.5, H * 0.46, rightColor);
     }
   });
 }
 
+let captionKey = '\u0000';
+/** Memoized: the canvas is only redrawn (and re-uploaded) when the visible caption actually changes. */
 function drawCaption(text: string) {
-  screen.captions.mesh.visible = captionsOn && !!text;
-  if (!screen.captions.mesh.visible) return;
+  const visible = captionsOn && !!text;
+  const key = visible ? text : '';
+  if (key === captionKey) return;
+  captionKey = key;
+  screen.captions.mesh.visible = visible;
+  if (!visible) return;
   screen.captions.draw((ctx, W, H) => {
-    ctx.font = `600 ${H * 0.34}px ${FONT}`;
-    const lines = wrapText(ctx, text, W * 0.9).slice(0, 2);
-    const w = Math.max(...lines.map((l) => ctx.measureText(l).width)) + H * 0.6;
-    ctx.fillStyle = 'rgba(10,12,12,0.86)';
-    roundRect(ctx, (W - w) / 2, 0, w, H, H * 0.22);
+    let size = Math.round(H * 0.34);
+    ctx.font = `600 ${size}px ${FONT}`;
+    let lines = wrapText(ctx, text, W * 0.92);
+    while (lines.length > 2 && size > H * 0.24) {
+      ctx.font = `600 ${--size}px ${FONT}`;
+      lines = wrapText(ctx, text, W * 0.92);
+    }
+    lines = lines.slice(0, 2);
+    let w = 0;
+    for (const l of lines) w = Math.max(w, ctx.measureText(l).width);
+    w += H * 0.6;
+    ctx.fillStyle = 'rgba(12,12,11,0.78)';
+    roundRect(ctx, (W - w) / 2, 0, w, H, H * 0.24);
     ctx.fill();
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    lines.forEach((l, i) => ctx.fillText(l, W / 2, H * (lines.length === 1 ? 0.5 : 0.3 + i * 0.4)));
+    lines.forEach((l, i) => ctx.fillText(l, W / 2, H * (lines.length === 1 ? 0.52 : 0.3 + i * 0.42)));
   });
+}
+
+let transportKey = '';
+function drawTransport(frac: number, text: string) {
+  const key = `${Math.round(frac * 500)}|${text}|${debug && screen.driftMs != null ? Math.round(screen.driftMs) : ''}`;
+  if (key === transportKey) return;
+  transportKey = key;
+  screen.transport.draw((ctx, W, H) => {
+    ctx.font = `600 ${Math.round(H * 0.4)}px ${FONT}`;
+    const tw = text ? ctx.measureText(text).width + H * 0.5 : 0;
+    const x0 = H * 0.3;
+    const barW = W - x0 - tw - H * 0.2;
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    roundRect(ctx, x0, H * 0.44, barW, H * 0.12, H * 0.06);
+    ctx.fill();
+    const fx = Math.max(H * 0.1, barW * Math.max(0, Math.min(1, frac)));
+    ctx.fillStyle = COLORS.greenBright;
+    roundRect(ctx, x0, H * 0.44, fx, H * 0.12, H * 0.06);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(x0 + fx, H * 0.5, H * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+    if (text) {
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, W - H * 0.1, H * 0.53);
+    }
+    if (debug && screen.driftMs != null) {
+      ctx.font = `${Math.round(H * 0.3)}px ${FONT}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(`drift ${screen.driftMs.toFixed(0)} ms`, x0, H * 0.2);
+    }
+  });
+}
+
+function recapSeconds() {
+  return recap?.plan?.chapters.reduce((a, c) => a + (c.durationSeconds || 0), 0) ?? 0;
 }
 
 function drawProgress() {
   const v = screen.video;
-  const frac = screen.current?.kind === 'clip' && v.duration ? v.currentTime / v.duration : story ? story.index / Math.max(1, story.steps.length - 1) : 0;
-  screen.progress.draw((ctx, W, H) => {
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    roundRect(ctx, 0, H * 0.35, W, H * 0.3, H * 0.15);
-    ctx.fill();
-    ctx.fillStyle = '#7fbf95';
-    roundRect(ctx, 0, H * 0.35, Math.max(H * 0.3, W * frac), H * 0.3, H * 0.15);
-    ctx.fill();
-    if (debug && screen.driftMs != null) {
-      ctx.fillStyle = '#fff';
-      ctx.font = `${H * 0.6}px ${FONT}`;
-      ctx.fillText(`drift ${screen.driftMs.toFixed(0)} ms`, W * 0.75, H * 0.3);
-    }
-  });
+  if (screen.current?.kind === 'clip' && v.duration) drawTransport(v.currentTime / v.duration, `${fmt(v.currentTime)} / ${fmt(v.duration)}`);
+  else if (story) drawTransport(story.index / Math.max(1, story.steps.length - 1), `${Math.max(1, story.index + 1)} of ${story.steps.length}`);
+  else if (voice) drawTransport(Math.min(1, (performance.now() - voice.started) / voice.durationMs), fmt(voice.durationMs / 1000));
+  else drawTransport(0, recap?.plan ? fmt(recapSeconds()) : '');
 }
 
 function setMediaTexture(tex: Texture | null, aspect = 16 / 9) {
@@ -279,18 +471,29 @@ function setMediaTexture(tex: Texture | null, aspect = 16 / 9) {
   screen.media.material.map = tex;
   screen.media.material.color.set(tex ? 0xffffff : 0x2a3431);
   screen.media.material.needsUpdate = true;
-  const h = 0.5175;
-  screen.media.scale.set(Math.min(1, (h * aspect) / 0.92), Math.min(1, 0.92 / aspect / h), 1);
+  screen.media.scale.set(Math.min(1, (MEDIA_H * aspect) / MEDIA_W), Math.min(1, MEDIA_W / aspect / MEDIA_H), 1);
+}
+
+function loadMedia(url: string) {
+  const t = mediaLoader.load(url);
+  t.colorSpace = SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+
+function generatorShort() {
+  return recap ? recap.generatorLabel.replace(' (no AI call)', '').replace(' recap', '') : room.name;
 }
 
 function setScreenIdle() {
   stopVideo();
   screen.current = null;
+  screen.together = false;
   const title = recap?.plan?.title ?? (moments.length ? 'Shared moments' : 'Nothing shared yet');
-  drawHeader(title, recap ? `${recap.generatorLabel.replace(' (no AI call)', '')}` : room.name);
+  drawHeader(title, generatorShort());
   const hero = moments.find((m) => m.kind === 'photo');
-  setMediaTexture(hero?.media?.url ? loadTexture(hero.media.url) : null, 16 / 10);
-  drawCaption(recap ? 'Pinch “Play our day” to watch the story, or pick up something on the table.' : 'Pick up something on the table to open it.');
+  setMediaTexture(hero?.media?.url ? loadMedia(hero.media.url) : null, 16 / 10);
+  drawCaption(recap ? `${verb()} Play our day, or pick up something on the table.` : `${verb()} something on the table to open it.`);
   screen.play.set({ label: recap ? 'Play our day' : 'Play', icon: 'play' });
   drawProgress();
 }
@@ -303,9 +506,11 @@ function stopVideo() {
 
 function showMoment(m: Moment, opts: { together?: boolean; segment?: string } = {}) {
   screen.current = m;
-  screen.together = !!opts.together;
+  screen.together = !!opts.together || !!live;
   const owner = room.members.find((x) => x.id === m.ownerId);
-  drawHeader(`${owner?.displayName ?? m.ownerName}'s ${m.kind === 'clip' ? 'clip' : m.kind === 'voice' ? 'voice note' : m.kind === 'text' ? 'note' : 'photo'}`, `${m.captureLocal.time} in ${cityOf(m.captureLocal.zone)}`, opts.together || !!live);
+  const kind = m.kind === 'clip' ? 'clip' : m.kind === 'voice' ? 'voice note' : m.kind === 'text' ? 'note' : 'photo';
+  if (screen.together) drawHeader(`${owner?.displayName ?? m.ownerName}'s ${kind}`, live ? 'Watching together' : 'Watching together · simulated', 'users', COLORS.greenBright);
+  else drawHeader(`${owner?.displayName ?? m.ownerName}'s ${kind}`, `${m.captureLocal.time} in ${cityOf(m.captureLocal.zone)}`);
   if (m.kind === 'clip' && m.media?.url) {
     const v = screen.video;
     v.src = m.media.url;
@@ -313,16 +518,17 @@ function showMoment(m: Moment, opts: { together?: boolean; segment?: string } = 
     const tex = new VideoTexture(v);
     tex.colorSpace = SRGBColorSpace;
     setMediaTexture(tex, (m.media.width ?? 16) / (m.media.height ?? 9));
-    if (!live) void v.play().catch(() => drawCaption('Pinch Play to start the clip.'));
+    if (capture) {
+      // a fixed, representative frame for documentation captures
+      v.addEventListener('loadeddata', () => { v.currentTime = 3.2; }, { once: true });
+      v.addEventListener('seeked', () => { v.pause(); drawProgress(); }, { once: true });
+    } else if (!live) void v.play().catch(() => drawCaption(`${verb()} Play to start the clip.`));
     screen.play.set({ label: 'Pause', icon: 'pause' });
-    if (opts.together && mode === 'sample' && partner) {
-      partner.setPresence('simulated', undefined);
-      partnerLookAtScreen = true;
-    }
+    if (opts.together && mode === 'sample' && partner) partner.setPresence('simulated');
   } else {
     stopVideo();
-    if (m.media?.url && m.kind === 'photo') setMediaTexture(loadTexture(m.media.url), (m.media.width ?? 16) / (m.media.height ?? 10));
-    else if (m.kind === 'voice' || m.kind === 'text') void portraitCard(m).then((tex) => { if (screen.current?.id === m.id) setMediaTexture(tex, 16 / 9); });
+    if (m.media?.url && m.kind === 'photo') setMediaTexture(loadMedia(m.media.url), (m.media.width ?? 16) / (m.media.height ?? 10));
+    else if (m.kind === 'voice' || m.kind === 'text') void portraitCard(m).then((tex) => { if (screen.current?.id === m.id) setMediaTexture(tex, 16 / 9); else tex.dispose(); });
     else setMediaTexture(null);
     screen.play.set({ label: story ? 'Pause' : 'Back', icon: story ? 'pause' : 'x' });
   }
@@ -334,26 +540,31 @@ function showMoment(m: Moment, opts: { together?: boolean; segment?: string } = 
 async function portraitCard(m: Moment): Promise<Texture> {
   const def = room.members.find((x) => x.id === m.ownerId)?.avatar?.definition ?? SAMPLE_PEOPLE['sample-maya'].avatar;
   const img = new Image();
-  img.src = avatarDataUrl(def, { background: '#e9dccb' });
+  img.src = await renderPortrait(def, 384);
   await img.decode().catch(() => undefined);
   const c = document.createElement('canvas');
   c.width = 1280;
   c.height = 720;
   const ctx = c.getContext('2d')!;
   const g = ctx.createLinearGradient(0, 0, 1280, 720);
-  g.addColorStop(0, '#3b4b44');
-  g.addColorStop(1, '#1b2321');
+  g.addColorStop(0, '#4a3b30');
+  g.addColorStop(1, '#221a15');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 1280, 720);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(260, 340, 170, 0, Math.PI * 2);
+  ctx.clip();
   ctx.drawImage(img, 90, 170, 340, 340);
-  ctx.fillStyle = '#f1ede6';
+  ctx.restore();
+  ctx.fillStyle = '#f7f2ea';
   ctx.font = `700 64px ${FONT}`;
   ctx.fillText(m.kind === 'voice' ? `“${m.caption}”` : m.ownerName, 500, 260, 700);
   ctx.font = `500 34px ${FONT}`;
-  ctx.fillStyle = '#c9d6cd';
+  ctx.fillStyle = 'rgba(255,255,255,0.78)';
   if (m.kind === 'voice') {
     ctx.fillText(`${m.ownerName} · Recorded message · ${m.captureLocal.time} in ${cityOf(m.captureLocal.zone)}`, 500, 320, 720);
-    ctx.fillStyle = '#79a985';
+    ctx.fillStyle = COLORS.greenBright;
     for (let i = 0; i < 40; i++) {
       const h = 20 + Math.abs(Math.sin(i * 0.9 + 3) * 90 + Math.sin(i * 2.3) * 30);
       ctx.fillRect(500 + i * 17, 440 - h / 2, 9, h);
@@ -410,6 +621,7 @@ function startStory() {
   });
   steps.push({ moment: null, chapter: -1, text: recap.plan.closingLine || recap.plan.title, seconds: 6 });
   story = { steps, index: -1, elapsed: 0, paused: false };
+  drawDock();
   nextStep();
 }
 
@@ -421,6 +633,7 @@ function nextStep() {
   const step = story.steps[story.index];
   if (!step) {
     story = null;
+    drawDock();
     setScreenIdle();
     return;
   }
@@ -431,7 +644,7 @@ function nextStep() {
     stopVideo();
     setMediaTexture(null);
     const name = step.chapter >= 0 ? room.members.find((m) => m.id === recap!.plan!.chapters[step.chapter].contributorId)?.displayName : null;
-    drawHeader(name ? `${name}'s chapter` : recap!.plan!.title, recap!.generatorLabel.replace(' (no AI call)', ''));
+    drawHeader(name ? `${name}'s chapter` : recap!.plan!.title, generatorShort());
     drawCaption(step.text);
   }
   screen.play.set({ label: 'Pause', icon: 'pause' });
@@ -464,6 +677,7 @@ function playVoice(m: Moment, onEnd?: () => void) {
     partner.setPresence('recorded', `${m.captureLocal.time} in ${cityOf(m.captureLocal.zone)}`);
     partner.playGesture(m.recordedGesture);
   }
+  drawCupLabel();
 }
 
 function stopVoice() {
@@ -471,13 +685,12 @@ function stopVoice() {
   try { AudioUtils.stop(voice.entity); } catch { /* not loaded yet */ }
   voice = null;
   if (partner) partner.setPresence(partnerKind);
+  drawCupLabel();
 }
 
 // ---------------------------------------------------------------------------
-// Objects on the table
+// Objects on the table (records keep their serialized table-relative transforms)
 // ---------------------------------------------------------------------------
-
-const hoverLabel = new CanvasPanel(0.36, 0.06);
 
 async function placeObjects(objects: RoomObject[]) {
   const replyIds = new Set(objects.filter((o) => o.replyId).map((o) => o.replyId!));
@@ -502,8 +715,6 @@ async function placeObjects(objects: RoomObject[]) {
     const type = m.kind === 'voice' ? 'cup' : m.kind === 'clip' ? 'postcard' : 'frame';
     addObject({ id: `pending-${m.id}`, objectType: type, momentId: m.id, replyId: null, ownerId: m.ownerId, transform: { x, y: 0, z, yaw: x < 0 ? 20 : -20 }, version: 0 }, m);
   }
-  hoverLabel.mesh.visible = false;
-  tableEntity.object3D!.add(hoverLabel.mesh);
 }
 
 function addObject(record: RoomObject, moment?: Moment, reply?: Reply) {
@@ -511,13 +722,9 @@ function addObject(record: RoomObject, moment?: Moment, reply?: Reply) {
   const entity = world.createTransformEntity(obj.group, { parent: tableEntity });
   entity.addComponent(OneHandGrabbable, { rotate: false, translate: true });
   entity.addComponent(DistanceGrabbable, { rotate: false, translate: true, scale: false, movementMode: MovementMode.MoveFromTarget });
-  makePressableObject(entity, obj);
-  memory.set(record.id, { ...obj, entity });
-}
-
-function makePressableObject(entity: Entity, obj: MemoryObject) {
   // Pinch from a distance or click (desktop) selects; grabbing selects too (see RoomSystem.init).
   obj.group.userData.pressable = registerPressable(entity, obj.group, () => activate(obj));
+  memory.set(record.id, { ...obj, entity });
 }
 
 let lastActivation = 0;
@@ -532,7 +739,9 @@ function activate(obj: MemoryObject) {
   const m = obj.moment;
   if (!m) return;
   story = null;
+  drawDock();
   if (m.kind === 'voice') {
+    if (voice?.moment.id === m.id) { stopVoice(); return; }
     showMoment(m, { segment: '' });
     playVoice(m);
     if (obj.glow) obj.glow.visible = false;
@@ -586,36 +795,154 @@ function resetObjects() {
 }
 
 // ---------------------------------------------------------------------------
-// Dock (seated reach), reply sheet, info cards
+// Keepsakes: the growing memory tree on the table, the other two by the lamp (same models as the companion)
 // ---------------------------------------------------------------------------
 
-let ccButton: Button;
-let soundButton: Button;
-let sheet: { group: Group; entity: Entity; buttons: Button[]; panel: CanvasPanel } | null = null;
-let info: { panel: CanvasPanel; timer: number } | null = null;
+function buildKeepsakes() {
+  const side = world.createTransformEntity(new Group(), { parent: roomEntity });
+  side.object3D!.position.set(env.sideTable.position.x, env.sideTop, env.sideTable.position.z);
+  const spots = [new Vector3(0.11, 0, 0.12), new Vector3(-0.1, 0, 0.17)];
+  let s = 0;
+  for (const a of awards) {
+    const k = buildKeepsake(a.keepsake, a.progress, a.target, a.earned);
+    const shadow = contactShadow(0.22, 0.22, 0.42);
+    shadow.position.y = 0.002;
+    k.add(shadow);
+    let parent: Entity;
+    if (a.keepsake === 'memory_tree') {
+      k.position.set(0.04, 0, -0.3);
+      k.rotation.y = 0.3;
+      parent = tableEntity;
+    } else {
+      k.position.copy(spots[s++ % spots.length]);
+      k.rotation.y = -0.9;
+      parent = side;
+    }
+    makePressable(world, k, parent, () => showInfo(a.title, [a.trigger, a.earned ? 'Earned together.' : `${a.progress} of ${a.target} so far — missed days never count against you.`], a.earned ? '✓ Earned' : undefined));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// The dock: one glass bar (one canvas, one draw call) with invisible per-button hit areas
+// ---------------------------------------------------------------------------
+
+interface DockItem { id: string; label: string; icon: string; round: boolean; tip: string; action: () => void; x: number; w: number }
+const DOCK_H = 0.078;
+let dock: { group: Group; entity: Entity; panel: CanvasPanel; items: DockItem[]; hovered: number; width: number; divider: number; tooltip: FittedPill };
 
 function buildDock() {
-  const group = new Group();
-  group.position.set(0, 0.16, 0.5);
-  group.rotation.x = -0.75;
-  const dock = world.createTransformEntity(group, { parent: tableEntity });
-  const items: [string, string, () => void][] = [
-    ['Our day', 'calendar', () => { stopVoice(); story = null; startStory(); }],
-    ['Reply', 'reply', () => openReplySheet()],
-    ['Love', 'heart', () => react('heart')],
-    ['Captions', 'cc', () => { captionsOn = !captionsOn; ccButton.setActive(captionsOn); drawCaption(captionsOn ? 'Captions on.' : ''); }],
-    ['Sound', 'sound', () => toggleMute()],
-    ['Recenter', 'recenter', () => recenter()],
-    ['Reset', 'reset', () => resetObjects()],
-    ['Exit', 'exit', () => exitRoom()],
+  const defs: Omit<DockItem, 'x' | 'w'>[] = [
+    { id: 'day', label: 'Our day', icon: 'calendar', round: false, tip: 'Play our day', action: () => { stopVoice(); story = null; startStory(); } },
+    { id: 'reply', label: 'Reply', icon: 'reply', round: false, tip: 'Leave a reply for later', action: () => openReplySheet() },
+    { id: 'love', label: 'Love', icon: 'heart', round: false, tip: 'Send a heart', action: () => react('heart') },
+    { id: 'cc', label: 'Captions', icon: 'cc', round: true, tip: 'Captions', action: () => toggleCaptions() },
+    { id: 'sound', label: 'Sound', icon: 'sound', round: true, tip: 'Sound', action: () => toggleMute() },
+    { id: 'recenter', label: 'Recenter', icon: 'recenter', round: true, tip: 'Recenter the room', action: () => recenter() },
+    { id: 'reset', label: 'Reset', icon: 'reset', round: true, tip: 'Put objects back', action: () => resetObjects() },
+    { id: 'exit', label: 'Leave', icon: 'exit', round: true, tip: 'Leave the room', action: () => exitRoom() },
   ];
-  const w = 0.078;
-  items.forEach(([label, icon, fn], i) => {
-    const b = new Button(world, dock, { label, icon, width: w, height: w, dark: true }, fn);
-    b.panel.mesh.position.set((i - (items.length - 1) / 2) * (w + 0.008), 0, 0);
-    if (label === 'Captions') { ccButton = b; b.setActive(true); }
-    if (label === 'Sound') soundButton = b;
+  const pad = 0.012;
+  const labelled = 0.098;
+  const round = 0.05;
+  let x = pad;
+  let divider = 0;
+  const items: DockItem[] = defs.map((d, i) => {
+    if (d.round && !defs[i - 1].round) {
+      divider = x + 0.006;
+      x += 0.018;
+    }
+    const w = d.round ? round : labelled;
+    const item = { ...d, x, w };
+    x += w + (d.round ? 0.009 : 0.004);
+    return item;
   });
+  const width = x - (items[items.length - 1].round ? 0.009 : 0.004) + pad;
+  const group = new Group();
+  group.name = 'dock';
+  const entity = world.createTransformEntity(group, { parent: tableEntity });
+  const panel = new CanvasPanel(width, DOCK_H, { renderOrder: 4 });
+  group.add(panel.mesh);
+  const tooltip = new FittedPill(0.4, 0.046, 9);
+  tooltip.mesh.visible = false;
+  group.add(tooltip.mesh);
+  dock = { group, entity, panel, items, hovered: -1, width, divider, tooltip };
+  items.forEach((it, i) => {
+    const hit = hitBox(it.w, DOCK_H - 0.01);
+    const p = makePressable(world, hit, entity, it.action, (h) => {
+      if (h) dock.hovered = i;
+      else if (dock.hovered === i) dock.hovered = -1;
+      drawDock();
+    });
+    p.object.position.set(it.x + it.w / 2 - width / 2, 0, 0.004);
+  });
+  drawDock();
+}
+
+let dockKey = '';
+function drawDock() {
+  if (!dock) return;
+  const active = (id: string) => (id === 'cc' && captionsOn) || (id === 'sound' && muted) || (id === 'day' && !!story);
+  const key = `${dock.hovered}|${captionsOn}|${muted}|${!!story}`;
+  if (key !== dockKey) {
+    dockKey = key;
+    dock.panel.draw((ctx, W, H) => {
+      const s = W / dock.width;
+      glass(ctx, 2, 2, W - 4, H - 4, H * 0.42, { tint: 'rgba(44, 37, 32, 0.62)', highlight: 0.18 });
+      dock.items.forEach((it, i) => {
+        const x = it.x * s;
+        const w = it.w * s;
+        const on = active(it.id);
+        const hover = i === dock.hovered;
+        if (!it.round) {
+          if (on || hover) {
+            roundRect(ctx, x, H * 0.12, w, H * 0.76, H * 0.26);
+            ctx.fillStyle = on ? 'rgba(61,107,79,0.94)' : 'rgba(255,255,255,0.16)';
+            ctx.fill();
+            if (hover) {
+              ctx.lineWidth = 4;
+              ctx.strokeStyle = '#a8e2bb';
+              ctx.stroke();
+            }
+          }
+          drawIcon(ctx, it.icon, x + w / 2, H * 0.37, H * 0.33, '#ffffff', it.icon === 'heart' && on);
+          ctx.font = `600 ${Math.round(H * 0.2)}px ${FONT}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(it.label, x + w / 2, H * 0.72);
+        } else {
+          const cx = x + w / 2;
+          const r = Math.min(w, H * 0.78) / 2;
+          ctx.beginPath();
+          ctx.arc(cx, H / 2, r, 0, Math.PI * 2);
+          ctx.fillStyle = on ? 'rgba(61,107,79,0.95)' : hover ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.1)';
+          ctx.fill();
+          ctx.lineWidth = hover ? 4 : 2.5;
+          ctx.strokeStyle = hover ? '#a8e2bb' : 'rgba(255,255,255,0.42)';
+          ctx.stroke();
+          drawIcon(ctx, it.id === 'sound' && muted ? 'mute' : it.icon, cx, H / 2, r * 1.0, '#ffffff');
+        }
+      });
+      ctx.fillStyle = 'rgba(255,255,255,0.32)';
+      ctx.fillRect(dock.divider * s, H * 0.24, 2, H * 0.52);
+    });
+  }
+  // round buttons have no visible label: show it above the hovered one
+  const it = dock.items[dock.hovered];
+  if (it?.round) {
+    const state = it.id === 'cc' ? (captionsOn ? ' · on' : ' · off') : it.id === 'sound' ? (muted ? ' · muted' : ' · on') : '';
+    dock.tooltip.set(`${it.tip}${state}`);
+    dock.tooltip.mesh.position.set(it.x + it.w / 2 - dock.width / 2, DOCK_H / 2 + 0.032, 0.002);
+    dock.tooltip.mesh.visible = true;
+  } else dock.tooltip.mesh.visible = false;
+}
+
+function toggleCaptions() {
+  captionsOn = !captionsOn;
+  const text = captionKey;
+  captionKey = '\u0000';
+  drawCaption(captionsOn ? (text || 'Captions on.') : '');
+  drawDock();
 }
 
 function toggleMute() {
@@ -623,43 +950,128 @@ function toggleMute() {
   screen.video.muted = muted;
   const listener = world.camera.children.find((c) => c instanceof AudioListener) as AudioListener | undefined;
   listener?.setMasterVolume(muted ? 0 : 1);
-  soundButton.set({ label: muted ? 'Muted' : 'Sound', icon: muted ? 'mute' : 'sound' });
-  soundButton.setActive(muted);
+  drawDock();
+  flash(muted ? 'Sound off.' : 'Sound on.');
 }
 
+// ---------------------------------------------------------------------------
+// Labels: the cup's waiting message, onboarding hint, flash messages, hover label (all fitted to text)
+// ---------------------------------------------------------------------------
+
+let cupLabel: { card: FittedCard; entry: MemoryObject & { entity: Entity }; pressable: Pressable } | null = null;
+let hint: FittedPill;
+let flashPill: FittedPill;
+const hoverLabel = new FittedPill(0.62, 0.05, 9);
+
+function buildLabels() {
+  const table = tableEntity.object3D!;
+  hoverLabel.mesh.visible = false;
+  table.add(hoverLabel.mesh);
+  const cup = [...memory.values()].find((o) => o.record.objectType === 'cup' && o.moment?.kind === 'voice');
+  if (cup) {
+    const card = new FittedCard(0.4, 0.072, 7);
+    const pressable = makePressable(world, card.mesh, tableEntity, () => activate(cup), () => drawCupLabel());
+    cupLabel = { card, entry: cup, pressable };
+    drawCupLabel();
+  }
+  hint = new FittedPill(0.62, 0.05, 9);
+  hint.mesh.visible = false;
+  table.add(hint.mesh);
+  flashPill = new FittedPill(0.62, 0.05, 10);
+  flashPill.mesh.visible = false;
+  dock.group.add(flashPill.mesh);
+  setOnboarding(onboarding);
+}
+
+function drawCupLabel() {
+  if (!cupLabel) return;
+  const m = cupLabel.entry.moment!;
+  const playing = voice?.moment.id === m.id;
+  const seconds = (m.media?.durationMs ?? 0) / 1000;
+  // narrow screens carry the onboarding instruction inside the card instead of a separate hint
+  const sub = hintNarrow && onboarding === 'cup' ? `${verb()} to listen · ${m.ownerName} · ${fmt(seconds)}` : `${m.ownerName} · Voice note · ${fmt(seconds)}`;
+  cupLabel.card.set(m.caption.replace(/\.$/, ''), sub, { icon: 'wave', trailing: playing ? 'pause' : 'play', hovered: cupLabel.pressable.hovered });
+}
+
+function setOnboarding(stage: string) {
+  onboarding = stage;
+  try { localStorage.setItem(onboardingKey, stage); } catch { /* ignore */ }
+  if (!hint) return;
+  drawCupLabel();
+  if (stage === 'cup' && cupLabel) {
+    hint.set(`Something is waiting — ${verb().toLowerCase()} the glowing cup`, { tint: 'rgba(47, 89, 64, 0.9)', icon: 'sprout', iconColor: '#d9f0df' });
+    hint.mesh.visible = !hintNarrow;
+    if (hint.mesh.parent !== tableEntity.object3D) tableEntity.object3D!.add(hint.mesh);
+  } else if (stage === 'reply') {
+    hint.set(`Leave something for later — ${verb().toLowerCase()} Reply`, { tint: 'rgba(47, 89, 64, 0.9)', icon: 'reply', iconColor: '#d9f0df' });
+    const reply = dock.items.find((i) => i.id === 'reply')!;
+    dock.group.add(hint.mesh);
+    hint.mesh.rotation.set(0, 0, 0);
+    hint.mesh.position.set(reply.x + reply.w / 2 - dock.width / 2 + hint.width / 2 - 0.05, DOCK_H / 2 + 0.034, 0.002);
+    hint.mesh.visible = true;
+  } else {
+    hint.mesh.visible = false;
+  }
+}
+
+let flashTimer = 0;
+function flash(text: string) {
+  status(text);
+  window.clearTimeout(flashTimer);
+  flashPill.set(text);
+  flashPill.mesh.position.set(0, DOCK_H / 2 + 0.034 + (hint?.mesh.visible && hint.mesh.parent === dock.group ? 0.06 : 0), 0.003);
+  flashPill.mesh.visible = true;
+  flashTimer = window.setTimeout(() => { flashPill.mesh.visible = false; status(''); }, 3500);
+}
+
+function showHoverLabel(obj: Object3D | null) {
+  const entry = [...memory.values()].find((o) => o.group === obj);
+  if (!entry) return;
+  const m = entry.moment;
+  const text = entry.reply ? `${entry.reply.authorName}: “${entry.reply.text}”` : m ? `${m.ownerName} · ${m.kind === 'voice' ? `“${m.caption}”` : m.caption}` : '';
+  if (!text) return;
+  hoverLabel.set(text);
+  hoverLabel.mesh.position.set(entry.group.position.x, entry.labelAnchorY + 0.06, entry.group.position.z);
+  hoverLabel.mesh.visible = true;
+}
+
+// ---------------------------------------------------------------------------
+// Reply sheet, info cards
+// ---------------------------------------------------------------------------
+
+let sheet: { group: Group; entity: Entity; buttons: Button[]; panel: CanvasPanel } | null = null;
+let info: { panel: CanvasPanel; timer: number } | null = null;
 const QUICK_REPLIES = ['On my way — save me that seat.', 'That light! Tell me everything tomorrow.', 'Thinking of you. ❤️'];
 
 function openReplySheet() {
   closeSheet();
-  if (hint) hint.panel.mesh.visible = hint.ring.visible = false;
+  if (hint) hint.mesh.visible = false;
   const target = [...moments].reverse().find((m) => !m.isMine) ?? moments[moments.length - 1];
   if (!target) return flash('Nothing to reply to yet.');
   const group = new Group();
-  group.position.set(0, 0.3, 0.08);
+  group.position.set(0, 0.3, 0.1);
   group.rotation.x = -0.35;
   const entity = world.createTransformEntity(group, { parent: tableEntity });
-  const panel = new CanvasPanel(0.5, 0.09);
+  const panel = new CanvasPanel(0.52, 0.1, { renderOrder: 5 });
   panel.draw((ctx, W, H) => {
-    ctx.fillStyle = 'rgba(247,242,234,0.97)';
-    roundRect(ctx, 0, 0, W, H, H * 0.3);
-    ctx.fill();
-    ctx.fillStyle = COLORS.ink;
-    ctx.font = `700 ${H * 0.32}px ${FONT}`;
+    glass(ctx, 2, 2, W - 4, H - 4, H * 0.3, { tint: 'rgba(36, 32, 29, 0.8)' });
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `700 ${Math.round(H * 0.3)}px ${FONT}`;
     ctx.textBaseline = 'middle';
     ctx.fillText(`Reply to ${target.ownerName}`, H * 0.35, H * 0.36);
-    ctx.fillStyle = COLORS.muted;
-    ctx.font = `500 ${H * 0.22}px ${FONT}`;
-    ctx.fillText(`Only people who can see this ${target.kind === 'voice' ? 'voice note' : target.kind} will see your reply.`, H * 0.35, H * 0.72, W - H * 0.7);
+    ctx.fillStyle = COLORS.onGlassMuted;
+    ctx.font = `500 ${Math.round(H * 0.2)}px ${FONT}`;
+    ctx.fillText(`Only people who can see this ${target.kind === 'voice' ? 'voice note' : target.kind} will see your reply.`, H * 0.35, H * 0.7, W - H * 0.7);
   });
-  panel.mesh.position.y = 0.16;
+  panel.mesh.position.y = 0.17;
   group.add(panel.mesh);
   const buttons = QUICK_REPLIES.map((text, i) => {
-    const b = new Button(world, entity, { label: text, width: 0.5, height: 0.058 }, () => void sendReply(target, text));
-    b.panel.mesh.position.set(0, 0.085 - i * 0.066, 0);
+    const b = new Button(world, entity, { label: text, width: 0.52, height: 0.058 }, () => void sendReply(target, text));
+    b.panel.mesh.position.set(0, 0.09 - i * 0.066, 0);
     return b;
   });
-  const close = new Button(world, entity, { label: 'Not now', icon: 'x', width: 0.16, height: 0.05, dark: true }, () => closeSheet());
-  close.panel.mesh.position.set(0, -0.13, 0);
+  const close = new Button(world, entity, { label: 'Not now', icon: 'x', width: 0.17, height: 0.05, dark: true }, () => closeSheet());
+  close.panel.mesh.position.set(0, -0.125, 0);
   buttons.push(close);
   sheet = { group, entity, buttons, panel };
 }
@@ -702,68 +1114,32 @@ function react(kind: string) {
 function showInfo(title: string, lines: string[], footer?: string) {
   if (info) { window.clearTimeout(info.timer); info.panel.mesh.removeFromParent(); info.panel.dispose(); }
   const panel = infoCard(0.42, 0.24, title, lines, footer);
-  panel.mesh.position.set(0, 0.3, 0.12);
+  panel.mesh.position.set(0, 0.32, 0.12);
   panel.mesh.rotation.x = -0.3;
   tableEntity.object3D!.add(panel.mesh);
   info = { panel, timer: window.setTimeout(() => { panel.mesh.removeFromParent(); panel.dispose(); info = null; }, 7000) };
-}
-
-let flashPanel: CanvasPanel | null = null;
-let flashTimer = 0;
-function flash(text: string) {
-  status(text);
-  window.clearTimeout(flashTimer);
-  if (!flashPanel) {
-    flashPanel = new CanvasPanel(0.6, 0.06);
-    flashPanel.mesh.position.set(0, 0.24, 0.42);
-    flashPanel.mesh.rotation.x = -0.5;
-    tableEntity.object3D!.add(flashPanel.mesh);
-  }
-  flashPanel.mesh.visible = true;
-  flashPanel.draw((ctx, W, H) => pill(ctx, text, W, H, { bg: 'rgba(22,28,26,0.92)' }));
-  flashTimer = window.setTimeout(() => { if (flashPanel) flashPanel.mesh.visible = false; status(''); }, 3500);
-}
-
-// ---------------------------------------------------------------------------
-// Keepsake shelf
-// ---------------------------------------------------------------------------
-
-function buildShelf() {
-  const group = new Group();
-  group.position.set(0.86, 0.16, -0.05);
-  group.rotation.y = -0.85;
-  const entity = world.createTransformEntity(group, { parent: tableEntity });
-  const plank = new Mesh(new PlaneGeometry(0.52, 0.16), new MeshBasicMaterial({ color: 0x3c2a1e }));
-  plank.rotation.x = -Math.PI / 2;
-  group.add(plank);
-  const label = new CanvasPanel(0.4, 0.05);
-  label.draw((ctx, W, H) => pill(ctx, 'Our keepsakes', W, H, { bg: 'rgba(22,28,26,0.85)' }));
-  label.mesh.position.set(0, 0.27, 0);
-  group.add(label.mesh);
-  awards.forEach((a, i) => {
-    const k = buildKeepsake(a);
-    k.position.set((i - 1) * 0.17, 0, 0);
-    const p = makePressable(world, k, entity, () => showInfo(a.title, [a.trigger, a.earned ? 'Earned together.' : `${a.progress} of ${a.target} so far — missed days never count against you.`], a.earned ? '✓ Earned' : undefined));
-    void p;
-  });
 }
 
 // ---------------------------------------------------------------------------
 // Partner avatar: simulated (sample), recorded, or live
 // ---------------------------------------------------------------------------
 
-let partnerLookAtScreen = false;
-const ACROSS = { p: [0.3, 0.43, -0.7], q: new Quaternion().setFromEuler(new Euler(0, -0.2, 0)).toArray() as number[] };
-
 function setupPartner() {
   const other = room.members.find((m) => m.id !== me.id);
   if (!other) return;
   const def = other.avatar?.definition ?? SAMPLE_PEOPLE['sample-maya'].avatar;
-  partner = new Avatar3D(def, other.displayName);
+  partner = createPartner(def, other.displayName);
   partnerKind = mode === 'sample' ? 'simulated' : 'away';
   partner.setPresence(partnerKind);
-  partner.setPose(ACROSS, { p: [0.16, 0.025, -0.4] }, { p: [0.42, 0.025, -0.42] }, false);
-  tableEntity.object3D!.add(partner.root);
+}
+
+function createPartner(def: AvatarDefinition, name: string) {
+  const p = new Avatar3D(kit, def, name, env.seat);
+  p.character.blinking = !capture;
+  p.setRest(mode === 'sample' ? 'chin' : 'table');
+  tableEntity.object3D!.add(p.root);
+  p.update(1 / 60, CAPTURE_T, SEATED_HEAD);
+  return p;
 }
 
 function mirrorPose(p: { p: number[]; q: number[] }) {
@@ -779,11 +1155,8 @@ async function joinLive(sessionId: string) {
     onWelcome: (_me, state, participants) => {
       const other = participants.find((p) => p.userId !== me.id);
       if (other && partner && other.avatar) {
-        partner.root.removeFromParent();
         partner.dispose();
-        partner = new Avatar3D(other.avatar.definition, other.displayName);
-        tableEntity.object3D!.add(partner.root);
-        partner.setPose(ACROSS, null, null, false);
+        partner = createPartner(other.avatar.definition, other.displayName);
       }
       partnerKind = other?.online ? 'live' : 'away';
       partner?.setPresence(partnerKind);
@@ -811,7 +1184,7 @@ function syncVideo(force = false) {
   const expected = live.expectedPositionMs();
   if (expected == null) return;
   if (live.state.paused && !v.paused) v.pause();
-  if (!live.state.paused && v.paused) void v.play().catch(() => drawCaption('Pinch Play to join the playback.'));
+  if (!live.state.paused && v.paused) void v.play().catch(() => drawCaption(`${verb()} Play to join the playback.`));
   const drift = v.currentTime * 1000 - expected;
   screen.driftMs = drift;
   if (force || Math.abs(drift) > 300) v.currentTime = Math.max(0, expected / 1000);
@@ -820,39 +1193,199 @@ function syncVideo(force = false) {
 }
 
 // ---------------------------------------------------------------------------
-// Onboarding: discover the first meaningful moment within a minute
+// Layout: table-space anchors in a headset, viewport-fitted anchors on a screen
 // ---------------------------------------------------------------------------
 
-let hint: { panel: CanvasPanel; ring: Mesh } | null = null;
+/** A seated viewer's head in table space (eye ~1.2 m, ~0.8 m from the table centre). */
+const SEATED_HEAD = new Vector3(0, 0.43, 0.8);
+const XR_SCREEN = new Vector3(-0.6, 0.5, -0.32);
+const XR_DOCK = new Vector3(0, 0.035, 0.47);
+const _a = new Vector3();
+const _b = new Vector3();
+const _c = new Vector3();
+const _d = new Vector3();
+const _up = new Vector3(0, 1, 0);
+const _uiQ = new Quaternion();
+const _yawQ = new Quaternion();
 
-function buildHints() {
-  const panel = new CanvasPanel(0.62, 0.06);
-  const ring = new Mesh(new RingGeometry(0.1, 0.112, 48), new MeshBasicMaterial({ color: 0xffd78a, transparent: true, opacity: 0.9, depthWrite: false }));
-  ring.rotation.x = -Math.PI / 2;
-  tableEntity.object3D!.add(panel.mesh, ring);
-  hint = { panel, ring };
-  setOnboarding(onboarding);
+function setFacing(obj: Object3D, posTable: Vector3, targetTable: Vector3, scale: number) {
+  const table = tableEntity.object3D!;
+  table.updateMatrixWorld(true);
+  obj.position.copy(posTable);
+  obj.scale.setScalar(scale);
+  obj.lookAt(table.localToWorld(_a.copy(targetTable)));
 }
 
-function setOnboarding(stage: string) {
-  onboarding = stage;
-  try { localStorage.setItem(onboardingKey, stage); } catch { /* ignore */ }
-  if (!hint) return;
-  const cup = [...memory.values()].find((o) => o.record.objectType === 'cup');
-  if (stage === 'cup' && cup) {
-    hint.panel.draw((ctx, W, H) => pill(ctx, 'Something is waiting — pinch the glowing cup', W, H, { bg: 'rgba(61,107,79,0.95)' }));
-    hint.panel.mesh.position.set(cup.group.position.x, 0.2, cup.group.position.z);
-    hint.ring.position.set(cup.group.position.x, 0.004, cup.group.position.z);
-    hint.panel.mesh.visible = hint.ring.visible = true;
-  } else if (stage === 'reply') {
-    hint.panel.draw((ctx, W, H) => pill(ctx, 'Leave something for later: pinch Reply below', W, H, { bg: 'rgba(61,107,79,0.95)' }));
-    hint.panel.mesh.position.set(-0.05, 0.26, 0.42);
-    hint.panel.mesh.rotation.x = -0.5;
-    hint.ring.visible = false;
-    hint.panel.mesh.visible = true;
-  } else {
-    hint.panel.mesh.visible = hint.ring.visible = false;
+/** Headset: comfortable seated reach. The screen sits left of the table, the dock at the near edge. */
+function applyXrLayout() {
+  setFacing(screen.group, XR_SCREEN, SEATED_HEAD, 1);
+  setFacing(dock.group, XR_DOCK, SEATED_HEAD, 1);
+}
+
+interface Framing {
+  fov: number;
+  eye: [number, number, number];
+  target: [number, number, number];
+  /** Screen top-left (or top-centre when screenAlignX is 0) in NDC, its distance and share of the view width. */
+  screen: [number, number];
+  screenAlignX: -1 | 0;
+  screenDist: number;
+  screenFrac: number;
+  /** Dock bottom-centre in NDC and share of the view width. */
+  dockBottom: number;
+  dockFrac: number;
+}
+
+function framingFor(aspect: number): Framing {
+  // portrait phone: stacked — screen on top, the person in the middle, table, cup and dock below
+  if (aspect < 0.8) return { fov: 72, eye: [0.1, 1.35, 0.95], target: [0.07, 1.15, -1.05], screen: [0, 0.8], screenAlignX: 0, screenDist: 1.4, screenFrac: 0.88, dockBottom: -0.96, dockFrac: 0.95 };
+  if (aspect < 1.45) return { fov: 62, eye: [0, 1.3, 0.34], target: [-0.04, 0.92, -0.9], screen: [-0.94, 0.8], screenAlignX: -1, screenDist: 1.0, screenFrac: 0.38, dockBottom: -0.95, dockFrac: 0.66 };
+  return { fov: 56, eye: [0, 1.25, 0.18], target: [-0.06, 0.9, -0.9], screen: [-0.85, 0.78], screenAlignX: -1, screenDist: 1.05, screenFrac: 0.39, dockBottom: -0.94, dockFrac: 0.55 };
+}
+
+function hudTopNdc() {
+  const hud = document.getElementById('hud');
+  const bottom = hud ? hud.getBoundingClientRect().bottom : 0;
+  return 1 - (2 * (bottom + 8)) / window.innerHeight;
+}
+
+/**
+ * Place a camera-facing UI group so that one of its edges/corners lands on an NDC anchor, at a given
+ * distance and with a given share of the view width. Iterates a few times to absorb perspective.
+ */
+function placeAtNdc(obj: Object3D, anchor: [number, number], align: [number, number], dist: number, widthFrac: number, baseW: number, baseH: number, maxScale: number, yaw = 0) {
+  const cam = world.camera;
+  const camPos = cam.getWorldPosition(_b);
+  const table = tableEntity.object3D!;
+  // parallel to the image plane (no keystone), optionally turned slightly toward the centre of the view
+  cam.getWorldQuaternion(_uiQ).multiply(_yawQ.setFromAxisAngle(_up, yaw));
+  // size from the depth along the view axis (not the ray length), so edge-of-view elements are not oversized
+  const forward = cam.getWorldDirection(_d);
+  const depth = dist * _c.set(anchor[0], anchor[1], 0.5).unproject(cam).sub(camPos).normalize().dot(forward);
+  const visibleW = 2 * depth * Math.tan(((cam.fov * Math.PI) / 180) / 2) * cam.aspect;
+  const scale = Math.min(maxScale, (widthFrac * visibleW) / baseW);
+  const target: [number, number] = [anchor[0], anchor[1]];
+  for (let i = 0; i < 4; i++) {
+    const dir = _c.set(target[0], target[1], 0.5).unproject(cam).sub(camPos).normalize();
+    const world3 = _d.copy(camPos).addScaledVector(dir, dist);
+    obj.position.copy(table.worldToLocal(world3));
+    obj.scale.setScalar(scale);
+    obj.quaternion.copy(_uiQ);
+    obj.updateMatrixWorld(true);
+    const p = _c.set((align[0] * baseW) / 2, (align[1] * baseH) / 2, 0).applyMatrix4(obj.matrixWorld).project(cam);
+    target[0] += anchor[0] - p.x;
+    target[1] += anchor[1] - p.y;
   }
+  return scale;
+}
+
+function layoutDesktopUi(f: Framing) {
+  const cam = world.camera;
+  const top = Math.min(f.screen[1], hudTopNdc() - 0.03);
+  placeAtNdc(screen.group, [f.screen[0], top], [f.screenAlignX, 1], f.screenDist, f.screenFrac, SCREEN_W, SCREEN_H, 1.25, f.screenAlignX ? 0.2 : 0);
+  // the dock rests just above the table's near edge: intersect the bottom-centre ray with that plane
+  const camPos = cam.getWorldPosition(_b);
+  const dir = _c.set(0, f.dockBottom + 0.12, 0.5).unproject(cam).sub(camPos).normalize();
+  let dist = 0.6;
+  if (dir.y < -0.05) dist = (TABLE.y + 0.06 - camPos.y) / dir.y;
+  dist = Math.max(0.42, Math.min(0.85, dist));
+  placeAtNdc(dock.group, [0, f.dockBottom], [0, -1], dist, f.dockFrac, dock.width, DOCK_H, 1.15);
+}
+
+/** Desktop/phone: a seated eye position and per-aspect framing; dolly back only if scene anchors would clip. */
+function placeDesktopCamera() {
+  if (!world || world.renderer.xr.isPresenting || xrPreview) return;
+  const cam = world.camera;
+  const f = framingFor(window.innerWidth / window.innerHeight);
+  const player = cam.parent;
+  player?.position.set(0, 0, 0);
+  player?.rotation.set(0, 0, 0);
+  cam.fov = f.fov;
+  cam.aspect = window.innerWidth / window.innerHeight;
+  cam.updateProjectionMatrix();
+  const eye = _a.set(...f.eye);
+  const target = new Vector3(...f.target);
+  const back = new Vector3().subVectors(eye, target).normalize();
+  const start = eye.clone();
+  for (let i = 0; i < 10; i++) {
+    cam.position.copy(start).addScaledVector(back, i * 0.06);
+    cam.lookAt(target);
+    cam.updateMatrixWorld(true);
+    updateViewer();
+    positionCupLabel();
+    layoutDesktopUi(f);
+    // the presence badge goes on whichever side of the head has room
+    for (const side of ['right', 'left'] as const) {
+      if (!partner) break;
+      partner.badgeSide = side;
+      partner.label.setUiScale(legibleScale(partner.label.mesh, 0.034, 13));
+      partner.update(1 / 60, CAPTURE_T, _viewer, _camQ);
+      if (!safeArea().violations.some((v) => v.startsWith('presence badge'))) break;
+    }
+    // only clipping of scene-anchored elements is fixed by moving back; UI anchors are fitted by construction
+    if (!safeArea().violations.some((v) => /^(presence badge|cup label|onboarding hint) clipped/.test(v))) break;
+  }
+  if (cupLabel) positionCupLabel();
+}
+
+// ---------------------------------------------------------------------------
+// Safe area: every key element fully inside the view (and below the 2D header)
+// ---------------------------------------------------------------------------
+
+interface SafeAreaReport { violations: string[]; boxes: Record<string, [number, number, number, number]> }
+const corners = [new Vector3(), new Vector3(), new Vector3(), new Vector3()];
+
+function planeCorners(mesh: Mesh) {
+  const g = mesh.geometry as PlaneGeometry;
+  const w = g.parameters.width / 2;
+  const h = g.parameters.height / 2;
+  mesh.updateWorldMatrix(true, false);
+  corners[0].set(-w, -h, 0).applyMatrix4(mesh.matrixWorld);
+  corners[1].set(w, -h, 0).applyMatrix4(mesh.matrixWorld);
+  corners[2].set(w, h, 0).applyMatrix4(mesh.matrixWorld);
+  corners[3].set(-w, h, 0).applyMatrix4(mesh.matrixWorld);
+  return corners;
+}
+
+function safeArea(): SafeAreaReport {
+  const cam = world.camera;
+  cam.updateMatrixWorld(true);
+  const top = hudTopNdc();
+  const W = window.innerWidth;
+  const H = window.innerHeight;
+  const report: SafeAreaReport = { violations: [], boxes: {} };
+  const check = (name: string, pts: Vector3[] | null, visible = true) => {
+    if (!pts || !visible) return;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    let behind = false;
+    for (const p of pts) {
+      const q = _c.copy(p).project(cam);
+      if (q.z > 1) behind = true;
+      x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y);
+    }
+    report.boxes[name] = [Math.round(((x0 + 1) / 2) * W), Math.round(((1 - y1) / 2) * H), Math.round(((x1 + 1) / 2) * W), Math.round(((1 - y0) / 2) * H)];
+    if (behind || x0 < -0.985 || x1 > 0.985 || y0 < -0.985 || y1 > top) report.violations.push(`${name} clipped ${JSON.stringify(report.boxes[name])}`);
+  };
+  check('screen header', planeCorners(screen.header.mesh));
+  check('primary action', planeCorners(screen.play.panel.mesh));
+  check('screen', planeCorners(screen.bg.mesh));
+  if (partner) check('presence badge', partner.labelCorners(corners));
+  if (cupLabel) check('cup label', planeCorners(cupLabel.card.mesh));
+  if (hint) check('onboarding hint', planeCorners(hint.mesh), hint.mesh.visible);
+  check('dock', planeCorners(dock.panel.mesh));
+  // overlaps that would hide information
+  const overlap = (a: string, b: string) => {
+    const A = report.boxes[a];
+    const B = report.boxes[b];
+    if (A && B && A[0] < B[2] && B[0] < A[2] && A[1] < B[3] && B[1] < A[3]) report.violations.push(`${a} overlaps ${b}`);
+  };
+  overlap('presence badge', 'screen');
+  overlap('presence badge', 'onboarding hint');
+  overlap('presence badge', 'cup label');
+  overlap('cup label', 'dock');
+  overlap('onboarding hint', 'screen');
+  overlap('cup label', 'screen');
+  return report;
 }
 
 // ---------------------------------------------------------------------------
@@ -868,9 +1401,9 @@ function recenter() {
   const yaw = new Euler().setFromQuaternion(quat, 'YXZ').y;
   const root = roomEntity.object3D!;
   if (world.renderer.xr.isPresenting) {
+    // Move the room to the person (never the person's view): the table edge at a comfortable seated reach.
     root.position.set(pos.x, 0, pos.z);
     root.rotation.set(0, yaw, 0);
-    // Keep the table edge at a comfortable seated reach regardless of real head height.
     root.position.y = Math.min(0.15, Math.max(-0.25, pos.y - 1.18));
   } else {
     root.position.set(0, 0, 0);
@@ -889,12 +1422,116 @@ function exitRoom() {
 }
 
 // ---------------------------------------------------------------------------
-// Per-frame system: hover feedback, grab-to-activate, release-to-persist, captions, avatars, poses
+// Per-frame system (allocation-free): hover feedback, grab-to-activate, release-to-persist, captions,
+// label facing, avatars, poses
 // ---------------------------------------------------------------------------
+
+const _viewer = new Vector3();
+const _screenPos = new Vector3();
+const _camQ = new Quaternion();
+const _tableQ = new Quaternion();
+let flatView = true;
+let frameT = 0;
+
+/** Viewer position and (for flat screens) camera orientation, both in table space. */
+function updateViewer() {
+  viewerInTable(_viewer);
+  flatView = !(world.renderer.xr.isPresenting || xrPreview);
+  world.camera.getWorldQuaternion(_camQ);
+  tableEntity.object3D!.getWorldQuaternion(_tableQ);
+  _camQ.premultiply(_tableQ.invert());
+}
+
+function viewerInTable(out: Vector3) {
+  world.camera.getWorldPosition(out);
+  return tableEntity.object3D!.worldToLocal(out);
+}
+
+function updateHover(p: Pressable) {
+  const h = p.entity.hasComponent(Hovered);
+  if (h === p.hovered) return;
+  p.hovered = h;
+  if (p.redraw) p.redraw(h);
+  else {
+    p.object.scale.setScalar(h ? 1.06 : 1);
+    if (h) showHoverLabel(p.object);
+    else hoverLabel.mesh.visible = false;
+  }
+}
+
+function pulseGlow(o: MemoryObject) {
+  if (o.glow?.visible) (o.glow.material as MeshBasicMaterial).opacity = 0.5 + Math.sin(frameT * 3) * 0.3;
+}
+
+/**
+ * Turn a table-space label toward the viewer. On a flat screen it lies parallel to the image plane (no keystone);
+ * in a headset it faces the head (yaw and pitch).
+ */
+function faceViewer(obj: Object3D) {
+  if (flatView) {
+    obj.quaternion.copy(_camQ);
+    return;
+  }
+  const dx = _viewer.x - obj.position.x;
+  const dy = _viewer.y - obj.position.y;
+  const dz = _viewer.z - obj.position.z;
+  obj.rotation.set(-Math.atan2(dy, Math.hypot(dx, dz)), Math.atan2(dx, dz), 0, 'YXZ');
+}
+
+/**
+ * Flat screens: labels keep a minimum legible text size (pixels) at their current distance. In a headset
+ * they keep their real-world size, chosen for seated reading distances.
+ */
+function legibleScale(obj: Object3D, textM: number, minPx: number) {
+  if (!flatView) return 1;
+  const d = obj.getWorldPosition(_lp).distanceTo(world.camera.getWorldPosition(_lc));
+  const pxPerM = window.innerHeight / (2 * d * Math.tan((world.camera.fov * Math.PI) / 360));
+  return Math.max(1, Math.min(3, minPx / (textM * pxPerM)));
+}
+const _lp = new Vector3();
+const _lc = new Vector3();
+
+/**
+ * The cup label sits to the viewer's right of the cup with the onboarding hint just above it. On narrow
+ * (portrait) screens both are centred over the cup and capped to the view width.
+ */
+function positionCupLabel() {
+  if (!cupLabel) return;
+  const cup = cupLabel.entry.group.position;
+  const card = cupLabel.card;
+  const narrow = flatView && window.innerWidth / window.innerHeight < 0.8;
+  let k = legibleScale(cupLabel.entry.group, 0.072 * 0.22, 12);
+  if (flatView) {
+    // never wider than ~92% of the view at the cup's distance
+    const d = cupLabel.entry.group.getWorldPosition(_lp).distanceTo(world.camera.getWorldPosition(_lc));
+    const viewW = 2 * d * Math.tan((world.camera.fov * Math.PI) / 360) * world.camera.aspect;
+    k = Math.min(k, Math.max(1, (0.92 * viewW) / (card.width / cardScale)));
+  }
+  cardScale = k;
+  card.setUiScale(k);
+  const yaw = Math.atan2(_viewer.x - cup.x, _viewer.z - cup.z);
+  const dx = narrow ? 0 : 0.07 + card.width / 2;
+  const y = (narrow ? 0.13 : 0.06) + card.height / 2;
+  card.mesh.position.set(cup.x + Math.cos(yaw) * dx, y, cup.z - Math.sin(yaw) * dx);
+  faceViewer(card.mesh);
+  if (narrow !== hintNarrow) {
+    hintNarrow = narrow;
+    setOnboarding(onboarding);
+  }
+  if (hint && hint.mesh.visible && hint.mesh.parent === tableEntity.object3D) {
+    hint.setUiScale(k);
+    const hx = narrow ? 0 : 0.07 + hint.width / 2 - 0.02 * k;
+    hint.mesh.position.set(cup.x + Math.cos(yaw) * hx, y + (card.height + hint.height) / 2 + 0.008 * k, cup.z - Math.sin(yaw) * hx);
+    faceViewer(hint.mesh);
+  }
+}
+let cardScale = 1;
+let hintNarrow = false;
 
 class RoomSystem extends createSystem({ grabbed: { required: [Grabbed] } }) {
   private poseTimer = 0;
   private syncTimer = 0;
+  private progressTimer = 0;
   private frames = 0;
   private fpsTimer = 0;
 
@@ -910,22 +1547,13 @@ class RoomSystem extends createSystem({ grabbed: { required: [Grabbed] } }) {
   }
 
   update(delta: number, time: number) {
-    // Hover feedback for buttons and objects.
-    for (const p of pressables.values()) {
-      const h = p.entity.hasComponent(Hovered);
-      if (h !== p.hovered) {
-        p.hovered = h;
-        if (p.redraw) p.redraw(h);
-        else p.object.scale.setScalar(h ? 1.06 : 1);
-        if (h && !p.redraw) showHoverLabel(p.object);
-        else if (!h && !p.redraw) hoverLabel.mesh.visible = false;
-      }
-    }
-    // Waiting cups glow until opened.
-    for (const o of memory.values()) if (o.glow?.visible) (o.glow.material as MeshBasicMaterial).opacity = 0.45 + Math.sin(time * 3) * 0.35;
-    if (hint?.ring.visible) hint.ring.scale.setScalar(1 + Math.sin(time * 3) * 0.06);
+    frameT = capture ? CAPTURE_T : time;
+    const dt = capture ? 1 / 60 : delta;
+    updateViewer();
+    pressables.forEach(updateHover);
+    memory.forEach(pulseGlow);
 
-    // Story pacing + voice captions.
+    // Story pacing + voice captions (memoized: redrawn only when the cue changes).
     if (story && !story.paused) {
       const step = story.steps[story.index];
       if (step && step.seconds > 0) {
@@ -939,23 +1567,35 @@ class RoomSystem extends createSystem({ grabbed: { required: [Grabbed] } }) {
       if (t * 1000 > voice.durationMs + 400) {
         const end = voice.onEnd;
         stopVoice();
-        if (!story) drawCaption('Pinch Reply to leave something for later.');
+        if (!story) drawCaption(`${verb()} Reply to leave something for later.`);
         end?.();
       }
     }
-    if (screen.current?.kind === 'clip' && !story) drawProgressThrottled(time);
+    if (screen.current?.kind === 'clip' || voice) {
+      this.progressTimer += delta;
+      if (this.progressTimer > 0.25) {
+        this.progressTimer = 0;
+        drawProgress();
+      }
+    }
 
-    // Avatars.
+    // Labels turn toward the viewer; the cup label follows the cup if someone moves it.
+    positionCupLabel();
+    if (hoverLabel.mesh.visible) faceViewer(hoverLabel.mesh);
+
+    // Avatar: tracked input wins; otherwise authored attention toward the viewer (or the screen while it plays).
     if (partner) {
-      if (mode === 'sample' || partnerKind !== 'live') {
-        const look = partnerLookAtScreen || !!screen.current ? -0.95 : -0.2 + Math.sin(time * 0.4) * 0.22;
-        const q = new Quaternion().setFromEuler(new Euler(partnerLookAtScreen ? -0.15 : 0, look, 0));
-        partner.setPose({ p: ACROSS.p, q: q.toArray() as number[] }, null, null, false);
-      } else if (performance.now() - partnerLastSeen > 10_000 && partnerKind === 'live') {
+      if (screen.current && !voice) {
+        screen.group.getWorldPosition(_screenPos);
+        tableEntity.object3D!.worldToLocal(_screenPos);
+        partner.attention.copy(_screenPos);
+      } else partner.attention.copy(_viewer);
+      if (partnerKind === 'live' && performance.now() - partnerLastSeen > 10_000) {
         partnerKind = 'away';
         partner.setPresence('away');
       }
-      partner.update(delta, time);
+      partner.label.setUiScale(legibleScale(partner.label.mesh, 0.034, 13));
+      partner.update(dt, frameT, _viewer, flatView ? _camQ : undefined);
     }
 
     // Live: send our table-relative head/hand poses at 15 Hz; resync playback at 4 Hz.
@@ -976,7 +1616,8 @@ class RoomSystem extends createSystem({ grabbed: { required: [Grabbed] } }) {
       this.frames++;
       this.fpsTimer += delta;
       if (this.fpsTimer >= 1) {
-        $('mode-tag').textContent = `${this.frames} fps · ${world.renderer.xr.isPresenting ? 'XR' : '2D'} · ${world.renderer.info.render.calls} draws`;
+        const info = world.renderer.info;
+        $('mode-tag').textContent = `${this.frames} fps · ${world.renderer.xr.isPresenting ? 'XR' : '2D'} · ${info.render.calls} draws · ${Math.round(info.render.triangles / 1000)}k tris · ${info.memory.textures} tex`;
         this.frames = 0;
         this.fpsTimer = 0;
       }
@@ -984,35 +1625,17 @@ class RoomSystem extends createSystem({ grabbed: { required: [Grabbed] } }) {
   }
 }
 
-let lastProgress = 0;
-function drawProgressThrottled(time: number) {
-  if (time - lastProgress > 0.25) {
-    lastProgress = time;
-    drawProgress();
-  }
-}
-
-function showHoverLabel(obj: import('three').Object3D | null) {
-  const entry = [...memory.values()].find((o) => o.group === obj);
-  if (!entry) return;
-  const m = entry.moment;
-  const text = entry.reply ? `${entry.reply.authorName}: “${entry.reply.text.slice(0, 40)}”` : m ? `${m.ownerName} · ${m.kind === 'voice' ? `“${m.caption}”` : m.caption.slice(0, 42)}` : '';
-  hoverLabel.draw((ctx, W, H) => pill(ctx, text, W, H));
-  hoverLabel.mesh.position.set(entry.group.position.x, 0.24, entry.group.position.z);
-  hoverLabel.mesh.visible = true;
-}
-
-const _v = new Vector3();
-const _q = new Quaternion();
-function toTable(o: import('three').Object3D) {
+const _tv = new Vector3();
+const _tq = new Quaternion();
+const _tq2 = new Quaternion();
+function toTable(o: Object3D) {
   const table = tableEntity.object3D!;
-  o.getWorldPosition(_v);
-  table.worldToLocal(_v);
-  o.getWorldQuaternion(_q);
-  const tq = new Quaternion();
-  table.getWorldQuaternion(tq);
-  const local = tq.invert().multiply(_q);
-  return { p: _v.toArray().map((x) => +x.toFixed(4)), q: local.toArray().map((x) => +x.toFixed(4)) };
+  o.getWorldPosition(_tv);
+  table.worldToLocal(_tv);
+  o.getWorldQuaternion(_tq);
+  table.getWorldQuaternion(_tq2);
+  const local = _tq2.invert().multiply(_tq);
+  return { p: _tv.toArray().map((x) => +x.toFixed(4)), q: local.toArray().map((x) => +x.toFixed(4)) };
 }
 
 function ownPose(): PoseMessage {
@@ -1028,6 +1651,5 @@ function ownPose(): PoseMessage {
 
 boot().catch((e) => {
   console.error(e);
-  $('overlay-text').textContent = 'The room could not start on this device. Try the companion instead.';
+  showLoadError('The room could not start on this device. Try reloading, or use the companion instead.');
 });
-

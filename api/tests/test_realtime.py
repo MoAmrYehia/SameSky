@@ -93,3 +93,14 @@ def test_outsider_and_bad_token_rejected(api):
         conn.send_json({"type": "auth", "token": "nope"})
         with pytest.raises(WebSocketDisconnect):
             conn.receive_json()
+
+
+def test_avatar_face_preset_is_validated_and_defaults_for_older_definitions(api):
+    """The sculpted character's face preset is part of the avatar definition; unknown values are rejected."""
+    maya = api.signup("Maya")
+    saved = api.call(maya, "PUT", "/v1/me/avatar", json={"skin": "#d29a72", "hair": "long", "hairColor": "#2b1d14", "top": "#e9e0cf", "accessory": "earrings", "face": "defined"}).json()
+    assert saved["definition"]["face"] == "defined"
+    older = api.call(maya, "PUT", "/v1/me/avatar", json={"skin": "#d29a72", "hair": "long", "hairColor": "#2b1d14", "top": "#e9e0cf"}).json()
+    assert older["definition"]["face"] == "soft"
+    api.call(maya, "PUT", "/v1/me/avatar", expect=422, json={"skin": "#d29a72", "hair": "long", "hairColor": "#2b1d14", "top": "#e9e0cf", "face": "photoreal"})
+    assert "defined" in api.call(maya, "GET", "/v1/avatar-options").json()["face"]

@@ -72,8 +72,8 @@ export function Welcome({ onSample, onSignedIn, joinToken }: { onSample: () => v
           <button className="btn btn-primary btn-lg" disabled={busy}>{tab === 'signin' ? 'Sign in' : 'Create account'}</button>
         </form>
         <div className="split-photo" aria-hidden>
-          <div style={{ backgroundImage: 'url(/sample/maya-park.jpg)' }} />
-          <div style={{ backgroundImage: 'url(/sample/adam-waterfront.jpg)' }} />
+          <div style={{ backgroundImage: 'url(/assets/sample/maya-park-thumb.jpg)' }} />
+          <div style={{ backgroundImage: 'url(/assets/sample/adam-waterfront-thumb.jpg)' }} />
         </div>
       </section>
     </div>

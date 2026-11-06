@@ -24,6 +24,7 @@ from ..services.availability_engine import parse_hhmm
 router = APIRouter(prefix="/v1")
 
 AVATAR_OPTIONS = {
+    "face": ["soft", "defined"],
     "skin": ["#f6d7c3", "#e8b896", "#d29a72", "#b0754d", "#8a5634", "#5e3a22"],
     "hair": ["short", "wavy", "long", "bun", "curly", "buzz", "none"],
     "hairColor": ["#2b1d14", "#4a2f1f", "#7a4a2a", "#b98a4e", "#d9c49a", "#8e8e8e", "#1d1d24"],
@@ -137,6 +138,7 @@ class AvatarIn(BaseModel):
     hairColor: str
     top: str
     accessory: str = "none"
+    face: str = "soft"  # sculpted face preset; older saved definitions without it render as "soft"
     likeness_consent: bool = False
 
 
