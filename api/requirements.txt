@@ -1,0 +1,19 @@
+# SameSky API + worker (Python 3.11+; developed and tested on 3.13)
+fastapi==0.162.0
+starlette==1.10.0
+uvicorn[standard]==0.54.0
+pydantic==2.14.3
+email-validator==2.3.0
+python-multipart==0.0.33
+SQLAlchemy==2.1.8
+alembic==1.20.1
+PyJWT==2.15.1
+tzdata==2026.6
+pillow==13.0.0
+imageio-ffmpeg==0.8.1
+pywebpush==2.5.0
+py-vapid==1.9.6
+anthropic==2.6.0
+websockets==17.4
+# Postgres driver for production (DATABASE_URL=postgresql+psycopg://...)
+# psycopg[binary]==3.2.*

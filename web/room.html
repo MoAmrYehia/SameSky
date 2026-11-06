@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1e2826" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <title>SameSky · Our room</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #15110f; color: #f1ede6; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; }
+      #scene { position: fixed; inset: 0; }
+      #overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 70% 20%, rgba(227,183,102,.25), transparent 60%), rgba(18,14,12,.72); backdrop-filter: blur(6px); z-index: 10; }
+      #overlay[hidden] { display: none; }
+      .welcome { width: min(560px, 100%); background: rgba(247,242,234,.97); color: #1d211f; border-radius: 28px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 14px; }
+      .welcome h1 { margin: 0; font-size: 2rem; letter-spacing: -0.02em; }
+      .welcome p { margin: 0; color: #5e625c; font-size: 1.05rem; line-height: 1.45; }
+      .btn { min-height: 56px; border: 0; border-radius: 999px; padding: 0 26px; font-size: 1.1rem; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }
+      .btn.primary { background: #3d6b4f; color: #fff; box-shadow: 0 8px 20px rgba(47,89,64,.3); }
+      .btn.ghost { background: transparent; color: #2f5940; box-shadow: inset 0 0 0 1.5px rgba(29,33,31,.15); }
+      .btn:focus-visible { outline: 3px solid #2f7dd1; outline-offset: 2px; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; }
+      .tag { align-self: flex-start; background: #f4e2c4; color: #5b3e10; border-radius: 999px; padding: 4px 12px; font-size: .82rem; font-weight: 650; }
+      .hint { font-size: .9rem !important; }
+      #hud { position: fixed; left: 12px; top: 12px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; }
+      #hud a, #hud span { background: rgba(22,28,26,.86); color: #fff; border-radius: 999px; padding: 8px 14px; font-size: .9rem; text-decoration: none; }
+      #status { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 5; background: rgba(22,28,26,.9); padding: 10px 16px; border-radius: 14px; max-width: 92vw; font-size: .95rem; }
+      #status:empty { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="scene"></div>
+    <div id="hud"><a href="/">← Companion</a><span id="mode-tag">Loading…</span></div>
+    <div id="overlay">
+      <div class="welcome" role="dialog" aria-labelledby="welcome-title">
+        <span class="tag" id="overlay-tag">Sample day · fictional people</span>
+        <h1 id="welcome-title">Our room</h1>
+        <p id="overlay-text">Sit at the table. Something is waiting in the glowing cup — pick it up with a pinch.</p>
+        <div class="row">
+          <button class="btn primary" id="enter-vr" hidden>Enter in VR</button>
+          <button class="btn ghost" id="enter-2d">Stay on this screen</button>
+        </div>
+        <p class="hint" id="overlay-hint">Hands only: pinch to select and to pick things up. Seated, no controllers needed.</p>
+      </div>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+    <script type="module" src="/src/xr/main.ts"></script>
+  </body>
+</html>

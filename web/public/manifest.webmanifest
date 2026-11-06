@@ -1,0 +1,9 @@
+{
+  "name": "SameSky",
+  "short_name": "SameSky",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e2826",
+  "theme_color": "#1e2826",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
