@@ -1,0 +1,516 @@
+{
+  "retrieved": "2026-11-06",
+  "hdris": [
+    {
+      "id": "ballawley_park",
+      "title": "Ballawley Park",
+      "authors": [
+        "Savva Zakharov"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/ballawley_park",
+      "use": "Maya's park photo (perspective crop)",
+      "files": [
+        {
+          "file": "hdri/ballawley_park_tonemapped.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/ballawley_park.jpg",
+          "bytes": 50256193,
+          "sha256": "e426bf72e2afe15e816970b90f3df573e758289485f88932ed77dd65031b0bf7"
+        }
+      ]
+    },
+    {
+      "id": "golden_bay",
+      "title": "Golden Bay",
+      "authors": [
+        "Greg Zaal"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/golden_bay",
+      "use": "Adam's waterfront photo + 8 s camera clip (perspective crops)",
+      "files": [
+        {
+          "file": "hdri/golden_bay_tonemapped.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/golden_bay.jpg",
+          "bytes": 51354319,
+          "sha256": "42220c9abd7f8649ef5ed101a562fe70bb8813e9fff14a7a7ce06ea3ef0e15fe"
+        }
+      ]
+    },
+    {
+      "id": "courtyard_night",
+      "title": "Courtyard Night",
+      "authors": [
+        "Greg Zaal"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/courtyard_night",
+      "use": "Lina's courtyard photo (perspective crop)",
+      "files": [
+        {
+          "file": "hdri/courtyard_night_tonemapped.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/courtyard_night.jpg",
+          "bytes": 6080923,
+          "sha256": "f0582e6dec01eb406b5299fbfcfb2847bc1335cf65611efd6950761182a75e33"
+        }
+      ]
+    },
+    {
+      "id": "rogland_sunset",
+      "title": "Rogland Sunset",
+      "authors": [
+        "Greg Zaal"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/rogland_sunset",
+      "use": "Adam's dunes photo (perspective crop)",
+      "files": [
+        {
+          "file": "hdri/rogland_sunset_tonemapped.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/rogland_sunset.jpg",
+          "bytes": 51788112,
+          "sha256": "482d0d2c721923137e6c706e567842322e4ebc08b9aa155e08bdab9ba6dce06f"
+        }
+      ]
+    },
+    {
+      "id": "dusseldorf_bridge",
+      "title": "Dusseldorf Bridge",
+      "authors": [
+        "Greg Zaal"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/dusseldorf_bridge",
+      "use": "Window skyline plate (cylindrical crop)",
+      "files": [
+        {
+          "file": "hdri/dusseldorf_bridge_tonemapped.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/dusseldorf_bridge.jpg",
+          "bytes": 4383177,
+          "sha256": "dc2f7bfda48ef1d8c11cf171c76764e96588f3f573b3c98e12f9ff12d77ea7de"
+        }
+      ]
+    },
+    {
+      "id": "lythwood_lounge",
+      "title": "Lythwood Lounge",
+      "authors": [
+        "Greg Zaal"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/lythwood_lounge",
+      "use": "Room image-based lighting (PMREM) + companion backdrop",
+      "files": [
+        {
+          "file": "hdri/lythwood_lounge_1k.hdr",
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/lythwood_lounge_1k.hdr",
+          "bytes": 1538903,
+          "sha256": "7de73ed75fbd52179152230198b3fb18bf8c36993b5608b724e899c426e53f78"
+        },
+        {
+          "file": "hdri/lythwood_lounge_tonemapped.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/HDRIs/extra/Tonemapped%20JPG/lythwood_lounge.jpg",
+          "bytes": 5027965,
+          "sha256": "14fb89bdaadfcc3f3974d1bad29656db0354bf7d96d72f69bc137d991d2fa119"
+        }
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "round_wooden_table_01",
+      "title": "Round Wooden Table 01",
+      "authors": [
+        "Ulan Cabanilla"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/round_wooden_table_01",
+      "use": "Shared round table",
+      "files": [
+        {
+          "file": "models/round_wooden_table_01/round_wooden_table_01_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/round_wooden_table_01/round_wooden_table_01_1k.gltf",
+          "bytes": 4089,
+          "sha256": "dd09c1663b10d15a1fda12ba4f53743e8b8379b17254a78be22100d584738b48"
+        },
+        {
+          "file": "models/round_wooden_table_01/textures/round_wooden_table_01_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/round_wooden_table_01/round_wooden_table_01_nor_gl_1k.jpg",
+          "bytes": 50832,
+          "sha256": "5f80ed76e2eccaea8ab7c0cc9c85d29cc9b164aabfa2403304e1ec79dc47150c"
+        },
+        {
+          "file": "models/round_wooden_table_01/textures/round_wooden_table_01_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/round_wooden_table_01/round_wooden_table_01_arm_1k.jpg",
+          "bytes": 134854,
+          "sha256": "32b5056dc36e3081987c20cd03f15e73298266c1aff3e573b832e9dd0f8145b9"
+        },
+        {
+          "file": "models/round_wooden_table_01/textures/round_wooden_table_01_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/round_wooden_table_01/round_wooden_table_01_diff_1k.jpg",
+          "bytes": 117911,
+          "sha256": "d83659d8d584bbadf160760b825f990c6264901e33051643d19fcd389b0d19ae"
+        },
+        {
+          "file": "models/round_wooden_table_01/round_wooden_table_01.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/round_wooden_table_01/round_wooden_table_01.bin",
+          "bytes": 242688,
+          "sha256": "c2635368bc86239a73fafdd8bce20b4261155ce7241e95e809a753ed4693f157"
+        }
+      ]
+    },
+    {
+      "id": "ArmChair_01",
+      "title": "Arm Chair 01",
+      "authors": [
+        "Kirill Sannikov"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/ArmChair_01",
+      "use": "Partner's upholstered armchair",
+      "files": [
+        {
+          "file": "models/ArmChair_01/ArmChair_01_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/ArmChair_01/ArmChair_01_1k.gltf",
+          "bytes": 2643,
+          "sha256": "91e39d5b35f36c8074b7b6432f6fd77f5f1a257c4d6af3924c0b263eb674286b"
+        },
+        {
+          "file": "models/ArmChair_01/textures/Armchair_01_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ArmChair_01/Armchair_01_diff_1k.jpg",
+          "bytes": 184246,
+          "sha256": "db30fc9ab61ac50c91ab7573583d2855a2910df1ecade02b89e3e8ab8d4e4c2d"
+        },
+        {
+          "file": "models/ArmChair_01/ArmChair_01.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/ArmChair_01/ArmChair_01.bin",
+          "bytes": 154012,
+          "sha256": "42a4206ea8bb3f7c3c1500ca3e408e084e8687cd3cc9cbf095b3344e215e0db6"
+        },
+        {
+          "file": "models/ArmChair_01/textures/Armchair_01_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ArmChair_01/Armchair_01_nor_gl_1k.jpg",
+          "bytes": 289916,
+          "sha256": "f5e4a43a12e79537e53e27c2bd4c5296b3e191cd6b301afce9fafd9d38238dde"
+        },
+        {
+          "file": "models/ArmChair_01/textures/Armchair_01_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ArmChair_01/Armchair_01_arm_1k.jpg",
+          "bytes": 138327,
+          "sha256": "d272c68e8180f2a381314ac0cef5a9165d15d951a0558cb40a17af71cf6a51c6"
+        }
+      ]
+    },
+    {
+      "id": "round_wooden_table_02",
+      "title": "Round Wooden Table 02",
+      "authors": [
+        "Ulan Cabanilla"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/round_wooden_table_02",
+      "use": "Lamp side table",
+      "files": [
+        {
+          "file": "models/round_wooden_table_02/round_wooden_table_02_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/round_wooden_table_02/round_wooden_table_02_1k.gltf",
+          "bytes": 2851,
+          "sha256": "df65c35148280a06efcc06bfa75432bb13f29318e869597fc94f364ce2b55974"
+        },
+        {
+          "file": "models/round_wooden_table_02/textures/round_wooden_table_02_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/round_wooden_table_02/round_wooden_table_02_nor_gl_1k.jpg",
+          "bytes": 635637,
+          "sha256": "34989b9a15753b964a4d9d6b2673c048ff2c14feedbe4e6adbeb4bf32be8bc8c"
+        },
+        {
+          "file": "models/round_wooden_table_02/textures/round_wooden_table_02_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/round_wooden_table_02/round_wooden_table_02_diff_1k.jpg",
+          "bytes": 470007,
+          "sha256": "9872acedc6be92ef232c581c8e9ce435e4aa0d8f5c4b75e4ce445995a3ef8c28"
+        },
+        {
+          "file": "models/round_wooden_table_02/textures/round_wooden_table_02_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/round_wooden_table_02/round_wooden_table_02_arm_1k.jpg",
+          "bytes": 677385,
+          "sha256": "613d051b4c4e093c5e65eec37d39f6f48ac5476e2cb1b59c4b034f308ef1a7ee"
+        },
+        {
+          "file": "models/round_wooden_table_02/round_wooden_table_02.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/round_wooden_table_02/round_wooden_table_02.bin",
+          "bytes": 135412,
+          "sha256": "fa9a0ed80be31d9160207913762cedc5de21d1cb37b01a5ae6caa23ce7a741b6"
+        }
+      ]
+    },
+    {
+      "id": "potted_plant_04",
+      "title": "Potted Plant 04",
+      "authors": [
+        "James Ray Cock"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/potted_plant_04",
+      "use": "Window-sill plants",
+      "files": [
+        {
+          "file": "models/potted_plant_04/potted_plant_04_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/potted_plant_04/potted_plant_04_1k.gltf",
+          "bytes": 7081,
+          "sha256": "b3a3bc3e97da75844999c4da07b7104b6c023f729a7c045979929b9504184339"
+        },
+        {
+          "file": "models/potted_plant_04/potted_plant_04.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/potted_plant_04/potted_plant_04.bin",
+          "bytes": 241800,
+          "sha256": "158c1d27503d4845eb3573f00c01ae3f4f77f1d6ca8754c67bf1762745946f7f"
+        },
+        {
+          "file": "models/potted_plant_04/textures/potted_plant_04_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_04/potted_plant_04_nor_gl_1k.jpg",
+          "bytes": 817786,
+          "sha256": "66e4627f6691a2d8104a6c53a39b41daddbd5bad8103e73f372c39166a3dcb07"
+        },
+        {
+          "file": "models/potted_plant_04/textures/potted_plant_04_arm_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_04/potted_plant_04_arm_1k.jpg",
+          "bytes": 478413,
+          "sha256": "7f3288345570ef700c851ea382ed267490ffc8c901ccc31f2ec5507e4d098e48"
+        },
+        {
+          "file": "models/potted_plant_04/textures/potted_plant_04_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/potted_plant_04/potted_plant_04_diff_1k.jpg",
+          "bytes": 577545,
+          "sha256": "8693a971557fbafb12a24a2e23c1a04ab6b04ecdc4d26808c5ad3516a4971f24"
+        }
+      ]
+    },
+    {
+      "id": "ceramic_vase_04",
+      "title": "Ceramic Vase 04",
+      "authors": [
+        "James Ray Cock"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/ceramic_vase_04",
+      "use": "Side-table vase",
+      "files": [
+        {
+          "file": "models/ceramic_vase_04/ceramic_vase_04_1k.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/ceramic_vase_04/ceramic_vase_04_1k.gltf",
+          "bytes": 2716,
+          "sha256": "ca6461229bd6379b621396581e32400f93884fe77f7fa8abe6ddbeb64d57421b"
+        },
+        {
+          "file": "models/ceramic_vase_04/ceramic_vase_04.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/ceramic_vase_04/ceramic_vase_04.bin",
+          "bytes": 239728,
+          "sha256": "00d6b5743358cba4bc78d25010b1bfc262d6cb313de8cbeffa570bb95387dfc7"
+        },
+        {
+          "file": "models/ceramic_vase_04/textures/ceramic_vase_04_rough_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_vase_04/ceramic_vase_04_rough_1k.jpg",
+          "bytes": 134635,
+          "sha256": "56186ba6e1980655ff8284a59b2bf04588c047fe61d69d09b98dde40a85f503e"
+        },
+        {
+          "file": "models/ceramic_vase_04/textures/ceramic_vase_04_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_vase_04/ceramic_vase_04_diff_1k.jpg",
+          "bytes": 95512,
+          "sha256": "b8682d194184e15b97b3e8547ebb92e96101d16260412528f37e3096b3844b67"
+        },
+        {
+          "file": "models/ceramic_vase_04/textures/ceramic_vase_04_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/ceramic_vase_04/ceramic_vase_04_nor_gl_1k.jpg",
+          "bytes": 123462,
+          "sha256": "a1c1cc5eda4157a17ba104387d9898362f2731632b840af62f76c2d00c751bd3"
+        }
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "id": "herringbone_parquet",
+      "title": "Herringbone Parquet",
+      "authors": [
+        "Jenelle van Heerden",
+        "Sergej Majboroda"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/herringbone_parquet",
+      "use": "Floor",
+      "files": [
+        {
+          "file": "textures/herringbone_parquet/Diffuse.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/herringbone_parquet/herringbone_parquet_diff_1k.jpg",
+          "bytes": 829046,
+          "sha256": "d6c66492a6c4cfd4e8ed18c9cdd4e0303f3de4e04613d2adca8bc2b8f2dd2350"
+        },
+        {
+          "file": "textures/herringbone_parquet/nor_gl.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/herringbone_parquet/herringbone_parquet_nor_gl_1k.jpg",
+          "bytes": 373438,
+          "sha256": "af6a822100fd6369bb75e43bb764f4a71ca41f521538ac796e92e681e3ad38f5"
+        },
+        {
+          "file": "textures/herringbone_parquet/Rough.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/herringbone_parquet/herringbone_parquet_rough_1k.jpg",
+          "bytes": 515202,
+          "sha256": "6058f5a1d27cef64f40057370188fec65c34998868d202a944f346ad9866ed62"
+        },
+        {
+          "file": "textures/herringbone_parquet/AO.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/herringbone_parquet/herringbone_parquet_ao_1k.jpg",
+          "bytes": 394481,
+          "sha256": "980271aa90417ac13c542c81f5abfe4ccf7af793a0bfad656daae99dca70fc6b"
+        }
+      ]
+    },
+    {
+      "id": "wool_boucle",
+      "title": "Wool Boucle",
+      "authors": [
+        "Rico Cilliers",
+        "colormass"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/wool_boucle",
+      "use": "Rug and cushions",
+      "files": [
+        {
+          "file": "textures/wool_boucle/Diffuse.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_diff_1k.jpg",
+          "bytes": 1284379,
+          "sha256": "fee39653b3c78efe89636508f2c10ceb38ecb10c0d735ae8dd4e9935cf26540e"
+        },
+        {
+          "file": "textures/wool_boucle/nor_gl.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_nor_gl_1k.jpg",
+          "bytes": 1266355,
+          "sha256": "2cc13a2be4d0bb942a59a86d613665c0d24ff201560daa4d841cee597af0c752"
+        },
+        {
+          "file": "textures/wool_boucle/Rough.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_rough_1k.jpg",
+          "bytes": 1272361,
+          "sha256": "f09f24bd26378b03bb798d4b75010ac8cc0fd1e4b858959e97e6d8d74fa3f6d8"
+        },
+        {
+          "file": "textures/wool_boucle/AO.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wool_boucle/wool_boucle_ao_1k.jpg",
+          "bytes": 909614,
+          "sha256": "f7d3d024686e099451f14ff5878b3e137b9295d3e4e8bb011bcc868331508a4a"
+        }
+      ]
+    },
+    {
+      "id": "clay_plaster",
+      "title": "Clay Plaster",
+      "authors": [
+        "Amal Kumar"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/clay_plaster",
+      "use": "Walls",
+      "files": [
+        {
+          "file": "textures/clay_plaster/Diffuse.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/clay_plaster/clay_plaster_diff_1k.jpg",
+          "bytes": 354209,
+          "sha256": "82e43c68bddebb55a18577ae3cb0d01c02c23f086d342a854ff8a174d9f4fd73"
+        },
+        {
+          "file": "textures/clay_plaster/nor_gl.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/clay_plaster/clay_plaster_nor_gl_1k.jpg",
+          "bytes": 784921,
+          "sha256": "359f814292005ab16be86807678a4a51e8256a87c282ebf5f5333ce18c428fba"
+        },
+        {
+          "file": "textures/clay_plaster/Rough.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/clay_plaster/clay_plaster_rough_1k.jpg",
+          "bytes": 345709,
+          "sha256": "e91a6238456b54a82dbf2c025e0b046851c90e7e772fe2affd26a46b243ce7b7"
+        },
+        {
+          "file": "textures/clay_plaster/AO.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/clay_plaster/clay_plaster_ao_1k.jpg",
+          "bytes": 347863,
+          "sha256": "68abd3834d30e8bdaa4b12b67f463f79e39514b5a21b0347b63cd5a520352fb2"
+        }
+      ]
+    },
+    {
+      "id": "american_walnut_veneer",
+      "title": "American Walnut Veneer",
+      "authors": [
+        "Jenelle van Heerden"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/american_walnut_veneer",
+      "use": "Frames, lamp base, keepsake plinths (tinted warm: the scan is a grey-washed veneer)",
+      "files": [
+        {
+          "file": "textures/american_walnut_veneer/Diffuse.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/american_walnut_veneer/american_walnut_veneer_diff_1k.jpg",
+          "bytes": 579182,
+          "sha256": "10d983003bb686db4af3d35d91197fdb6144dcd15d3dcea2ef315600f51b1af5"
+        },
+        {
+          "file": "textures/american_walnut_veneer/nor_gl.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/american_walnut_veneer/american_walnut_veneer_nor_gl_1k.jpg",
+          "bytes": 414945,
+          "sha256": "f54890d8dd352c8668d643adaa0ad66bd5a3b62995198b7dfb518fa59efebca2"
+        },
+        {
+          "file": "textures/american_walnut_veneer/Rough.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/american_walnut_veneer/american_walnut_veneer_rough_1k.jpg",
+          "bytes": 691712,
+          "sha256": "a13cd23228a4cb1bf0e342b4602d636123699cde61a2ff16bec1ce45a33ac62e"
+        },
+        {
+          "file": "textures/american_walnut_veneer/AO.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/american_walnut_veneer/american_walnut_veneer_ao_1k.jpg",
+          "bytes": 647888,
+          "sha256": "757d3d8147e30c6cd67c31cb6bfd17610df3adc3d8abeabda9a6f8accb79842e"
+        }
+      ]
+    },
+    {
+      "id": "knitted_fleece",
+      "title": "Knitted Fleece",
+      "authors": [
+        "Rico Cilliers",
+        "colormass"
+      ],
+      "license": "CC0 1.0 (public domain)",
+      "source": "https://polyhaven.com/a/knitted_fleece",
+      "use": "Avatar sweater detail (normal map)",
+      "files": [
+        {
+          "file": "textures/knitted_fleece/Diffuse.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/knitted_fleece/knitted_fleece_diff_1k.jpg",
+          "bytes": 887569,
+          "sha256": "57d7e416b698d02171a260da1a47109fc0f85b232f565d2a42d6d1be416c32e0"
+        },
+        {
+          "file": "textures/knitted_fleece/nor_gl.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/knitted_fleece/knitted_fleece_nor_gl_1k.jpg",
+          "bytes": 1128139,
+          "sha256": "ca1f965fee9957665a78a54bfa09e2c44f4e626d38fff6238a9a214cad5bab99"
+        },
+        {
+          "file": "textures/knitted_fleece/Rough.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/knitted_fleece/knitted_fleece_rough_1k.jpg",
+          "bytes": 959605,
+          "sha256": "0f82adaf29135b0d0a799d7dfcb2f64e76a9836bbf43d5745fb66330077e2042"
+        },
+        {
+          "file": "textures/knitted_fleece/AO.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/knitted_fleece/knitted_fleece_ao_1k.jpg",
+          "bytes": 828286,
+          "sha256": "ffece1dfb62cdc1953458b1bb4863d66eb54d4c889bb14cde2847ad0845a438f"
+        }
+      ]
+    }
+  ]
+}

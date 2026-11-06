@@ -16,6 +16,7 @@ interface Draft {
   kind: MomentKind;
   url: string;
   durationMs?: number;
+  poster?: string;
 }
 
 async function downscaleImage(file: File): Promise<Blob> {
@@ -177,63 +178,70 @@ export function Share() {
     void loadMine();
   };
 
+  const useSampleClip = async () => {
+    setError(null);
+    setBusy('Loading the sample clip…');
+    try {
+      const res = await fetch('/assets/sample/adam-clip.mp4');
+      const blob = await res.blob();
+      setDevice('camera');
+      setCaption('Evening lights along the promenade.');
+      setTrim([3000, 8000]);
+      setDraft({ blob, name: 'Evening-promenade.mp4', kind: 'clip', url: URL.createObjectURL(blob), durationMs: 8000, poster: '/assets/sample/adam-clip-poster.jpg' });
+    } catch {
+      setError('The sample clip could not be loaded.');
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <>
-      <h1 className="page-title" style={{ marginBottom: 20 }}>Share a moment</h1>
-      <div className="share-grid">
-        <section className="stack" style={{ gap: 16 }}>
+      <h1 className="page-title on-backdrop" style={{ marginBottom: 18 }}>Share a moment</h1>
+      <div className="composer">
+        <section className="stack" style={{ gap: 14 }}>
           <div className="tabs" role="tablist" aria-label="How to add a moment">
             {([['upload', 'upload', 'Upload'], ['camera', 'camera', 'Camera'], ['voice', 'mic', 'Voice note'], ['text', 'text', 'Text']] as const).map(([t, icon, label]) => (
               <button key={t} className="tab" role="tab" aria-selected={tab === t} onClick={() => { setTab(t); reset(); setError(null); }}><Icon name={icon} />{label}</button>
             ))}
           </div>
-          <div className="card stack">
+          <div className="glass-panel stack" style={{ gap: 0 }}>
             {tab === 'upload' && !draft ? (
-              <label className={`dropzone${drag ? ' drag' : ''}`} onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
-                onDrop={(e) => { e.preventDefault(); setDrag(false); void pickFile(e.dataTransfer.files[0]); }}>
-                <input type="file" accept={ACCEPT} className="sr-only" onChange={(e) => void pickFile(e.target.files?.[0])} />
-                <span className="stack" style={{ alignItems: 'center' }}>
-                  <span className="icon-btn solid"><Icon name="upload" /></span>
-                  <strong style={{ fontSize: '1.2rem' }}>Choose a photo or clip</strong>
-                  <span className="muted">From a phone, camera, action camera, drone or AI-glasses export. JPEG/PNG up to 10 MB · MP4/MOV/WebM up to 60 s and 100 MB.</span>
-                </span>
-              </label>
+              <>
+                <label className={`dropzone${drag ? ' drag' : ''}`} onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
+                  onDrop={(e) => { e.preventDefault(); setDrag(false); void pickFile(e.dataTransfer.files[0]); }}>
+                  <input type="file" accept={ACCEPT} className="sr-only" onChange={(e) => void pickFile(e.target.files?.[0])} />
+                  <span className="stack" style={{ alignItems: 'center' }}>
+                    <span className="icon-btn solid"><Icon name="upload" /></span>
+                    <strong style={{ fontSize: '1.2rem' }}>Choose a photo or clip</strong>
+                    <span className="muted">From a phone, camera, action camera, drone or AI-glasses export. JPEG/PNG up to 10 MB · MP4/MOV/WebM up to 60 s and 100 MB.</span>
+                  </span>
+                </label>
+                {ds.mode === 'sample' ? (
+                  <div className="row wrap" style={{ marginTop: 12, justifyContent: 'center' }}>
+                    <span className="muted small">No clip handy?</span>
+                    <button className="btn btn-ghost-light" onClick={() => void useSampleClip()}><Icon name="video" />Use a sample clip</button>
+                  </div>
+                ) : null}
+              </>
             ) : null}
             {tab === 'camera' && !draft ? <CameraCapture onDone={(d) => setDraft(d)} onError={setError} /> : null}
             {tab === 'voice' && !draft ? <VoiceCapture onDone={(d) => setDraft(d)} onError={setError} /> : null}
             {tab === 'text' ? (
               <label className="field"><span>What happened?</span><textarea className="input" maxLength={500} value={text} onChange={(e) => setText(e.target.value)} placeholder="Made dumplings for the whole office…" /></label>
             ) : null}
-            {draft ? (
-              <div className="stack">
-                <div className="row"><Icon name={draft.kind === 'photo' ? 'image' : draft.kind === 'clip' ? 'video' : 'mic'} /><strong className="grow">{draft.name}</strong>
-                  <button className="btn btn-quiet" onClick={() => setDraft(null)}>Choose another</button></div>
-                <div className="preview">
-                  {draft.kind === 'photo' ? <img src={draft.url} alt="Preview" /> : draft.kind === 'clip' ? <video src={draft.url} controls playsInline /> : <audio src={draft.url} controls style={{ width: '100%' }} />}
-                </div>
-                {draft.kind === 'clip' && draft.durationMs ? (
-                  <div className="card-inner stack">
-                    <strong>Trim the highlight (up to 15 seconds)</strong>
-                    <div className="trim">
-                      <span className="small">Start</span>
-                      <input type="range" min={0} max={draft.durationMs} step={100} value={trim[0]} aria-label="Trim start"
-                        onChange={(e) => { const s = Number(e.target.value); setTrim([s, Math.min(draft.durationMs!, Math.max(s + 1000, Math.min(trim[1], s + 15_000)))]); }} />
-                      <span className="small">{(trim[0] / 1000).toFixed(1)}s</span>
-                      <span className="small">End</span>
-                      <input type="range" min={0} max={draft.durationMs} step={100} value={trim[1]} aria-label="Trim end"
-                        onChange={(e) => { const end = Number(e.target.value); setTrim([Math.max(0, Math.min(trim[0], end - 1000), end - 15_000), end]); }} />
-                      <span className="small">{(trim[1] / 1000).toFixed(1)}s</span>
-                    </div>
-                    <span className="muted small">Highlight: {((trim[1] - trim[0]) / 1000).toFixed(1)} s. The server converts it to a Quest-friendly MP4 and removes location metadata.</span>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
-            {tab !== 'text' ? (
-              <label className="field"><span>Caption {kind === 'voice' ? '(shown as captions for everyone)' : ''}</span>
-                <input className="input" maxLength={500} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="A little piece of my day." /></label>
-            ) : null}
-            <div className="row wrap" style={{ gap: 16 }}>
+            {draft ? <DraftPreview draft={draft} device={tab === 'camera' ? 'webcam' : device} trim={trim} setTrim={setTrim} onReplace={() => setDraft(null)} /> : null}
+          </div>
+          {tab !== 'text' ? (
+            <div className="glass-panel caption-field">
+              <span className="t" aria-hidden="true">T</span>
+              <label className="grow"><span className="sr-only">Caption {kind === 'voice' ? '(shown as captions for everyone)' : ''}</span>
+                <input className="input caption-input" maxLength={500} value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="A little piece of my day." /></label>
+            </div>
+          ) : null}
+          <details className="glass-panel details-panel">
+            <summary><Icon name="info" />Source and time <span className="muted small">· {tab === 'upload' ? `${deviceLabel(device)} · ` : ''}{new Date(captureLocal).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></summary>
+            <div className="row wrap" style={{ gap: 16, marginTop: 12 }}>
               {tab === 'upload' ? (
                 <label className="field" style={{ minWidth: 200 }}><span>Where it came from</span>
                   <select className="input" value={device} onChange={(e) => setDevice(e.target.value as SourceDevice)}>
@@ -243,27 +251,28 @@ export function Share() {
               <label className="field" style={{ minWidth: 220 }}><span>When it happened ({me.timeZone.replace(/_/g, ' ')})</span>
                 <input className="input" type="datetime-local" value={captureLocal} onChange={(e) => setCaptureLocal(e.target.value)} /></label>
             </div>
-          </div>
+          </details>
         </section>
 
-        <aside className="card stack" aria-label="Who can see this?">
-          <h2 className="section-title" style={{ margin: 0 }}>Who can see this?</h2>
+        <aside className="glass-panel stack audience" aria-label="Who can see this?">
+          <h2 className="section-title audience-title">Who can see this?</h2>
           <div className="option-cards">
             <button className="option-card" aria-pressed={mode === 'one'} onClick={() => setMode('one')}><Icon name="user" /><span>One person · 1:1</span></button>
             <button className="option-card" aria-pressed={mode === 'circle'} onClick={() => setMode('circle')}><Icon name="users" /><span>Private circle · 1:many</span></button>
           </div>
           {candidates.length ? (
             <>
-              <label className="field"><span className="sr-only">Room</span>
+              <label className="select-with-icon"><span className="sr-only">{mode === 'one' ? 'Person' : 'Circle'}</span>
+                <Icon name={mode === 'one' ? 'user' : 'users'} />
                 <select className="input" value={room?.id} onChange={(e) => setRoomId(e.target.value)}>
-                  {candidates.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                  {candidates.map((r) => <option key={r.id} value={r.id}>{r.kind === 'circle' ? r.name.replace(/ circle$/i, '') : r.members.filter((m) => m.id !== me.id).map((m) => m.displayName).join(', ')}</option>)}
                 </select></label>
               <div className="muted small">{others.length} {others.length === 1 ? 'recipient' : 'recipients'}</div>
               <div>
                 {others.map((m) => (
                   <div key={m.id} className="recipient">
-                    <Avatar def={m.avatar?.definition} size={44} name={m.displayName} />
-                    <span className="grow" style={{ fontSize: '1.1rem' }}>{m.displayName}</span>
+                    <Avatar def={m.avatar?.definition} size={52} name={m.displayName} />
+                    <span className="grow" style={{ fontSize: '1.15rem' }}>{m.displayName}</span>
                     <Checkbox label={`Share with ${m.displayName}`} checked={recipients.includes(m.id)}
                       onChange={(v) => setRecipients((list) => (mode === 'one' ? (v ? [m.id] : []) : v ? [...list, m.id] : list.filter((x) => x !== m.id)))} />
                   </div>
@@ -271,21 +280,19 @@ export function Share() {
               </div>
             </>
           ) : <Notice kind="warn">You don't have a {mode === 'one' ? 'direct room' : 'circle'} yet. Create one in Settings.</Notice>}
-          <div className="row small muted"><Icon name="lock" />Only selected people can view this moment.</div>
-          <div className="row" style={{ justifyContent: 'space-between' }}>
-            <span className="row"><Icon name="sparkle" />Include in AI recap</span>
-            <Toggle checked={aiAllowed} onChange={setAiAllowed} label="Include in AI recap" />
-          </div>
-          <div className="row"><Checkbox checked onChange={() => undefined} label="Review recap before sharing (always on)" /><span>Review recap before sharing <span className="muted small">(always on)</span></span></div>
+          <div className="setting-row"><Icon name="lock" /><span className="grow">Only selected people can view this moment.</span></div>
+          <div className="setting-row"><Icon name="sparkle" /><span className="grow setting-label">Include in AI recap</span>
+            <Toggle checked={aiAllowed} onChange={setAiAllowed} label="Include in AI recap" /></div>
+          <div className="setting-row"><Checkbox checked onChange={() => undefined} label="Review recap before sharing (always on)" /><span className="grow setting-label">Review recap before sharing <span className="muted small">(always on)</span></span></div>
           {error ? <Notice kind="error">{error}</Notice> : null}
           {busy ? <Notice>{busy}</Notice> : null}
-          <button className="btn btn-primary btn-lg" disabled={!ready || !room || !!busy || !recipients.length} onClick={() => void startShare()}><Icon name="send" />{audienceText}</button>
-          <button className="btn btn-outline btn-lg" disabled={!ready || !room || !!busy} onClick={() => void saveOnly()}><Icon name="bookmark" />Save privately</button>
+          <button className="btn btn-mint btn-lg" disabled={!ready || !room || !!busy || !recipients.length} onClick={() => void startShare()}><Icon name="send" />{audienceText}</button>
+          <button className="btn btn-ghost-light btn-lg" disabled={!ready || !room || !!busy} onClick={() => void saveOnly()}><Icon name="bookmark" />Save privately</button>
         </aside>
       </div>
 
-      <section className="card" style={{ marginTop: 24 }}>
-        <h2 className="section-title">Your recent moments</h2>
+      <section className="glass-panel" style={{ marginTop: 22 }}>
+        <h2 className="section-title" style={{ marginTop: 0 }}>Your recent moments</h2>
         {mine.length ? (
           <div className="my-moments">
             {mine.map((m) => (
@@ -318,6 +325,128 @@ export function Share() {
         </div>
       ) : null}
     </>
+  );
+}
+
+const mmss = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor((ms % 60000) / 1000)).padStart(2, '0')}`;
+
+/** The selected media as the visual focus: preview with play overlay, metadata chips and (for clips) a filmstrip trimmer. */
+function DraftPreview({ draft, device, trim, setTrim, onReplace }: { draft: Draft; device: SourceDevice; trim: [number, number]; setTrim: (t: [number, number]) => void; onReplace: () => void }) {
+  const video = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+  const toggle = () => {
+    const v = video.current;
+    if (!v) return;
+    if (v.paused) {
+      if (draft.kind === 'clip' && (v.currentTime * 1000 < trim[0] || v.currentTime * 1000 >= trim[1])) v.currentTime = trim[0] / 1000;
+      void v.play();
+    } else v.pause();
+  };
+  useEffect(() => {
+    const v = video.current;
+    if (!v || draft.kind !== 'clip') return;
+    const stopAtEnd = () => { if (v.currentTime * 1000 >= trim[1]) v.pause(); };
+    v.addEventListener('timeupdate', stopAtEnd);
+    return () => v.removeEventListener('timeupdate', stopAtEnd);
+  }, [draft, trim]);
+  const known = !!draft.durationMs || draft.kind === 'photo';
+  return (
+    <div className="stack" style={{ gap: 0 }}>
+      <div className="file-head"><Icon name={draft.kind === 'photo' ? 'image' : draft.kind === 'clip' ? 'video' : 'mic'} /><span className="grow">{draft.name}</span>
+        <button className="btn btn-quiet btn-sm" onClick={onReplace}>Choose another</button></div>
+      <div className="preview">
+        {draft.kind === 'photo' ? <img src={draft.url} alt="Preview of the selected photo" /> : null}
+        {draft.kind === 'clip' ? (
+          <>
+            <video ref={video} src={draft.url} poster={draft.poster} playsInline preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} aria-label="Preview of the selected clip" />
+            <button className="play-overlay" onClick={toggle} aria-label={playing ? 'Pause preview' : 'Play preview'}>{playing ? null : <span><Icon name="play" /></span>}</button>
+          </>
+        ) : null}
+        {draft.kind === 'voice' ? <audio src={draft.url} controls style={{ width: '100%' }} /> : null}
+      </div>
+      <div className="meta-row">
+        <span className="meta-chip"><Icon name={draft.kind === 'voice' ? 'mic' : 'camera'} />{deviceLabel(device)} import</span>
+        {draft.kind !== 'photo' ? <span className="meta-chip"><Icon name="clock" />{draft.durationMs ? mmss(draft.durationMs) : '–:–'}</span> : null}
+        <span className={`meta-chip${known ? ' ok' : ''}`}><Icon name={known ? 'check' : 'refresh'} />{known ? 'Ready' : 'Reading the file…'}</span>
+      </div>
+      {draft.kind === 'clip' && draft.durationMs ? <Trimmer url={draft.url} duration={draft.durationMs} trim={trim} setTrim={setTrim} playing={playing} onPlay={toggle} /> : null}
+    </div>
+  );
+}
+
+/** Filmstrip of real frames from the clip, with two accessible handles (arrow keys move 0.5 s, Shift 2 s; drag with a pointer). */
+function Trimmer({ url, duration, trim, setTrim, playing, onPlay }: { url: string; duration: number; trim: [number, number]; setTrim: (t: [number, number]) => void; playing: boolean; onPlay: () => void }) {
+  const [thumbs, setThumbs] = useState<string[]>([]);
+  const strip = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const v = document.createElement('video');
+    v.muted = true;
+    v.preload = 'auto';
+    v.src = url;
+    const frames: string[] = [];
+    const c = document.createElement('canvas');
+    c.width = 160;
+    c.height = 90;
+    const ctx = c.getContext('2d');
+    const N = 8;
+    const grab = (i: number) => {
+      if (cancelled) return;
+      if (i >= N) { setThumbs(frames); return; }
+      v.currentTime = ((i + 0.5) / N) * (duration / 1000);
+    };
+    v.addEventListener('seeked', () => {
+      if (cancelled) return;
+      ctx?.drawImage(v, 0, 0, c.width, c.height);
+      frames.push(c.toDataURL('image/jpeg', 0.7));
+      grab(frames.length);
+    });
+    v.addEventListener('loadeddata', () => grab(0), { once: true });
+    return () => { cancelled = true; v.removeAttribute('src'); v.load(); };
+  }, [url, duration]);
+  const pct = (ms: number) => `${(ms / duration) * 100}%`;
+  const clamp = (which: 0 | 1, ms: number): [number, number] => {
+    const max = 15_000;
+    if (which === 0) {
+      const s = Math.max(0, Math.min(ms, trim[1] - 1000));
+      return [s, Math.min(trim[1], s + max)];
+    }
+    const e = Math.min(duration, Math.max(ms, trim[0] + 1000));
+    return [Math.max(trim[0], e - max), e];
+  };
+  const onKey = (which: 0 | 1) => (e: React.KeyboardEvent) => {
+    const step = e.shiftKey ? 2000 : 500;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setTrim(clamp(which, trim[which] - step)); }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setTrim(clamp(which, trim[which] + step)); }
+    if (e.key === 'Home') { e.preventDefault(); setTrim(clamp(which, 0)); }
+    if (e.key === 'End') { e.preventDefault(); setTrim(clamp(which, duration)); }
+  };
+  const onDrag = (which: 0 | 1) => (e: React.PointerEvent<HTMLButtonElement>) => {
+    const el = strip.current;
+    if (!el) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const move = (ev: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      setTrim(clamp(which, Math.round((((ev.clientX - r.left) / r.width) * duration) / 100) * 100));
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="trimmer">
+      <button className="icon-btn trim-play" onClick={onPlay} aria-label={playing ? 'Pause the highlight' : 'Play the highlight'}><Icon name={playing ? 'pause' : 'play'} /></button>
+      <div className="filmstrip" ref={strip}>
+        {thumbs.length ? thumbs.map((t, i) => <img key={i} src={t} alt="" />) : <span className="filmstrip-loading" aria-hidden="true" />}
+        <div className="window" style={{ left: pct(trim[0]), width: pct(trim[1] - trim[0]) }} />
+        {([0, 1] as const).map((w) => (
+          <button key={w} type="button" className="handle" role="slider" aria-label={w === 0 ? 'Highlight start' : 'Highlight end'} aria-valuemin={0} aria-valuemax={duration} aria-valuenow={trim[w]}
+            aria-valuetext={mmss(trim[w])} style={{ left: pct(trim[w]) }} onKeyDown={onKey(w)} onPointerDown={onDrag(w)} />
+        ))}
+      </div>
+      <span className="time">{mmss(trim[0])} – {mmss(trim[1])}</span>
+      <span className="muted small trim-note">Highlight {((trim[1] - trim[0]) / 1000).toFixed(1)} s (up to 15 s). The server converts it to a Quest-friendly MP4 and removes location metadata.</span>
+    </div>
   );
 }
 

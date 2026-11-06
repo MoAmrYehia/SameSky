@@ -4,7 +4,7 @@ import { formatDate } from '../../shared/tz';
 import { useApp } from '../App';
 import { MomentDetail } from '../MomentDetail';
 import { StoryPlayer } from '../StoryPlayer';
-import { Icon, KeepsakeArt, Notice } from '../ui';
+import { Icon, KeepsakeRender, Notice } from '../ui';
 
 export function Keepsakes() {
   const { ds, room } = useApp();
@@ -22,12 +22,12 @@ export function Keepsakes() {
   if (!room) return <Notice>Create or join a room first.</Notice>;
   return (
     <>
-      <h1 className="page-title">Keepsakes</h1>
-      <p className="subtitle" style={{ marginBottom: 20 }}>Milestones you reach together in {room.name}. No streaks, no scores — just shared history.</p>
+      <h1 className="page-title on-backdrop">Keepsakes</h1>
+      <p className="subtitle on-backdrop" style={{ marginBottom: 20, opacity: 0.85 }}>Milestones you reach together in {room.name}. No streaks, no scores — just shared history.</p>
       <div className="keepsake-row">
         {awards.map((a) => (
           <button key={a.milestone} className="keepsake" onClick={() => setOpen(a)} aria-label={`${a.title}: ${a.earned ? 'earned' : `${a.progress} of ${a.target}`}`}>
-            <div className="art"><KeepsakeArt kind={a.keepsake} progress={a.progress} target={a.target} /></div>
+            <div className="art"><KeepsakeRender kind={a.keepsake} progress={a.progress} target={a.target} earned={a.earned} title={a.title} /></div>
             <div className="info">
               <strong>{a.title}</strong>
               {a.earned ? <span className="chip green label" style={{ alignSelf: 'start' }}><Icon name="checkCircle" />Earned {a.earnedAt ? formatDate(a.earnedAt, room.reportingZone, { day: 'numeric', month: 'short' }) : ''}</span>
@@ -57,7 +57,7 @@ export function Keepsakes() {
       {open ? (
         <div className="overlay" role="dialog" aria-modal="true" aria-label={open.title} onClick={(e) => e.target === e.currentTarget && setOpen(null)}>
           <div className="card stack" style={{ width: 'min(560px, 100%)' }}>
-            <div className="keepsake" style={{ boxShadow: 'none', cursor: 'default' }}><div className="art" style={{ borderRadius: 18 }}><KeepsakeArt kind={open.keepsake} progress={open.progress} target={open.target} /></div></div>
+            <div className="keepsake" style={{ boxShadow: 'none', cursor: 'default' }}><div className="art" style={{ borderRadius: 18 }}><KeepsakeRender kind={open.keepsake} progress={open.progress} target={open.target} earned={open.earned} title={open.title} /></div></div>
             <h2 className="section-title" style={{ margin: 0 }}>{open.title}</h2>
             <p className="muted" style={{ margin: 0 }}>{open.trigger}</p>
             <p style={{ margin: 0 }}>{open.earned ? `Earned together${open.earnedAt ? ` on ${formatDate(open.earnedAt, room.reportingZone)}` : ''}.` : `${open.progress} of ${open.target} so far. Missed days never count against you.`}</p>

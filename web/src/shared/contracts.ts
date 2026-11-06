@@ -13,6 +13,8 @@ export interface AvatarDefinition {
   hairColor: string;
   top: string;
   accessory: string;
+  /** Sculpted face preset. Optional so definitions saved before it existed still render ("soft"). */
+  face?: 'soft' | 'defined';
 }
 
 export interface UserPublic {
@@ -66,6 +68,7 @@ export interface MediaInfo {
   needsCaptureTime?: boolean;
   url?: string;
   thumbUrl?: string;
+  posterUrl?: string;
   captionsUrl?: string;
 }
 

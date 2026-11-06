@@ -7,37 +7,72 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <title>SameSky · Our room</title>
     <style>
-      html, body { margin: 0; height: 100%; background: #15110f; color: #f1ede6; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; }
+      html, body { margin: 0; height: 100%; background: #2a211b; color: #f7f2ea; font-family: "Figtree Variable", "Segoe UI", system-ui, -apple-system, sans-serif; overflow: hidden; }
       #scene { position: fixed; inset: 0; }
-      #overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 70% 20%, rgba(227,183,102,.25), transparent 60%), rgba(18,14,12,.72); backdrop-filter: blur(6px); z-index: 10; }
+      #overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 70% 20%, rgba(227,183,102,.22), transparent 60%), rgba(28,20,15,.55); backdrop-filter: blur(8px); z-index: 10; }
       #overlay[hidden] { display: none; }
-      .welcome { width: min(560px, 100%); background: rgba(247,242,234,.97); color: #1d211f; border-radius: 28px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 14px; }
-      .welcome h1 { margin: 0; font-size: 2rem; letter-spacing: -0.02em; }
+      .welcome { width: min(540px, 100%); box-sizing: border-box; background: rgba(250,245,238,.96); color: #1d211f; border-radius: 28px; padding: 28px; box-shadow: 0 24px 70px rgba(20,12,6,.45), inset 0 1px 0 rgba(255,255,255,.8); display: flex; flex-direction: column; gap: 14px; }
+      .welcome h1 { margin: 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
       .welcome p { margin: 0; color: #5e625c; font-size: 1.05rem; line-height: 1.45; }
-      .btn { min-height: 56px; border: 0; border-radius: 999px; padding: 0 26px; font-size: 1.1rem; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }
+      .btn { min-height: 56px; border: 0; border-radius: 999px; padding: 0 26px; font: inherit; font-size: 1.08rem; font-weight: 650; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; }
+      .btn:disabled { opacity: .55; cursor: progress; }
+      .btn[hidden] { display: none; }
       .btn.primary { background: #3d6b4f; color: #fff; box-shadow: 0 8px 20px rgba(47,89,64,.3); }
       .btn.ghost { background: transparent; color: #2f5940; box-shadow: inset 0 0 0 1.5px rgba(29,33,31,.15); }
-      .btn:focus-visible { outline: 3px solid #2f7dd1; outline-offset: 2px; }
+      .btn:focus-visible, #hud a:focus-visible { outline: 3px solid #2f7dd1; outline-offset: 2px; }
       .row { display: flex; gap: 10px; flex-wrap: wrap; }
       .tag { align-self: flex-start; background: #f4e2c4; color: #5b3e10; border-radius: 999px; padding: 4px 12px; font-size: .82rem; font-weight: 650; }
       .hint { font-size: .9rem !important; }
-      #hud { position: fixed; left: 12px; top: 12px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; }
-      #hud a, #hud span { background: rgba(22,28,26,.86); color: #fff; border-radius: 999px; padding: 8px 14px; font-size: .9rem; text-decoration: none; }
-      #status { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 5; background: rgba(22,28,26,.9); padding: 10px 16px; border-radius: 14px; max-width: 92vw; font-size: .95rem; }
-      #status:empty { display: none; }
+      .progress { height: 8px; border-radius: 999px; background: rgba(61,107,79,.14); overflow: hidden; }
+      .progress[hidden] { display: none; }
+      .progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #5f9a74, #3d6b4f); border-radius: inherit; transition: width .25s ease; }
+      .error-text { color: #8a2f22 !important; }
+      /* Header over the room (2D only; in a headset the in-world UI takes over) */
+      #hud { position: fixed; left: 0; right: 0; top: 0; z-index: 5; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 12px 16px; pointer-events: none; }
+      #hud > * { pointer-events: auto; }
+      #hud .brand { justify-self: start; display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-weight: 700; font-size: 1.45rem; letter-spacing: -0.01em; text-shadow: 0 1px 8px rgba(30,16,8,.45); }
+      #hud .brand svg { width: 46px; height: 28px; }
+      .glass-pill { display: inline-flex; align-items: center; gap: 9px; min-height: 42px; padding: 0 18px; border-radius: 999px; color: #fff; font-size: 1.02rem; font-weight: 600; white-space: nowrap; background: rgba(48,40,34,.42); border: 1px solid rgba(255,255,255,.38); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 6px 18px rgba(30,16,8,.18); backdrop-filter: blur(10px); }
+      .glass-pill svg { width: 20px; height: 20px; flex: none; }
+      #hud-room { justify-self: center; }
+      .hud-right { justify-self: end; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+      #mode-tag { font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.92); background: rgba(30,24,20,.5); border-radius: 999px; padding: 3px 10px; }
+      #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      @media (max-width: 720px) {
+        #hud { grid-template-columns: auto 1fr; padding: 10px 12px; }
+        #hud-room { display: none; }
+        #hud .brand { font-size: 1.15rem; }
+        #hud .brand svg { width: 36px; height: 22px; }
+        .glass-pill { min-height: 36px; padding: 0 12px; font-size: .9rem; }
+        .welcome { padding: 22px; }
+        .tag-long { display: none; }
+        .welcome h1 { font-size: 1.6rem; }
+      }
     </style>
   </head>
   <body>
     <div id="scene"></div>
-    <div id="hud"><a href="/">← Companion</a><span id="mode-tag">Loading…</span></div>
+    <header id="hud">
+      <a class="brand" href="/" aria-label="SameSky — back to the companion">
+        <svg viewBox="0 0 60 36" aria-hidden="true"><path d="M4 30 C10 10 30 6 40 18" fill="none" stroke="#e3b766" stroke-width="4" stroke-linecap="round" /><path d="M20 32 C26 20 42 18 56 30" fill="none" stroke="#7fbf95" stroke-width="4" stroke-linecap="round" /></svg>
+        SameSky
+      </a>
+      <span class="glass-pill" id="hud-room"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5h4v5" /></svg>Our room</span>
+      <div class="hud-right">
+        <span class="glass-pill" id="hud-audience"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5M17 11.8a2.8 2.8 0 1 0 0-5.6M16 14.6c2.8.2 4.9 1.9 5.5 5.4" /></svg><span id="hud-audience-text">Private room</span></span>
+        <span id="mode-tag">Loading…</span>
+      </div>
+    </header>
     <div id="overlay">
-      <div class="welcome" role="dialog" aria-labelledby="welcome-title">
+      <div class="welcome" role="dialog" aria-labelledby="welcome-title" aria-describedby="overlay-text">
         <span class="tag" id="overlay-tag">Sample day · fictional people</span>
         <h1 id="welcome-title">Our room</h1>
         <p id="overlay-text">Sit at the table. Something is waiting in the glowing cup — pick it up with a pinch.</p>
+        <div class="progress" id="load" role="progressbar" aria-label="Loading the room" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="load-bar"></i></div>
         <div class="row">
           <button class="btn primary" id="enter-vr" hidden>Enter in VR</button>
-          <button class="btn ghost" id="enter-2d">Stay on this screen</button>
+          <button class="btn ghost" id="enter-2d" disabled>Loading the room…</button>
+          <button class="btn primary" id="retry" hidden>Try again</button>
         </div>
         <p class="hint" id="overlay-hint">Hands only: pinch to select and to pick things up. Seated, no controllers needed.</p>
       </div>

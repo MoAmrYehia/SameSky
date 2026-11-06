@@ -87,7 +87,8 @@ function AvatarEditor() {
   return (
     <section className="card stack">
       <h2 className="section-title" style={{ margin: 0 }}>Your avatar</h2>
-      <div className="row"><Avatar def={def} size={120} name={me.displayName} /><p className="muted small">A stylized preset — no photo or face scan needed. Only people in your rooms see it.</p></div>
+      <div className="row"><Avatar def={def} size={150} name={me.displayName} /><p className="muted small">Rendered live from your 3D character — the same one people see across the table. A stylized preset: no photo or face scan needed, and only people in your rooms see it.</p></div>
+      <span className="small"><strong>Face</strong></span><Segments values={AVATAR_OPTIONS.face} value={def.face ?? 'soft'} onChange={set('face')} label="Face shape" />
       <span className="small"><strong>Skin tone</strong></span><Swatches values={AVATAR_OPTIONS.skin} value={def.skin} onChange={set('skin')} label="Skin tone" />
       <span className="small"><strong>Hair</strong></span><Segments values={AVATAR_OPTIONS.hair} value={def.hair} onChange={set('hair')} label="Hairstyle" />
       <Swatches values={AVATAR_OPTIONS.hairColor} value={def.hairColor} onChange={set('hairColor')} label="Hair colour" />

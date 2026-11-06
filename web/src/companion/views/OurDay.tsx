@@ -1,16 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cueAt, loadCaptions, type Cue } from '../../shared/captions';
-import type { Moment, Recap } from '../../shared/contracts';
+import type { AvatarDefinition, Moment, Recap } from '../../shared/contracts';
 import { SAMPLE_DAY } from '../../shared/sample';
-import { formatDate, wallParts } from '../../shared/tz';
+import { wallParts } from '../../shared/tz';
 import { useApp } from '../App';
 import { Conversation, MomentDetail } from '../MomentDetail';
 import { StoryPlayer } from '../StoryPlayer';
-import { localWhen, Avatar, Icon, kindLabel, Notice, SourceIcon, Waveform } from '../ui';
+import { Avatar, Icon, kindLabel, localWhen, Notice, SourceIcon, Waveform } from '../ui';
 
 function todayIn(zone: string): string {
   const p = wallParts(Date.now(), zone);
   return `${p.year}-${String(p.month).padStart(2, '0')}-${String(p.day).padStart(2, '0')}`;
+}
+
+function longDate(day: string) {
+  const d = new Date(`${day}T12:00:00Z`);
+  const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: 'UTC' }).format(d);
+  const rest = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(d);
+  return `${weekday}, ${rest}`;
 }
 
 function mmss(seconds: number) {
@@ -65,14 +72,11 @@ export function OurDay() {
     );
   }
 
-  const others = room.members.filter((m) => m.id !== me.id);
-  const audienceLabel = recap?.audience
-    ? room.kind === 'direct'
-      ? `Only ${recap.audience.map((a) => a.displayName).join(' + ')}`
-      : `${room.name}: ${recap.audience.map((a) => a.displayName).join(', ')}`
-    : room.kind === 'direct' ? `Only ${room.members.map((m) => m.displayName).join(' + ')}` : room.name;
+  const names = recap?.audience?.map((a) => a.displayName) ?? room.members.map((m) => m.displayName);
+  const audienceLabel = room.kind === 'direct' ? `Only ${names.join(' + ')}` : `${room.name}: ${names.join(', ')}`;
   const totalSeconds = recap?.plan?.chapters.reduce((s, c) => s + c.durationSeconds, 0) ?? 0;
   const contributors = recap?.plan ? recap.plan.chapters.map((c) => c.contributorId) : [...new Set(shared.map((m) => m.ownerId))];
+  const visualContributors = contributors.filter((uid) => shared.some((m) => m.ownerId === uid));
 
   const requestRecap = async () => {
     try {
@@ -84,20 +88,22 @@ export function OurDay() {
     }
   };
 
+  const sources = showSources ? shared : shared.slice(0, 3);
+
   return (
     <>
       <div className="day-grid">
-        <div className="stack" style={{ gap: 24 }}>
-          <section className="card">
+        <div className="stack" style={{ gap: 18 }}>
+          <section className="card" aria-labelledby="day-title">
             <div className="day-header">
               <div>
-                <h1 className="page-title">{room.kind === 'direct' ? 'Your day, side by side' : "Our circle's day"}</h1>
-                <p className="subtitle">{day ? formatDate(`${day}T12:00:00Z`, 'UTC') : ''}</p>
+                <h1 className="page-title" id="day-title">{room.kind === 'direct' ? 'Your day, side by side' : "Our circle's day"}</h1>
+                <p className="subtitle">{day ? longDate(day) : ' '}</p>
               </div>
-              <span className="chip"><Icon name="users" />{audienceLabel}</span>
+              <span className="chip audience-pill"><Icon name="users" />{audienceLabel}</span>
             </div>
             {error ? <Notice kind="error">{error}</Notice> : null}
-            {loading ? <p className="muted">Loading…</p> : null}
+            {loading && !shared.length ? <p className="muted">Loading…</p> : null}
             {!loading && !shared.length ? (
               <div className="card-inner stack">
                 <strong>Nothing shared for this day yet.</strong>
@@ -107,20 +113,20 @@ export function OurDay() {
             ) : null}
             {shared.length ? (
               <div className="people-grid">
-                {contributors.map((uid) => {
+                {visualContributors.map((uid) => {
                   const person = room.members.find((m) => m.id === uid);
                   const theirs = shared.filter((m) => m.ownerId === uid);
                   const hero = theirs.find((m) => m.kind === 'photo') ?? theirs.find((m) => m.kind === 'clip') ?? theirs[0];
                   const chapter = recap?.plan?.chapters.find((c) => c.contributorId === uid);
-                  const bg = hero?.media?.thumbUrl ?? (hero?.kind === 'photo' ? hero.media?.url : undefined);
+                  const bg = hero?.kind === 'photo' ? hero.media?.url : hero?.media?.posterUrl ?? hero?.media?.thumbUrl;
                   return (
-                    <button key={uid} className="person-card" style={{ border: 0, padding: 0, textAlign: 'left', cursor: 'pointer', color: 'inherit' }} onClick={() => hero && setDetail(hero)}>
+                    <button key={uid} className="person-card" onClick={() => hero && setDetail(hero)} aria-label={`Open ${person?.displayName}'s ${hero ? kindLabel(hero.kind, hero.media?.sourceDevice).toLowerCase() : 'moment'}`}>
                       {bg ? <div className="media" style={{ backgroundImage: `url("${bg}")` }} /> : <div className="media text">“{hero?.caption}”</div>}
                       <div className="who">
                         <Avatar def={person?.avatar?.definition} size={92} name={person?.displayName} />
-                        <div>
+                        <div style={{ paddingBottom: 4 }}>
                           <h3>{person?.id === me.id ? 'Your day' : `${person?.displayName}'s day`}</h3>
-                          <p>{chapter?.segments[0]?.text ?? hero?.caption}</p>
+                          <p>{hero?.caption ?? chapter?.segments[0]?.text}</p>
                         </div>
                       </div>
                     </button>
@@ -129,10 +135,13 @@ export function OurDay() {
               </div>
             ) : null}
             {recap?.plan ? (
-              <div className="player-bar">
+              <div className="control-strip">
                 <button className="icon-btn" aria-label="Play our day" onClick={() => setPlaying(true)}><Icon name="play" /></button>
-                <div className="grow stack" style={{ gap: 8, minWidth: 180 }}>
-                  <strong>Our day · {mmss(totalSeconds)}</strong>
+                <div className="timeline">
+                  <strong>
+                    Our day · {mmss(totalSeconds)}{' '}
+                    {recap.generator === 'sample' ? <span className="chip label" title={recap.generatorLabel}>Precomputed sample</span> : recap.generator === 'chronological' ? <span className="chip label">No AI</span> : null}
+                  </strong>
                   <div className="progress" aria-hidden><i style={{ width: '0%' }} /><b style={{ left: '0%' }} /></div>
                 </div>
                 <button className="btn btn-primary btn-lg" onClick={() => setPlaying(true)}><Icon name="play" />Play our day</button>
@@ -140,21 +149,23 @@ export function OurDay() {
                 <button className="btn btn-quiet" aria-expanded={showSources} onClick={() => setShowSources((s) => !s)}>View sources</button>
               </div>
             ) : shared.length ? (
-              <div className="player-bar">
+              <div className="control-strip">
                 <p className="muted grow" style={{ margin: 0 }}>No shared recap for this day yet.</p>
                 <button className="btn btn-primary" onClick={() => void requestRecap()}><Icon name="sparkle" />Draft our day</button>
               </div>
             ) : null}
-            {recap ? <p className="small muted" style={{ margin: '10px 4px 0' }}>{recap.generatorLabel}. Every line links to the moment it came from.</p> : null}
           </section>
 
           {pending.map((p) => <PendingReview key={p.id} recap={p} onDone={load} />)}
 
           {shared.length ? (
-            <section className="card">
-              <h2 className="section-title">Moments behind the story</h2>
+            <section className="card" aria-labelledby="sources-title">
+              <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
+                <h2 className="section-title" id="sources-title" style={{ margin: 0 }}>Moments behind the story</h2>
+                {shared.length > 3 ? <button className="btn btn-quiet" onClick={() => setShowSources((s) => !s)}>{showSources ? 'Show fewer' : `All ${shared.length}`}</button> : null}
+              </div>
               <div className="sources-row">
-                {(showSources ? shared : shared.slice(0, 3)).map((m) => (
+                {sources.map((m) => (
                   <button key={m.id} className="source-tile" onClick={() => setDetail(m)}>
                     <span className="thumb" style={{ backgroundImage: m.media?.thumbUrl ? `url("${m.media.thumbUrl}")` : m.kind === 'voice' ? 'linear-gradient(135deg,#dfe9dc,#c6d8c4)' : undefined }}>
                       {m.kind === 'clip' ? <span className="play"><Icon name="play" /></span> : m.kind === 'voice' ? <Waveform bars={12} /> : m.kind === 'text' ? <Icon name="text" /> : null}
@@ -166,26 +177,22 @@ export function OurDay() {
                   </button>
                 ))}
               </div>
-              {shared.length > 3 && !showSources ? <button className="btn btn-quiet" style={{ marginTop: 8 }} onClick={() => setShowSources(true)}>Show all {shared.length}</button> : null}
             </section>
           ) : null}
         </div>
 
-        <aside className="stack" style={{ gap: 24 }}>
+        <aside className="stack" style={{ gap: 18 }}>
           {waiting ? <WaitingForYou moment={waiting} avatar={room.members.find((m) => m.id === waiting.ownerId)?.avatar?.definition} /> : null}
-          <section className="card stack">
+          <section className="card stack" style={{ gap: 10 }}>
             <span className="lock-hero"><Icon name="lockCheck" /></span>
             <h2 className="section-title" style={{ margin: 0 }}>Approved moments only</h2>
-            <p className="muted" style={{ margin: 0, fontSize: '1.1rem' }}>You choose what becomes part of our day. Every contributor approves their part before anyone sees a recap.</p>
+            <p className="muted" style={{ margin: 0, fontSize: '1.08rem' }}>You choose what becomes part of our day.</p>
+            <details>
+              <summary className="small" style={{ color: 'var(--green-strong)', fontWeight: 600 }}>How approval works</summary>
+              <p className="small muted" style={{ margin: '6px 0 0' }}>Every contributor reviews what a recap says about their own moments before anyone else sees it. Withdrawing a moment removes it from the story too.</p>
+            </details>
           </section>
           {room.kind === 'circle' ? <PrivacyCheck /> : null}
-          {others.length ? (
-            <section className="card stack">
-              <h2 className="section-title" style={{ margin: 0 }}>Sit together</h2>
-              <p className="muted" style={{ margin: 0 }}>Open the shared room on a Quest headset, or from this device with a seated avatar.</p>
-              <a className="btn btn-outline" href={`/room.html?room=${room.id}`}><Icon name="headset" />Enter our room</a>
-            </section>
-          ) : null}
         </aside>
       </div>
       {playing && recap?.plan ? <StoryPlayer recap={recap} room={room} onClose={() => setPlaying(false)} onOpenMoment={(m) => { setPlaying(false); setDetail(m); }} /> : null}
@@ -194,7 +201,7 @@ export function OurDay() {
   );
 }
 
-function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: import('../../shared/contracts').AvatarDefinition }) {
+function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: AvatarDefinition }) {
   const [playing, setPlaying] = useState(false);
   const [replying, setReplying] = useState(false);
   const [cues, setCues] = useState<Cue[]>([]);
@@ -206,13 +213,15 @@ function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: import('..
   const duration = moment.media?.durationMs ? Math.round(moment.media.durationMs / 1000) : null;
   return (
     <section className="card waiting" aria-label="Waiting for you">
-      <h2 className="section-title" style={{ margin: 0, fontSize: '1.9rem' }}>Waiting for you</h2>
-      <div className="row">
-        <Avatar def={avatar} size={110} name={moment.ownerName} />
+      <h2 className="section-title" style={{ margin: 0, fontSize: 'clamp(1.5rem, 2vw, 1.95rem)' }}>Waiting for you</h2>
+      <div className="row" style={{ gap: 16 }}>
+        <Avatar def={avatar} size={104} name={moment.ownerName} />
         {moment.kind === 'voice' ? <Waveform playing={playing} /> : null}
       </div>
       <div className="quote">“{moment.caption}”</div>
-      <div className="muted" style={{ fontSize: '1.1rem' }}>{moment.ownerName} · {kindLabel(moment.kind, moment.media?.sourceDevice)}{duration ? ` · 0:${String(duration).padStart(2, '0')}` : ''}</div>
+      <div className="muted" style={{ fontSize: '1.06rem' }}>
+        {moment.ownerName} · {kindLabel(moment.kind, moment.media?.sourceDevice)}{duration ? ` · 0:${String(duration).padStart(2, '0')}` : ''}
+      </div>
       {moment.kind === 'voice' && moment.media?.url ? (
         <audio ref={audio} src={moment.media.url} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={(e) => setT(e.currentTarget.currentTime)} />
       ) : null}
@@ -226,7 +235,7 @@ function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: import('..
         <button className="btn btn-primary btn-lg" aria-expanded={replying} onClick={() => setReplying((r) => !r)}><Icon name="reply" />Reply</button>
       </div>
       {replying ? <Conversation moment={moment} /> : null}
-      <p className="small muted" style={{ margin: 0 }}>Recorded {localWhen(moment)} — a message, not a live call.</p>
+      <p className="small muted" style={{ margin: 0 }}>Recorded message · {localWhen(moment)}</p>
     </section>
   );
 }
@@ -277,7 +286,7 @@ function PrivacyCheck() {
     void Promise.all(direct.map((r) => ds.moments(r.id))).then((lists) => setCount(lists.flat().filter((m) => m.sharingState === 'shared').length)).catch(() => setCount(null));
   }, [ds, rooms, room]);
   return (
-    <section className="card stack">
+    <section className="card stack" style={{ gap: 8 }}>
       <h2 className="section-title" style={{ margin: 0 }}>Private stays private</h2>
       <p className="muted" style={{ margin: 0 }}>
         {count ? `${count} moment${count > 1 ? 's' : ''} from your direct room${count > 1 ? 's are' : ' is'} not part of this circle — not in its story, feed, keepsakes or notifications.` : 'Moments from direct rooms never appear in a circle.'}

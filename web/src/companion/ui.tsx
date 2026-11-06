@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { avatarDataUrl, DEFAULT_AVATAR } from '../shared/avatar';
+import { useEffect, useState, type ReactNode } from 'react';
+import { DEFAULT_AVATAR } from '../shared/avatar';
 import type { AvatarDefinition } from '../shared/contracts';
 import { cityOf } from '../shared/tz';
 
@@ -40,6 +40,7 @@ const P: Record<string, ReactNode> = {
   refresh: <><path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v3h3" /><path d="M4 13a8 8 0 0 0 14.6 4.5M20 20v-3h-3" /></>,
   trash: <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></>,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></>,
+  clock: <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></>,
   sun: <><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></>,
 };
 
@@ -63,12 +64,51 @@ export function Logo({ size = 44 }: { size?: number }) {
   );
 }
 
+// Portraits and keepsakes are rendered from the same 3D assets used in the room (src/shared/portrait.ts).
+// The renderer is code-split so three.js only loads when a portrait is first needed.
+const renderer = () => import('../shared/portrait');
+
+function usePortrait(def: AvatarDefinition | null | undefined, px: number) {
+  const key = JSON.stringify(def ?? DEFAULT_AVATAR);
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    setSrc(null);
+    renderer()
+      .then((m) => m.renderPortrait(def ?? DEFAULT_AVATAR, px))
+      .then((url) => alive && setSrc(url))
+      .catch(() => alive && setSrc(null));
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, px]);
+  return src;
+}
+
 export function Avatar({ def, size = 64, name }: { def?: AvatarDefinition | null; size?: number; name?: string }) {
+  const px = size <= 56 ? 128 : size <= 120 ? 256 : 384;
+  const src = usePortrait(def, px);
   return (
     <span className="avatar" style={{ width: size, height: size }}>
-      <img src={avatarDataUrl(def ?? DEFAULT_AVATAR)} alt={name ? `${name}'s avatar` : ''} width={size} height={size} />
+      {src ? <img src={src} alt={name ? `${name}'s avatar` : ''} width={size} height={size} /> : <span className="avatar-loading" role="img" aria-label={name ? `${name}'s avatar (loading)` : undefined} />}
     </span>
   );
+}
+
+export function KeepsakeRender({ kind, progress = 1, target = 1, earned = true, title }: { kind: string; progress?: number; target?: number; earned?: boolean; title: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    renderer()
+      .then((m) => m.renderKeepsake(kind, progress, target, earned, 520, 320))
+      .then((url) => alive && setSrc(url))
+      .catch(() => alive && setSrc(null));
+    return () => {
+      alive = false;
+    };
+  }, [kind, progress, target, earned]);
+  return src ? <img className="keepsake-render" src={src} alt={`${title} keepsake`} /> : <span className="keepsake-render loading" aria-hidden />;
 }
 
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
@@ -100,51 +140,6 @@ export function Notice({ kind = 'info', children }: { kind?: 'info' | 'warn' | '
       <Icon name={kind === 'info' ? 'info' : 'info'} />
       <div>{children}</div>
     </div>
-  );
-}
-
-export function KeepsakeArt({ kind, progress = 1, target = 1 }: { kind: string; progress?: number; target?: number }) {
-  if (kind === 'frame') {
-    return (
-      <svg viewBox="0 0 200 130" aria-hidden>
-        <ellipse cx="100" cy="122" rx="80" ry="6" fill="rgba(0,0,0,.25)" />
-        <rect x="45" y="14" width="110" height="104" rx="6" fill="#a8743f" />
-        <rect x="53" y="22" width="94" height="88" fill="#f6efe2" />
-        <rect x="59" y="28" width="82" height="62" fill="url(#sky)" />
-        <defs>
-          <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#f2a86f" /><stop offset="1" stopColor="#6b5a7a" /></linearGradient>
-        </defs>
-        <path d="M59 78 l10 -12 6 6 10 -22 6 26 12 -8 8 10 30 0 v12 H59Z" fill="#4a3a52" />
-        <circle cx="120" cy="52" r="6" fill="#ffe2a8" />
-        <rect x="118" y="28" width="16" height="12" fill="#e9dcc6" stroke="#b8a07a" />
-      </svg>
-    );
-  }
-  if (kind === 'linked_sculptures') {
-    return (
-      <svg viewBox="0 0 200 130" aria-hidden>
-        <ellipse cx="100" cy="118" rx="70" ry="7" fill="rgba(0,0,0,.25)" />
-        <g fill="none" strokeLinecap="round">
-          <ellipse cx="82" cy="70" rx="34" ry="40" stroke="#efe6d6" strokeWidth="16" />
-          <ellipse cx="118" cy="66" rx="34" ry="40" stroke="#d9cdb8" strokeWidth="16" />
-          <path d="M100 32 a34 40 0 0 1 16 2" stroke="#efe6d6" strokeWidth="16" />
-        </g>
-      </svg>
-    );
-  }
-  const blossoms = Math.max(1, Math.round((progress / target) * 9));
-  return (
-    <svg viewBox="0 0 200 130" aria-hidden>
-      <ellipse cx="100" cy="122" rx="56" ry="6" fill="rgba(0,0,0,.25)" />
-      <path d="M78 102 h44 l-6 18 h-32Z" fill="#efe6d6" />
-      <path d="M100 102 C98 86 104 76 100 62 M100 80 C90 74 84 70 78 60 M101 74 C112 68 118 62 122 52" stroke="#6b4a2b" strokeWidth="5" fill="none" strokeLinecap="round" />
-      {[[76, 52], [88, 44], [102, 40], [116, 44], [126, 50], [70, 62], [132, 60], [96, 54], [110, 56]].map(([x, y], i) => (
-        <g key={i}>
-          <circle cx={x} cy={y} r="11" fill="#6f9a5c" />
-          {i < blossoms ? <circle cx={x + 3} cy={y - 3} r="4" fill="#f6e4d0" /> : null}
-        </g>
-      ))}
-    </svg>
   );
 }
 

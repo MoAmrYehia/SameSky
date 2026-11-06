@@ -137,9 +137,10 @@ function Signed({ mode, route, navigate, onExit }: { mode: 'sample' | 'live'; ro
   else if (base === 'join') view = <Join token={route.slice(5)} />;
   else view = <OurDay />;
 
+  const pageClass = base === 'together' || base === 'keepsakes' ? 'page-evening' : base === 'moments' ? 'page-composer' : 'page-day';
   return (
     <Ctx.Provider value={ctx}>
-      <div className="shell">
+      <div className={`shell ${pageClass}`}>
         <nav className="sidebar" aria-label="Main">
           <a className="brand" href="#/day"><Logo /><span className="brand-name">SameSky</span></a>
           {NAV.map((n) => (
@@ -158,16 +159,16 @@ function Signed({ mode, route, navigate, onExit }: { mode: 'sample' | 'live'; ro
             {rooms.length > 1 ? (
               <label className="row small">
                 <span className="sr-only">Room</span>
-                <select className="input" style={{ width: 'auto', minHeight: 44 }} value={room?.id} onChange={(e) => setRoomId(e.target.value)}>
+                <select className="room-select" value={room?.id} onChange={(e) => setRoomId(e.target.value)}>
                   {rooms.map((r) => (
-                    <option key={r.id} value={r.id}>{r.kind === 'direct' ? `💬 ${r.name}` : `👪 ${r.name}`}</option>
+                    <option key={r.id} value={r.id}>{r.kind === 'direct' ? `Direct · ${r.name}` : `Circle · ${r.name}`}</option>
                   ))}
                 </select>
               </label>
             ) : null}
-            {mode === 'sample' ? <span className="chip label warn">Sample · fictional people, precomputed AI</span> : null}
+            {mode === 'sample' ? <span className="chip label warn" title="Everyone in the sample is fictional; its recaps are precomputed (no AI call).">Sample · fictional people</span> : null}
             <span className="spacer" />
-            <a className="icon-btn bell" href="#/inbox" aria-label={`Inbox, ${unread} unread`}>
+            <a className="icon-btn bell glass" href="#/inbox" aria-label={`Inbox, ${unread} unread`}>
               <Icon name="bell" />
               {unread ? <span className="count">{unread}</span> : null}
             </a>

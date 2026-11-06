@@ -10,7 +10,7 @@ Legend: ✅ implemented and automatically tested · 🟢 implemented, exercised 
 | Runs on Quest 3/3S, not glasses-only | `web/room.html` (IWSDK/WebXR, immersive-vr, hand tracking) | 🟡 headset run pending |
 | Controller-free navigation throughout | Pinch select/grab, poke dock; no buttons, keyboard, gaze or voice needed | 🟢 desktop / 🟡 hands |
 | Seated, quick start, short rewarding session | Seated table layout; first meaningful moment = the glowing cup | 🟢 |
-| ≥ 60 fps on Quest | `?debug=1` HUD shows fps/draw calls; ~100 draw calls, canvas UI, no shadows | 🟡 measure on device |
+| ≥ 60 fps on Quest | `?debug=1` HUD shows fps/draw calls/triangles; 95–101 draw calls and 123k–136k triangles incl. one bounded soft shadow light, canvas UI | 🟡 measure on device |
 | Launchable build URL + testing instructions | `docs/DEPLOYMENT.md`, `docs/JUDGE_GUIDE.md` | 🟡 hosting pending |
 | < 3 min video of actual app | `docs/DEMO_SCRIPT.md` | ⬜ to record |
 
@@ -54,6 +54,26 @@ Legend: ✅ implemented and automatically tested · 🟢 implemented, exercised 
 | 16 | `test_unsupported_codec_gets_useful_message`, `test_unprocessed_media_cannot_be_published`, `test_filename_is_not_trusted`, `test_phone_photo_orientation_and_location_stripped`; camera denial handled in `Share.tsx` 🟢 |
 | 17 | `test_phone_photo_orientation_and_location_stripped` + `test_action_camera_clip_processed_to_playback_profile` — Quest playback 🟡 |
 | 18 | Companion stops tracks on stop/unmount (`useMediaStream`); recorded messages labelled in companion and room 🟢; live streaming ⬜ (P1) |
+
+## Visual enhancement instructions (6 November 2026)
+
+See [VISUAL_QA.md](VISUAL_QA.md) for captures, comparisons and remaining differences, and
+[ASSET_MANIFEST.md](ASSET_MANIFEST.md) for provenance.
+
+| Instruction | Where | Status |
+|---|---|---|
+| Photographic sample media with documented provenance; stop overwriting art with the Pillow generator | `scripts/assets/build_sample_media.py`, `web/public/assets/sample/`, `docs/asset-provenance.json`; Pillow generator moved to `scripts/fixtures/` (git-ignored output) | ✅ |
+| Authored, modelled avatar (nose, eyelids, brows, mouth, hair, clothing, hands); compatible `Avatar3D` interface | `scripts/assets/sculpt_characters.py` → `characters.glb`; `src/shared/character.ts`; `src/xr/avatar3d.ts` (root, head, hand anchors, setPresence, setPose, playGesture, update, dispose) | 🟢 desktop |
+| Portraits from the same character, outfit, materials and light rig | `src/shared/portrait.ts`, `Avatar` in `src/companion/ui.tsx` | 🟢 |
+| Blink, breathing, rest pose and gestures separate from tracking; tracked hands win | `CharacterModel.update`, `Avatar3D.update` | 🟢 desktop / 🟡 tracked input |
+| Room composition: screen left, partner right, cup label foreground, compact unified dock; nothing clipped | `src/xr/main.ts` (`framingFor`, `placeAtNdc`, `safeArea`), `window.__sameskySafeArea` | ✅ checked by `capture.mjs` at 1672×941, 1440×900, 1024×768, 390×844 |
+| Headset: table-space anchors at seated reach; the head pose is never moved | `applyXrLayout`, `recenter` | 🟡 headset run pending (`?preview=xr` approximation only) |
+| CC0 furniture, PBR textures, projected skyline plate, contact shading, one restrained shadow light | `src/xr/env.ts`, `web/scripts/optimize-assets.mjs` | 🟢 |
+| sRGB vs data textures, PMREM IBL, tone mapping, unlit UI, disposal | `IBLTexture` + `NeutralToneMapping` in `main.ts`; `toneMapped:false` panels; `dispose()` on env, objects, avatar, panels | 🟢 |
+| Memoized caption/label redraws; allocation-free frame loop | `drawCaption`, `FittedPill`/`FittedCard`, `RoomSystem.update`, `CharacterModel.update` | 🟢 code review |
+| Locally hosted font; deterministic light and explicit dark themes | `@fontsource-variable/figtree`; `samesky.theme` | ✅ |
+| Our day, Share (populated, filmstrip trim, audience), Together, keepsake renders | `src/companion/views/*`, `src/companion/styles.css` | 🟢 |
+| Budgets: ~150–200k tris, ≤100–120 draws, 1–2K textures, ~15 MB critical art | Measured: 123k–136k tris, 95–101 draws, ≤2K, about 6.3 MB | 🟢 desktop / 🟡 Quest |
 
 ## P1 (not implemented)
 
