@@ -6,6 +6,7 @@ import { Inbox } from './views/Inbox';
 import { Keepsakes } from './views/Keepsakes';
 import { OurDay } from './views/OurDay';
 import { Settings } from './views/Settings';
+import { GetStarted, setupOpen } from './views/Setup';
 import { Share } from './views/Share';
 import { Together } from './views/Together';
 import { Join, Welcome } from './views/Welcome';
@@ -61,7 +62,7 @@ export function App() {
     return <Welcome onSample={() => choose('sample')} onSignedIn={() => choose('live')} joinToken={route.slice(5)} />;
   }
   if (!mode) return <Welcome onSample={() => choose('sample')} onSignedIn={() => choose('live')} />;
-  return <Signed mode={mode} route={route} navigate={navigate} onExit={() => { storeToken(null); choose(null); navigate('day'); }} />;
+  return <Signed mode={mode} route={route} navigate={navigate} onExit={() => { storeToken(null); void import('../shared/portrait').then((mod) => mod.setPortraitViewer(null)); choose(null); navigate('day'); }} />;
 }
 
 function Signed({ mode, route, navigate, onExit }: { mode: 'sample' | 'live'; route: string; navigate: (r: string) => void; onExit: () => void }) {
@@ -78,6 +79,8 @@ function Signed({ mode, route, navigate, onExit }: { mode: 'sample' | 'live'; ro
   const refresh = useCallback(async () => {
     try {
       const [m, r, inbox] = await Promise.all([ds.me(), ds.rooms(), ds.inbox()]);
+      // cached renders of people's likenesses are scoped to the signed-in viewer
+      void import('../shared/portrait').then((mod) => mod.setPortraitViewer(mode === 'live' ? m.id : null));
       setMe(m);
       setRooms(r);
       setUnread(inbox.unread);
@@ -126,7 +129,7 @@ function Signed({ mode, route, navigate, onExit }: { mode: 'sample' | 'live'; ro
   }
   if (!me) return <div className="main muted" aria-busy="true">Loading your day…</div>;
 
-  const base = route.split('/')[0];
+  const base = route.split(/[/?]/)[0];
   const ctx: AppCtx = { ds, me, rooms, room, setRoomId, refresh, toast, signOut: onExit, navigate };
   let view;
   if (base === 'moments') view = <Share />;
@@ -135,6 +138,7 @@ function Signed({ mode, route, navigate, onExit }: { mode: 'sample' | 'live'; ro
   else if (base === 'settings') view = <Settings />;
   else if (base === 'inbox') view = <Inbox />;
   else if (base === 'join') view = <Join token={route.slice(5)} />;
+  else if (mode === 'live' && (rooms.length === 0 || setupOpen())) view = <GetStarted />;
   else view = <OurDay />;
 
   const pageClass = base === 'together' || base === 'keepsakes' ? 'page-evening' : base === 'moments' ? 'page-composer' : 'page-day';

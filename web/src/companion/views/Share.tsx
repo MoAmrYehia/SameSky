@@ -3,6 +3,7 @@ import type { AudienceResolution, Moment, MomentKind, SourceDevice } from '../..
 import { useApp } from '../App';
 import { MomentMedia } from '../MomentDetail';
 import { localWhen, Avatar, Checkbox, deviceLabel, Icon, kindLabel, Notice, Toggle } from '../ui';
+import { InviteCard, NoRoom } from './Setup';
 
 type Tab = 'upload' | 'camera' | 'voice' | 'text';
 const DEVICES: SourceDevice[] = ['phone', 'camera', 'action_camera', 'drone', 'glasses', 'webcam', 'laptop', 'tablet', 'other'];
@@ -17,6 +18,8 @@ interface Draft {
   url: string;
   durationMs?: number;
   poster?: string;
+  /** the sample clip is a simulated pan rendered from a still panorama, never a camera recording */
+  origin?: 'simulated';
 }
 
 async function downscaleImage(file: File): Promise<Blob> {
@@ -104,13 +107,13 @@ export function Share() {
 
   const kind: MomentKind = tab === 'text' ? 'text' : draft?.kind ?? (tab === 'voice' ? 'voice' : 'photo');
   const ready = tab === 'text' ? text.trim().length > 0 : !!draft;
-  const audienceText = recipients.length === 1 ? `Share with ${others.find((o) => o.id === recipients[0])?.displayName ?? 'them'}` : room?.kind === 'circle' && recipients.length === others.length ? `Share with ${room.name.replace(/ circle$/i, '').toLowerCase() === 'family' ? 'family' : room.name}` : `Share with ${recipients.length} people`;
+  const audienceText = !others.length ? 'No one to share with yet' : !recipients.length ? 'Choose who can see it' : recipients.length === 1 ? `Share with ${others.find((o) => o.id === recipients[0])?.displayName ?? 'them'}` : room?.kind === 'circle' && recipients.length === others.length ? `Share with ${room.name.replace(/ circle$/i, '').toLowerCase() === 'family' ? 'family' : room.name}` : `Share with ${recipients.length} people`;
 
   const create = async () => {
     if (!room) throw new Error('Choose a room first.');
     return ds.createMoment(
       {
-        roomId: room.id, kind, caption: tab === 'text' ? text.trim() : caption.trim(), file: draft?.blob, fileName: draft?.name, sourceDevice: tab === 'camera' ? 'webcam' : device,
+        roomId: room.id, kind, caption: tab === 'text' ? text.trim() : caption.trim(), file: draft?.blob, fileName: draft?.name, sourceDevice: tab === 'camera' ? 'webcam' : device, origin: draft?.origin,
         captureAt: new Date(captureLocal).toISOString(), aiAllowed,
         trimStartMs: kind === 'clip' ? trim[0] : undefined, trimEndMs: kind === 'clip' ? trim[1] : undefined,
       },
@@ -187,13 +190,15 @@ export function Share() {
       setDevice('camera');
       setCaption('Evening lights along the promenade.');
       setTrim([3000, 8000]);
-      setDraft({ blob, name: 'Evening-promenade.mp4', kind: 'clip', url: URL.createObjectURL(blob), durationMs: 8000, poster: '/assets/sample/adam-clip-poster.jpg' });
+      setDraft({ blob, name: 'sample-promenade-pan.mp4', kind: 'clip', url: URL.createObjectURL(blob), durationMs: 8000, poster: '/assets/sample/adam-clip-poster.jpg', origin: 'simulated' });
     } catch {
       setError('The sample clip could not be loaded.');
     } finally {
       setBusy(null);
     }
   };
+
+  if (!rooms.length) return <NoRoom />;
 
   return (
     <>
@@ -240,9 +245,11 @@ export function Share() {
             </div>
           ) : null}
           <details className="glass-panel details-panel">
-            <summary><Icon name="info" />Source and time <span className="muted small">· {tab === 'upload' ? `${deviceLabel(device)} · ` : ''}{new Date(captureLocal).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></summary>
+            <summary><Icon name="info" />Source and time <span className="muted small">· {tab === 'upload' ? `${draft?.origin === 'simulated' ? 'Simulated camera pan' : deviceLabel(device)} · ` : ''}{new Date(captureLocal).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></summary>
             <div className="row wrap" style={{ gap: 16, marginTop: 12 }}>
-              {tab === 'upload' ? (
+              {tab === 'upload' && draft?.origin === 'simulated' ? (
+                <p className="muted small" style={{ margin: 0, maxWidth: 360 }}>This sample clip was rendered from a still CC0 panorama along a simulated camera path. It isn’t a camera recording, so it’s labelled “Simulated camera pan”.</p>
+              ) : tab === 'upload' ? (
                 <label className="field" style={{ minWidth: 200 }}><span>Where it came from</span>
                   <select className="input" value={device} onChange={(e) => setDevice(e.target.value as SourceDevice)}>
                     {DEVICES.map((d) => <option key={d} value={d}>{deviceLabel(d)}</option>)}
@@ -260,7 +267,9 @@ export function Share() {
             <button className="option-card" aria-pressed={mode === 'one'} onClick={() => setMode('one')}><Icon name="user" /><span>One person · 1:1</span></button>
             <button className="option-card" aria-pressed={mode === 'circle'} onClick={() => setMode('circle')}><Icon name="users" /><span>Private circle · 1:many</span></button>
           </div>
-          {candidates.length ? (
+          {room && !others.length ? (
+            <InviteCard room={room} title="Nobody has joined yet" body="Invite someone to share with. You can still save moments privately now and share them later." />
+          ) : candidates.length ? (
             <>
               <label className="select-with-icon"><span className="sr-only">{mode === 'one' ? 'Person' : 'Circle'}</span>
                 <Icon name={mode === 'one' ? 'user' : 'users'} />
@@ -271,7 +280,7 @@ export function Share() {
               <div>
                 {others.map((m) => (
                   <div key={m.id} className="recipient">
-                    <Avatar def={m.avatar?.definition} size={52} name={m.displayName} />
+                    <Avatar avatar={m.avatar} size={52} name={m.displayName} />
                     <span className="grow" style={{ fontSize: '1.15rem' }}>{m.displayName}</span>
                     <Checkbox label={`Share with ${m.displayName}`} checked={recipients.includes(m.id)}
                       onChange={(v) => setRecipients((list) => (mode === 'one' ? (v ? [m.id] : []) : v ? [...list, m.id] : list.filter((x) => x !== m.id)))} />
@@ -279,7 +288,7 @@ export function Share() {
                 ))}
               </div>
             </>
-          ) : <Notice kind="warn">You don't have a {mode === 'one' ? 'direct room' : 'circle'} yet. Create one in Settings.</Notice>}
+          ) : <Notice kind="warn">You don’t have a {mode === 'one' ? 'direct room' : 'circle'} yet. <a href="#/settings">Create one in Settings</a>.</Notice>}
           <div className="setting-row"><Icon name="lock" /><span className="grow">Only selected people can view this moment.</span></div>
           <div className="setting-row"><Icon name="sparkle" /><span className="grow setting-label">Include in AI recap</span>
             <Toggle checked={aiAllowed} onChange={setAiAllowed} label="Include in AI recap" /></div>
@@ -297,7 +306,7 @@ export function Share() {
           <div className="my-moments">
             {mine.map((m) => (
               <div key={m.id} className="card-inner stack" style={{ gap: 8 }}>
-                <div className="row"><strong className="grow">{kindLabel(m.kind, m.media?.sourceDevice)}</strong>
+                <div className="row"><strong className="grow">{kindLabel(m.kind, m.media?.sourceDevice, m.media?.origin)}</strong>
                   <span className={`chip label${m.sharingState === 'shared' ? ' green' : ''}`}>{m.sharingState === 'shared' ? 'Shared' : m.sharingState === 'withdrawn' ? 'Withdrawn' : 'Private'}</span></div>
                 {m.media ? <MomentMedia moment={m} /> : <p style={{ margin: 0 }}>{m.caption}</p>}
                 <span className="small muted">{m.audience.length ? `Seen by ${m.audience.map((a) => a.displayName).join(', ')}` : 'Only you'} · {localWhen(m)}</span>
@@ -365,7 +374,7 @@ function DraftPreview({ draft, device, trim, setTrim, onReplace }: { draft: Draf
         {draft.kind === 'voice' ? <audio src={draft.url} controls style={{ width: '100%' }} /> : null}
       </div>
       <div className="meta-row">
-        <span className="meta-chip"><Icon name={draft.kind === 'voice' ? 'mic' : 'camera'} />{deviceLabel(device)} import</span>
+        <span className="meta-chip"><Icon name={draft.kind === 'voice' ? 'mic' : 'camera'} />{draft.origin === 'simulated' ? 'Simulated camera pan · sample' : `${deviceLabel(device)} import`}</span>
         {draft.kind !== 'photo' ? <span className="meta-chip"><Icon name="clock" />{draft.durationMs ? mmss(draft.durationMs) : '–:–'}</span> : null}
         <span className={`meta-chip${known ? ' ok' : ''}`}><Icon name={known ? 'check' : 'refresh'} />{known ? 'Ready' : 'Reading the file…'}</span>
       </div>

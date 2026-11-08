@@ -79,12 +79,108 @@ class User(Base):
 
 
 class Avatar(Base):
+    """A person's profile avatar.
+
+    `definition` is the demo/legacy preset (the sculpted demo kit) and stays readable for every existing
+    row. `active_asset_id` points at the owner-approved, photo-derived 3D asset when there is one; it is
+    independent of private source photos and of any unapproved generation job. `version` increases on
+    every change so viewers' caches (portraits, loaded models) are keyed to the exact active version.
+    """
+
     __tablename__ = "avatars"
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
     definition: Mapped[dict] = mapped_column(JSON, default=dict)
     version: Mapped[int] = mapped_column(Integer, default=1)
-    likeness_consent: Mapped[bool] = mapped_column(Boolean, default=False)
+    likeness_consent: Mapped[bool] = mapped_column(Boolean, default=False)  # legacy flag; see AvatarConsent
+    active_asset_id: Mapped[str | None] = mapped_column(ForeignKey("avatar_assets.id", ondelete="SET NULL"), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class AvatarConsent(Base):
+    """Explicit choices recorded before any photo is processed: which service, and who may see the result."""
+
+    __tablename__ = "avatar_consents"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    provider: Mapped[str] = mapped_column(String(24))  # metaperson | manual_import
+    processing: Mapped[bool] = mapped_column(Boolean, default=False)  # may this service process my photos
+    likeness_scope: Mapped[str] = mapped_column(String(12), default="rooms")  # rooms | direct | private
+    text_version: Mapped[str] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    withdrawn_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class AvatarSource(Base):
+    """A private source photo. Never served publicly, never a moment, recap source or notification image."""
+
+    __tablename__ = "avatar_sources"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    consent_id: Mapped[str] = mapped_column(ForeignKey("avatar_consents.id", ondelete="CASCADE"))
+    view: Mapped[str] = mapped_column(String(8), default="front")  # front | left | right
+    blob_path: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    mime: Mapped[str] = mapped_column(String(40), default="image/jpeg")
+    width: Mapped[int] = mapped_column(Integer, default=0)
+    height: Mapped[int] = mapped_column(Integer, default=0)
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    content_hash: Mapped[str] = mapped_column(String(64), default="")
+    retention_until: Mapped[datetime] = mapped_column(UTCDateTime)
+    deletion_status: Mapped[str] = mapped_column(String(10), default="kept")  # kept | deleted
+    deleted_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class AvatarJob(Base):
+    """One generation attempt. States: validated → queued → processing → validating_asset →
+    awaiting_owner_approval (the asset then waits for the owner), or failed | cancelled | superseded."""
+
+    __tablename__ = "avatar_jobs"
+    __table_args__ = (UniqueConstraint("owner_id", "idempotency_key", name="uq_avatar_jobs_owner_key"),)
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    consent_id: Mapped[str] = mapped_column(ForeignKey("avatar_consents.id", ondelete="CASCADE"))
+    provider: Mapped[str] = mapped_column(String(24))
+    provider_ref: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    source_ids: Mapped[list] = mapped_column(JSON, default=list)
+    options: Mapped[dict] = mapped_column(JSON, default=dict)
+    idempotency_key: Mapped[str] = mapped_column(String(80))
+    state: Mapped[str] = mapped_column(String(24), default="validated")
+    attempt: Mapped[int] = mapped_column(Integer, default=1)
+    progress: Mapped[int] = mapped_column(Integer, default=0)
+    safe_error: Mapped[str | None] = mapped_column(String(240), nullable=True)
+    asset_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    provider_cleanup: Mapped[str | None] = mapped_column(String(16), nullable=True)  # pending | done | failed | not_needed
+    poll_count: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
+class AvatarAsset(Base):
+    """A validated, privately stored 3D avatar model (GLB) and its rig capabilities.
+
+    States: awaiting_owner_approval → active (or rejected); active → superseded | revoked; then deleting →
+    deleted. Only `active` assets are ever served to other people, and only within `visibility`.
+    """
+
+    __tablename__ = "avatar_assets"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    source_kind: Mapped[str] = mapped_column(String(16), default="photo_derived")  # photo_derived | preset_demo | legacy
+    provider: Mapped[str] = mapped_column(String(24))  # metaperson | manual_import
+    provider_model_version: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    job_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    glb_path: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    content_hash: Mapped[str] = mapped_column(String(64), default="")
+    size_bytes: Mapped[int] = mapped_column(Integer, default=0)
+    rig: Mapped[dict] = mapped_column(JSON, default=dict)
+    state: Mapped[str] = mapped_column(String(24), default="awaiting_owner_approval")
+    visibility: Mapped[str] = mapped_column(String(12), default="rooms")  # rooms | direct | private
+    approved_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    revocation_version: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
 # ---------------------------------------------------------------------------

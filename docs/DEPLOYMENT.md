@@ -30,7 +30,10 @@ cd api && pip install -r requirements.txt && uvicorn samesky.main:app --host 0.0
 Required environment: `SAMESKY_SECRET_KEY` (long random), `DATABASE_URL`, `SAMESKY_MEDIA_ROOT` (persistent
 volume), `SAMESKY_CORS_ORIGINS` (your web origin). Optional: `ANTHROPIC_API_KEY` (+ `SAMESKY_AI_MODEL`),
 `VAPID_PUBLIC_KEY`/`VAPID_PRIVATE_KEY`/`VAPID_SUBJECT`, `SUPABASE_JWT_SECRET`, `SAMESKY_PUBLIC_API_URL` (only if
-the web app and API are on different origins). WebSockets must be allowed through the proxy for `/v1/realtime`;
+the web app and API are on different origins), and for photo-derived avatars `METAPERSON_CLIENT_ID`/
+`METAPERSON_CLIENT_SECRET` (+ the `SAMESKY_AVATAR_*` settings in `.env.example`; set them on the worker too, see
+`docs/AVATARS.md`). Private avatar source photos and models live under `SAMESKY_MEDIA_ROOT/avatar-private/`,
+outside every static path; back that volume up like media and include it in deletion requests. WebSockets must be allowed through the proxy for `/v1/realtime`;
 run a single API instance (the realtime hub is in-process) or add sticky sessions.
 
 ## 3. Worker (durable, restartable)

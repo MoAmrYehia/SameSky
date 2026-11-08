@@ -11,8 +11,8 @@ IWSDK/WebXR experience with a phone/desktop companion.
 
 | | |
 |---|---|
-| **XR room** (`web/room.html`) | Hands-first seated room on Quest 3/3S via Meta's Immersive Web SDK: pinch to pick up the cup (spatial voice note + captions), frames and postcards open on the shared screen, quick replies become persistent notes on the table, keepsake shelf, recenter / reset / captions / mute / exit within seated reach, personalized avatars, two-person live viewing with synchronized playback. Same page works on desktop/phone with click. |
-| **Companion** (`web/index.html`) | React phone/desktop app: Our day (side-by-side recap, source-linked story player, waiting voice note, reply), Share a moment (upload / camera / voice / text, trim, explicit 1:1 or 1:many audience with confirmation, AI consent separate), Together (live clocks, deterministic overlap, Free now, quiet hours, call suggestions), Keepsakes + daily archive, Inbox, Settings (time zone, avatar, availability, push, rooms & invites). |
+| **XR room** (`web/room.html`) | Hands-first seated room on Quest 3/3S via Meta's Immersive Web SDK: pinch to pick up the cup (spatial voice note + captions), frames and postcards open on the shared screen, quick replies become persistent notes on the table, keepsake shelf, recenter / reset / captions / mute / exit within seated reach, each person's owner-approved photo-derived 3D avatar (or a labelled demo avatar), two-person live viewing with synchronized playback. Same page works on desktop/phone with click. |
+| **Companion** (`web/index.html`) | React phone/desktop app: Our day (side-by-side recap, source-linked story player, waiting voice note, reply), Share a moment (upload / camera / voice / text, trim, explicit 1:1 or 1:many audience with confirmation, AI consent separate), Together (live clocks, deterministic overlap, Free now, quiet hours, call suggestions), Keepsakes + daily archive, Inbox, Settings (time zone; *Your avatar*: create from your photos or import a model, review in neutral light, approve, choose who sees it, stop sharing or delete; availability, push, rooms & invites). |
 | **API** (`api/`) | FastAPI + SQLAlchemy (SQLite dev / Postgres prod). Explicit recipient grants bound to membership generations, audience snapshots, withdrawal/invalidation, recap generation + per-contributor approval, idempotent awards, time-zone engine, durable job outbox + worker, Web Push, app-owned realtime channel. |
 | **Sample day** | No login, no network calls to real rooms, no AI calls, no push. Fictional Adam (Dubai), Maya (Beijing) and Lina (London); original generated media; isolated local storage with a reset. |
 
@@ -41,6 +41,10 @@ npm install
 npm run dev
 ```
 
+Photo-to-avatar generation runs on the server through Avatar SDK MetaPerson and needs their API credentials
+(Pro plan) in `.env` — see [docs/AVATARS.md](docs/AVATARS.md) and `.env.example`. Without them the app says
+generation isn't set up, and people can import a rigged GLB made elsewhere or keep the labelled demo avatar.
+
 Open http://localhost:5173 and choose **Try a sample day**, or open http://localhost:5173/room.html?mode=sample
 for the room. On a Quest on the same network, run `npm run dev -- --mode https` and open
 `https://<your-computer-ip>:5173/room.html?mode=sample` (accept the self-signed certificate), then **Enter in VR**.
@@ -59,9 +63,25 @@ cd web && npm run typecheck && npm test && npm run build
 api/.venv/Scripts/python scripts/smoke_live.py http://localhost:5173
 ```
 
+With `npm run dev` running, these drive the real UI (playwright-core with the system Chrome):
+
+```bash
+cd web && node scripts/xr-emulator-test.mjs     # the room in Meta's emulator: hands, controllers, recenter, leave
+```
+
+```bash
+cd web && node scripts/onboarding-e2e.mjs       # a new account's first run, inviting someone, the invitee joining
+```
+
+```bash
+cd web && node scripts/avatar-e2e.mjs           # photo-derived avatar import, approval, live co-presence, stop sharing
+```
+
 ## Documentation
 
 - [docs/STATUS.md](docs/STATUS.md) — what is implemented, what was actually tested where, and what is still unverified
+- [docs/AVATARS.md](docs/AVATARS.md) — photo-derived avatars: journey, provider setup, privacy, rig contract, results table
+- [docs/EMULATOR.md](docs/EMULATOR.md) — testing the room in Meta's Immersive Web Emulator (emulated Quest 3), what it found and fixed
 - [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) — testing instructions for the judged flow
 - [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — the under-three-minute video script
 - [docs/REQUIREMENTS_MAP.md](docs/REQUIREMENTS_MAP.md) — competition and brief requirements → where they are demonstrated
@@ -84,9 +104,12 @@ scripts/        asset pipeline (assets/), test fixtures (fixtures/), VAPID keys,
 docs/           design, status and submission documents
 ```
 
-All people in the sample are fictional. Sample photos and the camera clip are crops of public-domain (CC0)
-Poly Haven panoramas; the room's furniture, textures and light probe are CC0 Poly Haven assets; the characters
-are original, sculpted by a script in this repository; the voice note uses the operating system's
-text-to-speech voice. Every file, its origin, licence and size is listed in
+All people in the sample are fictional. Sample photos are crops of public-domain (CC0) Poly Haven panoramas
+(labelled *Sample photo*); the sample clip is a camera pan simulated from one of those panoramas (labelled
+*Simulated camera pan*, never as a recording); the voice note uses the operating system's text-to-speech voice
+(labelled *Synthesized voice note*). The room's furniture, textures and light probe are CC0 Poly Haven assets,
+and the window view is a CC0 photograph of a real river (the room makes no claim about where it is). The demo
+characters are original, sculpted by a script in this repository; no real person's photo or likeness is in the
+repository. Every file, its origin, licence and size is listed in
 [docs/ASSET_MANIFEST.md](docs/ASSET_MANIFEST.md); captures and comparisons with the concept art are in
 [docs/VISUAL_QA.md](docs/VISUAL_QA.md).

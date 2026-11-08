@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Award, Moment, OpportunityResult } from '../../shared/contracts';
+import type { Award, Moment, OpportunityResult, WeeklyRule } from '../../shared/contracts';
 import { cityOf, formatTime } from '../../shared/tz';
 import { useApp } from '../App';
 import { Avatar, Checkbox, Icon, KeepsakeRender, Notice } from '../ui';
+import { InviteCard, NoRoom, QuickTimes } from './Setup';
 
 function longDate(instant: number, zone: string) {
   const weekday = new Intl.DateTimeFormat('en-GB', { weekday: 'long', timeZone: zone }).format(instant);
@@ -20,6 +21,7 @@ export function Together() {
   const [now, setNow] = useState(Date.now());
   const [error, setError] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState(false);
+  const [myRules, setMyRules] = useState<WeeklyRule[] | null>(null);
 
   useEffect(() => {
     setSelected(room?.kind === 'direct' ? others.map((o) => o.id) : others.slice(0, 1).map((o) => o.id));
@@ -32,6 +34,7 @@ export function Together() {
       const [res, avail, aw] = await Promise.all([ds.opportunities(room.id, selected), ds.availability(room.id), ds.awards(room.id)]);
       setResult(res);
       setFreeUntil(avail.freeNowUntil);
+      setMyRules(avail.rules);
       setAwards(aw);
       setError(null);
     } catch (e) {
@@ -40,12 +43,39 @@ export function Together() {
   }, [ds, room, selected]);
 
   useEffect(() => { void load(); }, [load]);
+  // nobody else yet: still show (and let them set) their own usual times
+  useEffect(() => {
+    if (!room || others.length) return;
+    void ds.availability(room.id).then((a) => setMyRules(a.rules)).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ds, room?.id, others.length]);
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 15_000);
     return () => window.clearInterval(t);
   }, []);
 
-  if (!room) return <Notice>Create or join a room first.</Notice>;
+  if (!room) return <NoRoom />;
+  if (!others.length && ds.mode === 'live') {
+    return (
+      <>
+        <div className="day-header">
+          <h1 className="page-title on-backdrop">Find our next moment</h1>
+          <span className="chip glass audience-pill"><Icon name="users" />{room.name}</span>
+        </div>
+        <section className="card stack" aria-label="Waiting for someone to join">
+          <InviteCard room={room} title="Nobody to meet yet" body="Once someone joins, SameSky shows both your local times and the next time your days overlap — without showing anyone your schedule." />
+          <hr className="soft-rule" />
+          <strong>Meanwhile: when are you usually free?</strong>
+          {myRules?.length ? (
+            <span className="muted small">You’ve set {myRules.length} weekly {myRules.length === 1 ? 'window' : 'windows'}. <a href="#/settings">Change them in Settings</a>.</span>
+          ) : <QuickTimes room={room} onSaved={() => void ds.availability(room.id).then((a) => setMyRules(a.rules))} />}
+          <div className="row wrap">
+            <a className="btn btn-outline" href={`/room.html?room=${room.id}`}><Icon name="headset" />Look around our room</a>
+          </div>
+        </section>
+      </>
+    );
+  }
   const people = result?.participants ?? [];
   const next = result?.candidates[0];
   const toggleFree = async () => {
@@ -80,7 +110,7 @@ export function Together() {
             const member = room.members.find((m) => m.id === p.userId);
             return (
               <div key={p.userId} className="clock-card">
-                <Avatar def={member?.avatar?.definition} size={118} name={p.displayName} />
+                <Avatar avatar={member?.avatar} size={118} name={p.displayName} />
                 <div className="stack" style={{ gap: 2 }}>
                   <span className="name">{p.displayName}{p.userId === me.id ? <span className="muted small" style={{ fontWeight: 500 }}> (you)</span> : null}</span>
                   <span className="row muted" style={{ gap: 6, fontSize: '1.08rem' }}><Icon name="pin" />{member?.city ?? cityOf(p.timeZone)}</span>
@@ -99,13 +129,19 @@ export function Together() {
                 <strong style={{ fontSize: '1.2rem' }}>Your chosen schedules overlap</strong>
                 <span>{next.local.map((l) => `${l.time}–${l.endTime} ${cityOf(l.zone)}`).join(' · ')} · {next.minutes} min{next.local[0] ? ` · ${next.local[0].weekday}` : ''}</span>
               </>
-            ) : <strong>No shared window in the next 7 days. Adjust your availability in Settings.</strong>}
+            ) : myRules && !myRules.length && ds.mode === 'live' ? (
+              <>
+                <strong>Tell SameSky when you’re usually free</strong>
+                <span className="muted small">Then it can find the times your days overlap. Others only ever see the overlap.</span>
+              </>
+            ) : <strong>No shared window in the next 7 days. <a href="#/settings">Adjust your usual times</a>.</strong>}
           </div>
           <span className="divider-v" />
           {result?.allMarkedFreeNow ? <span className="chip green"><Icon name="checkCircle" />{people.length === 2 ? 'Both marked free now' : 'All marked free now'}</span> : null}
           <span className="row muted" style={{ gap: 8 }}><Icon name="moon" />Quiet hours respected</span>
           {result?.simulated ? <span className="chip label" title="Schedules are fictional and nobody is notified.">Sample schedules</span> : null}
         </div>
+        {myRules && !myRules.length && ds.mode === 'live' && !next ? <div style={{ marginTop: 12 }}><QuickTimes room={room} compact onSaved={() => void load()} /></div> : null}
         {result?.statusMessage && !dismissed ? <div style={{ marginTop: 12 }}><Notice>{result.statusMessage}{result.simulated ? ' Other people’s Free now is simulated in the sample.' : ''}</Notice></div> : null}
         <div className="connect-row">
           <a className="btn btn-primary btn-lg" href={`/room.html?room=${room.id}`} style={{ minWidth: 250 }}><Icon name="users" />Open our room</a>

@@ -27,7 +27,7 @@
       ],
       "license": "CC0 1.0 (public domain)",
       "source": "https://polyhaven.com/a/golden_bay",
-      "use": "Adam's waterfront photo + 8 s camera clip (perspective crops)",
+      "use": "Adam's waterfront photo + 8 s camera clip (perspective crops) — the 8 s clip is a simulated camera pan rendered from this panorama, labelled 'Simulated camera pan', never as a camera recording",
       "files": [
         {
           "file": "hdri/golden_bay_tonemapped.jpg",
@@ -81,7 +81,7 @@
       ],
       "license": "CC0 1.0 (public domain)",
       "source": "https://polyhaven.com/a/dusseldorf_bridge",
-      "use": "Window skyline plate (cylindrical crop)",
+      "use": "Window skyline plate (cylindrical crop) — shown as a sample lounge's window view; no geographic claim (not Dubai, not a user's city)",
       "files": [
         {
           "file": "hdri/dusseldorf_bridge_tonemapped.jpg",
@@ -511,6 +511,17 @@
           "sha256": "ffece1dfb62cdc1953458b1bb4863d66eb54d4c889bb14cde2847ad0845a438f"
         }
       ]
+    }
+  ],
+  "originals": [
+    {
+      "id": "test-mannequin",
+      "file": "web/tests/fixtures/test-mannequin.glb",
+      "generator": "web/scripts/build-test-rig.mjs",
+      "license": "Original work in this repository",
+      "use": "Skinned non-photo test figure for the photo-derived avatar import, validation, review, approval and room rig checks. Not a person, not a likeness, not shipped in web/public.",
+      "bytes": 926284,
+      "sha256": "1a85f241af84043ad7775f4c115a18d6d9ead2a0850090ab1f6e89fb1ced2555"
     }
   ]
 }

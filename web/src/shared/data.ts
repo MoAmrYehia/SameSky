@@ -5,8 +5,9 @@
 //                   It has no route to real rooms and never sends real notifications.
 
 import type {
-  AudienceResolution, Award, AvatarDefinition, InboxItem, Me, Moment, MomentKind, MyAvailability, OpportunityResult,
-  ReactionKind, Recap, RecapPlan, Reply, Room, RoomObject, SourceDevice, WeeklyRule,
+  AudienceResolution, Award, AvatarAssetInfo, AvatarConsentInfo, AvatarDefinition, AvatarJobInfo, AvatarScope, AvatarSourceInfo,
+  AvatarStudio, AvatarView, InboxItem, MediaInfo, Me, Moment, MomentKind, MyAvailability, OpportunityResult, ReactionKind, Recap, RecapPlan, Reply,
+  Room, RoomObject, SourceDevice, WeeklyRule,
 } from './contracts';
 import { ME, SAMPLE_DAY, SAMPLE_PEOPLE, SAMPLE_ROOMS, SAMPLE_SCHEDULES, SEED_AWARDS, SEED_INBOX, SEED_REPLIES, seedMoments, seedRecaps } from './sample';
 import { commonOverlaps, formatTime, isBlockedNow, wallParts, zoneAbbreviation } from './tz';
@@ -18,6 +19,8 @@ export interface NewMomentInput {
   file?: Blob;
   fileName?: string;
   sourceDevice: SourceDevice;
+  /** sample mode only (never sent to the API): how sample media was made */
+  origin?: MediaInfo['origin'];
   captureAt?: string;
   aiAllowed: boolean;
   trimStartMs?: number;
@@ -29,6 +32,25 @@ export interface DataSource {
   me(): Promise<Me>;
   updateMe(patch: Partial<Record<string, unknown>>): Promise<Me>;
   saveAvatar(def: AvatarDefinition, likenessConsent: boolean): Promise<void>;
+  // photo-derived avatars (owner only; unavailable in the sample, whose people are fictional)
+  avatarStudio(): Promise<AvatarStudio>;
+  avatarConsent(provider: 'metaperson' | 'manual_import', processing: boolean, scope: AvatarScope): Promise<AvatarConsentInfo>;
+  withdrawAvatarConsent(id: string): Promise<void>;
+  uploadAvatarSource(file: Blob, fileName: string, view: 'front' | 'left' | 'right', consentId: string): Promise<AvatarSourceInfo>;
+  deleteAvatarSource(id: string): Promise<void>;
+  startAvatarJob(sourceIds: string[], consentId: string, options: { body: string; outfit?: string | null; remove_glasses?: boolean }, key: string): Promise<AvatarJobInfo>;
+  avatarJob(id: string): Promise<AvatarJobInfo>;
+  cancelAvatarJob(id: string): Promise<AvatarJobInfo>;
+  retryAvatarJob(id: string): Promise<AvatarJobInfo>;
+  importAvatarModel(file: Blob, fileName: string, consentId: string): Promise<AvatarAssetInfo>;
+  approveAvatar(id: string, visibility: AvatarScope): Promise<AvatarAssetInfo>;
+  rejectAvatar(id: string): Promise<AvatarAssetInfo>;
+  activateAvatar(id: string): Promise<AvatarAssetInfo>;
+  setAvatarVisibility(id: string, visibility: AvatarScope): Promise<AvatarAssetInfo>;
+  deleteAvatar(id: string): Promise<AvatarAssetInfo>;
+  useDemoAvatar(): Promise<void>;
+  deleteAvatarData(): Promise<{ assets: number; sources: number }>;
+  userAvatar(userId: string): Promise<{ userId: string; displayName: string; avatar: AvatarView | null }>;
   rooms(): Promise<Room[]>;
   createRoom(kind: 'direct' | 'circle', name: string): Promise<Room>;
   invite(roomId: string): Promise<{ token: string; path: string; expiresAt: string }>;
@@ -133,6 +155,40 @@ export class LiveSource implements DataSource {
   }
   me() { return apiFetch<Me>('/v1/me'); }
   updateMe(patch: Partial<Record<string, unknown>>) { return apiFetch<Me>('/v1/me', { method: 'PATCH', body: JSON.stringify(patch) }); }
+  avatarStudio() { return apiFetch<AvatarStudio>('/v1/me/avatar-studio'); }
+  avatarConsent(provider: 'metaperson' | 'manual_import', processing: boolean, scope: AvatarScope) {
+    return apiFetch<AvatarConsentInfo>('/v1/me/avatar-consents', json({ provider, processing, likeness_scope: scope }));
+  }
+  async withdrawAvatarConsent(id: string) { await apiFetch(`/v1/me/avatar-consents/${id}/withdraw`, json({})); }
+  uploadAvatarSource(file: Blob, fileName: string, view: 'front' | 'left' | 'right', consentId: string) {
+    const form = new FormData();
+    form.append('file', file, fileName);
+    form.append('view', view);
+    form.append('consent_id', consentId);
+    return apiFetch<AvatarSourceInfo>('/v1/me/avatar-sources', { method: 'POST', body: form });
+  }
+  async deleteAvatarSource(id: string) { await apiFetch(`/v1/me/avatar-sources/${id}`, { method: 'DELETE' }); }
+  startAvatarJob(sourceIds: string[], consentId: string, options: { body: string; outfit?: string | null; remove_glasses?: boolean }, key: string) {
+    return apiFetch<AvatarJobInfo>('/v1/me/avatar-jobs', json({ source_ids: sourceIds, consent_id: consentId, options, idempotency_key: key }));
+  }
+  avatarJob(id: string) { return apiFetch<AvatarJobInfo>(`/v1/me/avatar-jobs/${id}`); }
+  cancelAvatarJob(id: string) { return apiFetch<AvatarJobInfo>(`/v1/me/avatar-jobs/${id}/cancel`, json({})); }
+  retryAvatarJob(id: string) { return apiFetch<AvatarJobInfo>(`/v1/me/avatar-jobs/${id}/retry`, json({})); }
+  importAvatarModel(file: Blob, fileName: string, consentId: string) {
+    const form = new FormData();
+    form.append('file', file, fileName);
+    form.append('consent_id', consentId);
+    form.append('attested', 'true');
+    return apiFetch<AvatarAssetInfo>('/v1/me/avatar-assets', { method: 'POST', body: form });
+  }
+  approveAvatar(id: string, visibility: AvatarScope) { return apiFetch<AvatarAssetInfo>(`/v1/me/avatar-assets/${id}/approve`, json({ visibility, confirmed: true })); }
+  rejectAvatar(id: string) { return apiFetch<AvatarAssetInfo>(`/v1/me/avatar-assets/${id}/reject`, json({})); }
+  activateAvatar(id: string) { return apiFetch<AvatarAssetInfo>(`/v1/me/avatar-assets/${id}/activate`, json({})); }
+  setAvatarVisibility(id: string, visibility: AvatarScope) { return apiFetch<AvatarAssetInfo>(`/v1/me/avatar-assets/${id}`, { method: 'PATCH', body: JSON.stringify({ visibility }) }); }
+  deleteAvatar(id: string) { return apiFetch<AvatarAssetInfo>(`/v1/me/avatar-assets/${id}`, { method: 'DELETE' }); }
+  async useDemoAvatar() { await apiFetch('/v1/me/avatar/demo', json({})); }
+  deleteAvatarData() { return apiFetch<{ assets: number; sources: number }>('/v1/me/avatar-data', { method: 'DELETE' }); }
+  userAvatar(userId: string) { return apiFetch<{ userId: string; displayName: string; avatar: AvatarView | null }>(`/v1/users/${userId}/avatar`); }
   async saveAvatar(def: AvatarDefinition, likenessConsent: boolean) {
     await apiFetch('/v1/me/avatar', { method: 'PUT', body: JSON.stringify({ ...def, likeness_consent: likenessConsent }) });
   }
@@ -359,6 +415,42 @@ export class SampleSource implements DataSource {
     return this.me();
   }
 
+  async avatarStudio(): Promise<AvatarStudio> {
+    return {
+      sample: true,
+      provider: { name: 'metaperson', label: 'Avatar SDK MetaPerson (itSeez3D)', configured: false, photoViews: ['front'], bodies: ['female', 'male'], retentionDays: 7 },
+      consentTextVersion: '2026-11-08',
+      active: null,
+      activeAssetId: null,
+      assets: [],
+      jobs: [],
+      sources: [],
+      consents: [],
+    };
+  }
+  private sampleOnly(): never {
+    throw new ApiError(400, 'sample_mode', 'Sign in to create your avatar from your own photos. The sample’s people are fictional and use labelled demo avatars.');
+  }
+  async avatarConsent(): Promise<AvatarConsentInfo> { return this.sampleOnly(); }
+  async withdrawAvatarConsent(): Promise<void> { return this.sampleOnly(); }
+  async uploadAvatarSource(): Promise<AvatarSourceInfo> { return this.sampleOnly(); }
+  async deleteAvatarSource(): Promise<void> { return this.sampleOnly(); }
+  async startAvatarJob(): Promise<AvatarJobInfo> { return this.sampleOnly(); }
+  async avatarJob(): Promise<AvatarJobInfo> { return this.sampleOnly(); }
+  async cancelAvatarJob(): Promise<AvatarJobInfo> { return this.sampleOnly(); }
+  async retryAvatarJob(): Promise<AvatarJobInfo> { return this.sampleOnly(); }
+  async importAvatarModel(): Promise<AvatarAssetInfo> { return this.sampleOnly(); }
+  async approveAvatar(): Promise<AvatarAssetInfo> { return this.sampleOnly(); }
+  async rejectAvatar(): Promise<AvatarAssetInfo> { return this.sampleOnly(); }
+  async activateAvatar(): Promise<AvatarAssetInfo> { return this.sampleOnly(); }
+  async setAvatarVisibility(): Promise<AvatarAssetInfo> { return this.sampleOnly(); }
+  async deleteAvatar(): Promise<AvatarAssetInfo> { return this.sampleOnly(); }
+  async useDemoAvatar(): Promise<void> { /* the sample always uses demo avatars */ }
+  async deleteAvatarData(): Promise<{ assets: number; sources: number }> { return { assets: 0, sources: 0 }; }
+  async userAvatar(userId: string) {
+    const person = SAMPLE_PEOPLE[userId];
+    return { userId, displayName: person?.name ?? 'Member', avatar: person ? { kind: 'preset_demo' as const, definition: person.avatar, version: 1 } : null };
+  }
   async saveAvatar(def: AvatarDefinition) {
     this.state.avatar = def;
     this.save();
@@ -404,7 +496,7 @@ export class SampleSource implements DataSource {
       const url = URL.createObjectURL(input.file);
       blobUrls.set(id, url);
       const kind = input.kind === 'photo' ? 'image' : input.kind === 'clip' ? 'video' : 'audio';
-      media = { id: `asset-${id}`, kind, processingState: 'ready', sourceDevice: input.sourceDevice, projection: 'flat', durationMs: null, width: null, height: null, url, thumbUrl: kind === 'image' ? url : undefined };
+      media = { id: `asset-${id}`, kind, processingState: 'ready', sourceDevice: input.sourceDevice, origin: input.origin, projection: 'flat', durationMs: null, width: null, height: null, url, thumbUrl: kind === 'image' ? url : undefined };
     }
     const lp = wallParts(Date.parse(at), me.timeZone);
     const moment: Moment = {

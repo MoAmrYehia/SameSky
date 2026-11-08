@@ -92,6 +92,16 @@ def sign_media_url(asset_id: str, variant: str, user_id: str, ttl: int | None = 
     return f"/v1/media/{asset_id}/{variant}?u={user_id}&e={expires}&s={sig}"
 
 
+def sign_resource_url(prefix: str, resource_id: str, variant: str, user_id: str, ttl: int | None = None) -> str:
+    """Same signature scheme as media, for other private resources (avatar models and source photos).
+    The variant is part of the signed message, so a link for one resource kind can't be replayed for another."""
+    settings = get_settings()
+    expires = int(time.time()) + (ttl or settings.media_url_ttl_seconds)
+    message = f"{resource_id}:{variant}:{user_id}:{expires}".encode()
+    sig = hmac.new(settings.secret_key.encode(), message, hashlib.sha256).hexdigest()[:40]
+    return f"{prefix}/{resource_id}/{variant}?u={user_id}&e={expires}&s={sig}"
+
+
 def verify_media_signature(asset_id: str, variant: str, user_id: str, expires: int, sig: str) -> bool:
     if expires < int(time.time()):
         return False

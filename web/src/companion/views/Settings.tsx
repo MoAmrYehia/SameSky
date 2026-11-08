@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { AVATAR_OPTIONS, DEFAULT_AVATAR } from '../../shared/avatar';
-import type { AvatarDefinition, WeeklyRule } from '../../shared/contracts';
+import type { WeeklyRule } from '../../shared/contracts';
 import { SampleSource } from '../../shared/data';
 import { COMMON_ZONES, detectZone } from '../../shared/tz';
 import { useApp } from '../App';
 import { disablePush, enablePush, PUSH_COPY, pushStatus, type PushStatus } from '../push';
 import { Avatar, Icon, Notice, Toggle } from '../ui';
+import { AvatarStudioCard } from './AvatarStudio';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -14,8 +14,9 @@ export function Settings() {
     <>
       <h1 className="page-title" style={{ marginBottom: 20 }}>Settings</h1>
       <div className="settings-grid">
+        {/* full width first, so the single-column cards below pack into rows without a gap beside "You" */}
+        <AvatarStudioCard startAt={location.hash.includes('avatar=create') ? 'consent' : undefined} />
         <Profile />
-        <AvatarEditor />
         <Availability />
         <Notifications />
         <Rooms />
@@ -55,46 +56,6 @@ function Profile() {
         <input className="input" placeholder="https://… or facetime:…" value={link} onChange={(e) => setLink(e.target.value)} />
         <small className="muted">“Connect” hands off to this link. SameSky never starts a call or turns on a microphone by itself.</small></label>
       <button className="btn btn-primary" style={{ alignSelf: 'start' }} onClick={() => void save()}>Save</button>
-    </section>
-  );
-}
-
-function Swatches({ values, value, onChange, label }: { values: readonly string[]; value: string; onChange: (v: string) => void; label: string }) {
-  return (
-    <div className="swatches" role="group" aria-label={label}>
-      {values.map((v) => <button key={v} className="swatch" style={{ background: v }} aria-pressed={value === v} aria-label={`${label} ${v}`} onClick={() => onChange(v)} />)}
-    </div>
-  );
-}
-
-function Segments({ values, value, onChange, label }: { values: readonly string[]; value: string; onChange: (v: string) => void; label: string }) {
-  return (
-    <div className="seg-control" role="group" aria-label={label}>
-      {values.map((v) => <button key={v} aria-pressed={value === v} onClick={() => onChange(v)}>{v}</button>)}
-    </div>
-  );
-}
-
-function AvatarEditor() {
-  const { ds, me, refresh, toast } = useApp();
-  const [def, setDef] = useState<AvatarDefinition>(me.avatar?.definition ?? DEFAULT_AVATAR);
-  const set = (k: keyof AvatarDefinition) => (v: string) => setDef((d) => ({ ...d, [k]: v }));
-  const save = async () => {
-    await ds.saveAvatar(def, false);
-    await refresh();
-    toast('Avatar saved. It appears beside people at the table.');
-  };
-  return (
-    <section className="card stack">
-      <h2 className="section-title" style={{ margin: 0 }}>Your avatar</h2>
-      <div className="row"><Avatar def={def} size={150} name={me.displayName} /><p className="muted small">Rendered live from your 3D character — the same one people see across the table. A stylized preset: no photo or face scan needed, and only people in your rooms see it.</p></div>
-      <span className="small"><strong>Face</strong></span><Segments values={AVATAR_OPTIONS.face} value={def.face ?? 'soft'} onChange={set('face')} label="Face shape" />
-      <span className="small"><strong>Skin tone</strong></span><Swatches values={AVATAR_OPTIONS.skin} value={def.skin} onChange={set('skin')} label="Skin tone" />
-      <span className="small"><strong>Hair</strong></span><Segments values={AVATAR_OPTIONS.hair} value={def.hair} onChange={set('hair')} label="Hairstyle" />
-      <Swatches values={AVATAR_OPTIONS.hairColor} value={def.hairColor} onChange={set('hairColor')} label="Hair colour" />
-      <span className="small"><strong>Clothing</strong></span><Swatches values={AVATAR_OPTIONS.top} value={def.top} onChange={set('top')} label="Top colour" />
-      <span className="small"><strong>Accessory</strong></span><Segments values={AVATAR_OPTIONS.accessory} value={def.accessory} onChange={set('accessory')} label="Accessory" />
-      <button className="btn btn-primary" style={{ alignSelf: 'start' }} onClick={() => void save()}>Save avatar</button>
     </section>
   );
 }
@@ -213,7 +174,7 @@ function Rooms() {
           <div className="row"><strong className="grow">{r.name}</strong><span className="chip label">{r.kind === 'direct' ? 'Direct · 2' : `Circle · up to ${r.capacity}`}</span></div>
           <div className="row wrap" style={{ gap: 6 }}>
             {r.members.map((m) => (
-              <span key={m.id} className="chip"><Avatar def={m.avatar?.definition} size={24} />{m.displayName}{m.id === me.id ? ' (you)' : ''}
+              <span key={m.id} className="chip"><Avatar avatar={m.avatar} size={24} />{m.displayName}{m.id === me.id ? ' (you)' : ''}
                 {r.isOwner && m.id !== me.id && ds.mode === 'live' ? (
                   <button className="btn btn-quiet" style={{ minHeight: 28, padding: '0 6px' }} aria-label={`Remove ${m.displayName}`}
                     onClick={() => window.confirm(`Remove ${m.displayName}? They immediately lose access to everything in ${r.name}.`) && void ds.removeMember(r.id, m.id).then(refresh)}><Icon name="x" /></button>
@@ -227,11 +188,15 @@ function Rooms() {
                 <span className="small">Single-use link, valid 72 hours. Send it to one adult you trust:</span>
                 <span className="code">{invite.url}</span>
                 <div className="row wrap">
+                  {typeof navigator.share === 'function' ? (
+                    <button className="btn btn-primary" onClick={() => void navigator.share({ title: `Join ${r.name} on SameSky`, url: invite.url }).catch(() => undefined)}><Icon name="share" />Share link</button>
+                  ) : null}
                   <button className="btn btn-outline" onClick={() => void navigator.clipboard.writeText(invite.url).then(() => toast('Copied.'))}><Icon name="link" />Copy link</button>
                 </div>
               </div>
             ) : <button className="btn btn-outline" style={{ alignSelf: 'start' }} onClick={() => void makeInvite(r.id)}><Icon name="link" />Invite someone</button>
           ) : null}
+          {ds.mode === 'live' ? <RoomSettings roomId={r.id} /> : null}
           {!r.isOwner && ds.mode === 'live' ? <button className="btn btn-danger" style={{ alignSelf: 'start' }} onClick={() => window.confirm(`Leave ${r.name}?`) && void ds.removeMember(r.id, 'me').then(refresh)}>Leave room</button> : null}
         </div>
       ))}
@@ -274,5 +239,42 @@ function Session() {
         </>
       ) : <button className="btn btn-outline" style={{ alignSelf: 'start' }} onClick={signOut}>Sign out</button>}
     </section>
+  );
+}
+
+/** Per-room choices: mute this room's notifications (just for you); the owner sets when the daily recap is drafted. */
+function RoomSettings({ roomId }: { roomId: string }) {
+  const { ds, rooms, refresh, toast } = useApp();
+  const room = rooms.find((x) => x.id === roomId)!;
+  const [time, setTime] = useState(room.dailyDraftTime ?? '');
+  const save = async (patch: { muted?: boolean; daily_draft_time?: string }, message: string) => {
+    try {
+      await ds.setRoom(room.id, patch);
+      await refresh();
+      toast(message);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Could not save.');
+    }
+  };
+  return (
+    <details className="studio-more">
+      <summary>Room settings</summary>
+      <div className="stack" style={{ gap: 10, marginTop: 8 }}>
+        <div className="setting-row">
+          <span className="grow setting-label">Mute notifications from this room<small className="muted" style={{ display: 'block' }}>Only for you. Your inbox still collects everything.</small></span>
+          <Toggle checked={room.muted} label="Mute notifications from this room" onChange={(v) => void save({ muted: v }, v ? 'Muted. Your inbox still collects everything.' : 'Notifications are on again.')} />
+        </div>
+        {room.isOwner ? (
+          <label className="field"><span>Draft the daily recap at ({room.reportingZone.replace(/_/g, ' ')})</span>
+            <div className="row wrap" style={{ gap: 8 }}>
+              <input className="input" type="time" value={time} onChange={(e) => setTime(e.target.value)} style={{ maxWidth: 160 }} />
+              <button className="btn btn-outline" onClick={() => void save({ daily_draft_time: time }, time ? `Daily recap drafts at ${time}.` : 'Daily recap drafting is off.')}>Save</button>
+              {room.dailyDraftTime ? <button className="btn btn-quiet" onClick={() => { setTime(''); void save({ daily_draft_time: '' }, 'Daily recap drafting is off.'); }}>Turn off</button> : null}
+            </div>
+            <small className="muted">A draft only. Everyone reviews their own part before anyone sees the recap.</small>
+          </label>
+        ) : null}
+      </div>
+    </details>
   );
 }

@@ -15,5 +15,7 @@ pywebpush==2.5.0
 py-vapid==1.9.6
 anthropic==2.6.0
 websockets==17.4
+# avatar provider adapter (server-side HTTPS calls)
+httpx==0.28.1
 # Postgres driver for production (DATABASE_URL=postgresql+psycopg://...)
 # psycopg[binary]==3.2.*

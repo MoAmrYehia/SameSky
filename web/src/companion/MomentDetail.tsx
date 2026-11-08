@@ -16,10 +16,10 @@ export function MomentDetail({ moment, room, onClose }: { moment: Moment; room: 
     <div className="overlay" role="dialog" aria-modal="true" aria-label={`${moment.ownerName}'s moment`} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="card stack" style={{ width: 'min(860px, 100%)', maxHeight: '100%', overflow: 'auto' }}>
         <div className="row">
-          <Avatar def={room.members.find((m) => m.id === moment.ownerId)?.avatar?.definition} size={52} name={moment.ownerName} />
+          <Avatar avatar={room.members.find((m) => m.id === moment.ownerId)?.avatar} size={52} name={moment.ownerName} />
           <div className="grow">
             <strong>{moment.ownerName}</strong>
-            <div className="muted small">{kindLabel(moment.kind, moment.media?.sourceDevice)} · {localWhen(moment)}</div>
+            <div className="muted small">{kindLabel(moment.kind, moment.media?.sourceDevice, moment.media?.origin)} · {localWhen(moment)}</div>
           </div>
           <button className="icon-btn" aria-label="Close" onClick={onClose}><Icon name="x" /></button>
         </div>

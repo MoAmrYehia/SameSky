@@ -26,18 +26,19 @@ of a person; all people in the sample are fictional.
 | `textures/walnut/{color,normal,rough,ao}.webp` | Frames, lamp base and keepsake plinths. The scan is a grey-washed veneer, so materials tint it warm (`WALNUT_TINT`) | CC0, Poly Haven *American Walnut Veneer* | 179 KB |
 | `textures/knit/normal.webp` | Knit relief on the characters' sweaters | CC0, Poly Haven *Knitted Fleece* | 476 KB |
 | `env/lounge_1k.hdr` | Interior light probe, prefiltered at runtime with PMREM (IWSDK `IBLTexture`) and reused by the portrait renderer | CC0, Poly Haven HDRI *Lythwood Lounge* (Greg Zaal), 1k, unmodified | 1.54 MB |
-| `sample/window-skyline.jpg` | Distant skyline seen through the window: a 200° cylindrical projection (straight verticals, correct heights), sunset grade, slight softening, 2048×512 | Derived from CC0 HDRI *Dusseldorf Bridge* (Greg Zaal) by `scripts/assets/build_sample_media.py` | 123 KB |
+| `sample/window-skyline.jpg` | Distant skyline seen through the window: a 200° cylindrical projection (straight verticals, correct heights), sunset grade, slight softening, 2048×512 | Derived from CC0 HDRI *Dusseldorf Bridge* (Greg Zaal) by `scripts/assets/build_sample_media.py`. In the room it is multiplied by a slightly cool white (`#e8eef7`) to temper the sunset grade. **No geographic claim:** the room is a *sample lounge* (its welcome card says the view is a CC0 photograph, not a live view of anyone’s city); it is not Dubai or any user’s location | 123 KB |
 | `backdrops/lounge.jpg`, `lounge-dark.jpg` | Blurred companion backdrops (light and dark). No UI text, no people, no private content | Derived from CC0 HDRI *Lythwood Lounge* | 48 KB, 30 KB |
 | `sample/maya-park.jpg` (+`-thumb`) | Maya's afternoon walk photo | Perspective crop of CC0 HDRI *Ballawley Park* (Savva Zakharov), graded | 408 KB + 77 KB |
 | `sample/adam-waterfront.jpg` (+`-thumb`) | Adam's harbour walk photo | Perspective crop of CC0 HDRI *Golden Bay* (Greg Zaal) | 291 KB + 55 KB |
 | `sample/adam-desert.jpg` (+`-thumb`) | Adam's desert-hills photo (family circle) | Perspective crop of CC0 HDRI *Rogland Sunset* (Greg Zaal) | 358 KB + 62 KB |
 | `sample/lina-courtyard.jpg` (+`-thumb`) | Lina's courtyard evening photo (family circle) | Perspective crop of CC0 HDRI *Courtyard Night* (Greg Zaal) | 227 KB + 45 KB |
-| `sample/adam-clip.mp4`, `-poster.jpg`, `-thumb.jpg` | 8-second 1280×720 handheld-style camera pan along the promenade, H.264 High plus AAC (quiet brown-noise ambience), `+faststart` | Rendered frame by frame from CC0 HDRI *Golden Bay* along a simulated camera path. Labelled as a *Camera* clip | 3.85 MB (loaded only when played) |
-| `sample/maya-voice.m4a`, `.vtt` | Maya's 9-second voice note and its captions | **Original.** Synthesized with the operating system's text-to-speech voice by `scripts/fixtures/make_illustrated_media.py` (`voice()`), AAC 96 kb/s. A synthesized sample voice, not a recording of a person | 79 KB |
+| `sample/adam-clip.mp4`, `-poster.jpg`, `-thumb.jpg` | 8-second 1280×720 handheld-style camera pan along the promenade, H.264 High plus AAC (quiet brown-noise ambience), `+faststart` | Rendered frame by frame from CC0 HDRI *Golden Bay* along a simulated camera path. **Not a camera recording**: its sample data carries `origin: 'simulated'`, so the companion labels it *Simulated camera pan* and the room *Adam’s simulated camera pan*. Real device imports keep their own source labels (*Phone*, *Camera*, *Action camera* …) | 3.85 MB (loaded only when played) |
+| `sample/maya-voice.m4a`, `.vtt` | Maya's 9-second voice note and its captions | **Original.** Synthesized with the operating system's text-to-speech voice by `scripts/fixtures/make_illustrated_media.py` (`voice()`), AAC 96 kb/s. A synthesized sample voice, not a recording of a person; labelled *Synthesized voice note* in the companion and *Synthesized voice* on the cup | 79 KB |
 | Figtree Variable font | Companion and in-room interface type | SIL Open Font License 1.1, self-hosted from the `@fontsource-variable/figtree` npm package and bundled by Vite | 20 KB (variable woff2, latin; latin-ext 10 KB only if needed) |
 
 The sample's people, captions and recaps are fictional. The photos are crops of public-domain panoramas
-with no identifiable people. They stand in for what a user would share.
+with no identifiable people. They stand in for what a user would share, and are labelled *Sample photo*
+(`origin: 'stock'`) rather than as a phone or camera photo.
 
 ## Derived renders (not files)
 
@@ -48,6 +49,14 @@ with no identifiable people. They stand in for what a user would share.
 - Small canvas textures (mug speckle, cork, iris, interface panels) are drawn procedurally at runtime.
 
 ## Test fixtures (not shipped)
+
+| Path | What it is | Origin and licence | Size |
+|---|---|---|---|
+| `web/tests/fixtures/test-mannequin.glb` | Skinned test figure for the photo-derived avatar path: an artist's-mannequin body with a Mixamo-style 24-joint skeleton, eye-blink morph targets, A-pose, metres, facing +Z | **Original.** Generated procedurally by `web/scripts/build-test-rig.mjs` (no scan, no photo, no person). Used only by `web/scripts/avatar-e2e.mjs`, the dev rig page and API validation tests; it never ships in `web/public` and is not a likeness | 905 KB, 17,584 triangles |
+
+No real person's photo, face scan or provider-generated avatar is committed. Photo-derived avatars are private
+per-user data stored by the API (`SAMESKY_MEDIA_ROOT/avatar-private/`), never repository assets.
+
 
 `scripts/fixtures/make_illustrated_media.py` (formerly `scripts/make_sample_media.py`) still produces the
 earlier Pillow illustrations for tests and fallbacks. Its output goes to `scripts/fixtures/out/` (git-ignored) and

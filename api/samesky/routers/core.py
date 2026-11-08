@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends
@@ -11,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import serializers
+from ..realtime import hub
 from ..db import get_db
 from ..deps import current_user
 from ..errors import ApiError, conflict, invalid
@@ -31,6 +34,18 @@ AVATAR_OPTIONS = {
     "top": ["#3f6b52", "#e9e0cf", "#2f4a6b", "#8a3b3b", "#c98f3a", "#5b4a7a"],
     "accessory": ["none", "glasses", "earrings", "scarf", "cap"],
 }
+
+
+def starter_definition(user_id: str) -> dict:
+    """A labelled demo avatar for a new account, varied so two new people don't look identical at the table.
+
+    Chosen from the account id only (stable, never inferred from a name, photo or anything about the person):
+    face shape, hair, hair colour and clothing vary; skin stays one neutral default rather than a guess about
+    someone. People change any of it, or create their own photo-derived avatar, from Settings.
+    """
+    digest = hashlib.sha256(user_id.encode()).digest()
+    pick = lambda key, i: AVATAR_OPTIONS[key][digest[i] % len(AVATAR_OPTIONS[key])]  # noqa: E731
+    return {"face": pick("face", 0), "skin": "#e8b896", "hair": pick("hair", 1), "hairColor": pick("hairColor", 2), "top": pick("top", 3), "accessory": "none"}
 
 
 class SignupIn(BaseModel):
@@ -70,9 +85,9 @@ def signup(body: SignupIn, db: Session = Depends(get_db)) -> dict:
     except IntegrityError:
         db.rollback()
         raise conflict("email_taken", "An account with that email already exists. Sign in instead.") from None
-    db.add(Avatar(user_id=user.id, definition={"skin": "#e8b896", "hair": "wavy", "hairColor": "#4a2f1f", "top": "#3f6b52", "accessory": "none"}))
+    db.add(Avatar(user_id=user.id, definition=starter_definition(user.id)))
     db.commit()
-    return {"token": issue_access_token(user.id), "user": serializers.me(user, _avatar(db, user.id))}
+    return {"token": issue_access_token(user.id), "user": serializers.me(user, _avatar(db, user.id), db)}
 
 
 @router.post("/auth/login")
@@ -80,12 +95,12 @@ def login(body: LoginIn, db: Session = Depends(get_db)) -> dict:
     user = db.scalar(select(User).where(User.email == body.email.lower()))
     if user is None or not verify_password(body.password, user.password_hash):
         raise ApiError(401, "bad_credentials", "That email and password don't match.")
-    return {"token": issue_access_token(user.id), "user": serializers.me(user, _avatar(db, user.id))}
+    return {"token": issue_access_token(user.id), "user": serializers.me(user, _avatar(db, user.id), db)}
 
 
 @router.get("/me")
 def get_me(user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
-    return serializers.me(user, _avatar(db, user.id))
+    return serializers.me(user, _avatar(db, user.id), db)
 
 
 class ProfilePatch(BaseModel):
@@ -129,7 +144,7 @@ def patch_me(body: ProfilePatch, user: User = Depends(current_user), db: Session
         allowed = {"push", "call_suggestions", "celebrations"}
         user.notification_prefs = {**(user.notification_prefs or {}), **{k: bool(v) for k, v in body.notification_prefs.items() if k in allowed}}
     db.commit()
-    return serializers.me(user, _avatar(db, user.id))
+    return serializers.me(user, _avatar(db, user.id), db)
 
 
 class AvatarIn(BaseModel):
@@ -163,6 +178,7 @@ def put_avatar(body: AvatarIn, user: User = Depends(current_user), db: Session =
         avatar.likeness_consent = body.likeness_consent
         avatar.updated_at = datetime.now(UTC)
     db.commit()
+    hub.avatar_changed(user.id)
     return {"definition": avatar.definition, "version": avatar.version}
 
 

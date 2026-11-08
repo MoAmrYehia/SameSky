@@ -75,6 +75,44 @@ See [VISUAL_QA.md](VISUAL_QA.md) for captures, comparisons and remaining differe
 | Our day, Share (populated, filmstrip trim, audience), Together, keepsake renders | `src/companion/views/*`, `src/companion/styles.css` | 🟢 |
 | Budgets: ~150–200k tris, ≤100–120 draws, 1–2K textures, ~15 MB critical art | Measured: 123k–136k tris, 95–101 draws, ≤2K, about 6.3 MB | 🟢 desktop / 🟡 Quest |
 
+## Realistic scenes and photo-derived avatars (instructions of 7 November 2026)
+
+| Instruction | Where | Status |
+|---|---|---|
+| “Create from my photos” in onboarding and Settings, labelled demo alternative | `OurDay.tsx` (`AvatarPrompt`), `views/AvatarStudio.tsx` | ✅ e2e |
+| Explain/consent (service, who sees it, removal), file or camera capture, photo requirements, retake | `AvatarStudio.tsx` (consent, `PhotoStep`); `POST /me/avatar-consents`, `/me/avatar-sources` | 🟢 UI / ✅ API |
+| Owner-chosen options, never inferred | body model + glasses step; `services/avatars.py` (`BODIES`) | ✅ API |
+| Real job states, cancel, retry | `avatar_jobs`, `worker.py` (`avatar.generate`), job step polling | ✅ `test_avatars.py` (fake provider) / 🟡 real provider |
+| Neutral-light review (front, three-quarter, side, seated, source photo), rotate, retake, regenerate | `ReviewStep`, `portrait.ts` (`renderReviewViews`, `mountAvatarViewer`) | ✅ e2e (test mannequin) |
+| “This looks like me — use this avatar” records version and scope | `POST /me/avatar-assets/{id}/approve` (compare-and-set) | ✅ |
+| Approved version everywhere; replace, stop sharing, delete sources, delete avatar | `serializers.avatar_view`, `GET /users/{id}/avatar`, `avatar_changed` realtime notice | ✅ API + e2e (open room swaps without reload) |
+| Real provider adapter (MetaPerson), no invented endpoints, no purchase | `services/avatar_providers.py` (documented REST flow only) | ✅ fake-provider tests / ❌ never run live (no credentials) |
+| Manual GLB import when generation is unavailable, stated as such | `ImportStep`, `POST /me/avatar-assets`, `services/glb.py` | ✅ e2e |
+| Tables: sources, jobs, assets + profile active reference; migration | `models.py`, `migrations/versions/1c9e35884ad2_photo_derived_avatars.py` | ✅ upgrade/downgrade/check |
+| Secure private uploads, EXIF strip, retention | `store_source` (re-encode), `purge_expired_sources` | ✅ |
+| Authorized short-lived model delivery, GLB validation, cache clearing | signed viewer-bound URLs + re-authorization per request; `glb.inspect`; `purgeAvatarCaches`, ref-counted model cache | ✅ |
+| Rig: skinning/morphs preserved, per-participant skeleton, units/facing, seated fit, IK; blinks only where supported | `shared/avatarRig.ts` (`SkinnedAvatar`) | 🟢 desktop (test mannequin) / 🟡 real export / 🟡 headset |
+| Less amber, fewer glossy wood highlights, quieter dock and panels | `env.ts` (lights, `satin()`), `keepsakes3d.ts` (`WALNUT_TINT`), `ui3d.ts`/`main.ts` (glass) | 🟢 `docs/VISUAL_QA.md` |
+| No Dubai claim for the Düsseldorf plate; simulated clip labelled as such | `room.html` place note; `origin` on sample media → *Simulated camera pan*, *Synthesized voice note*, *Sample photo* | ✅ |
+| Settings overflow at 1440 px | `styles.css` (`.settings-grid`, `.rule-row` container query); `web/scripts/overflow-check.mjs` | ✅ |
+| Captures 1672×941, 1440×900, 390×844 incl. avatar setup/approval | `web/scripts/capture.mjs`, `web/scripts/avatar-e2e.mjs` → `docs/visual-qa/after/` | ✅ |
+| Docs: provider setup, config example without secrets, provenance, results table | `docs/AVATARS.md`, `.env.example`, `docs/ASSET_MANIFEST.md`, `docs/asset-provenance.json`, `docs/STATUS.md` | ✅ |
+| Two consenting real-photo subjects, recognisable likenesses | — | ❌ not done (no subjects; no real photos used) |
+| Quest performance with two skinned avatars | — | ❌ no hardware |
+
+## Full application UX and emulator testing (8 November 2026)
+
+| Request | Where | Status |
+|---|---|---|
+| A complete first-run journey for a new account | `views/Setup.tsx` (`GetStarted`: you → room or invite link → invite → avatar → usual times → done), routed from `App.tsx` | ✅ `web/scripts/onboarding-e2e.mjs` (1440×900, 390×844) |
+| Invite links that are easy to send | `InviteCard` (single-use link, Copy, system Share sheet, New link) in setup, Our day, Together, Share, Settings | ✅ |
+| No dead ends while someone hasn't joined yet | Our day "waiting for someone" card; Together "nobody to meet yet" with usual-times presets; Share "nobody has joined yet" (save privately still works); `NoRoom` for views that need a room | ✅ e2e |
+| Usual free times without a form | `QuickTimes` presets (weekday evenings, weekend mornings …), full editor in Settings | ✅ e2e |
+| Room settings | Settings → Rooms → *Room settings*: mute this room (per person), daily recap draft time (owner) | ✅ e2e |
+| Distinct people by default | Varied starter demo avatars per account (face, hair, hair colour, clothing; one neutral skin) — `starter_definition` | ✅ `test_new_people_get_valid_varied_demo_avatars` |
+| Test inside Meta's emulator | `web/scripts/xr-emulator-test.mjs` drives IWER's emulated Quest 3 (hands: poke, point + pinch, tracking loss; controller: ray + trigger; recenter; leave); `docs/EMULATOR.md` | ✅ 13 checks / 🟡 real headset still needed |
+| Fix what the emulator finds | `src/xr/emulator.ts` (dev-only session shim), leaves instanced at real size + no phantom touch volumes, far-select proxies for table objects, flash/hint spacing, headset reply-sheet placement | ✅ |
+
 ## P1 (not implemented)
 
 More than two live avatars · WebRTC audio/video and TURN · live phone/webcam streaming · 360°/stereo footage ·

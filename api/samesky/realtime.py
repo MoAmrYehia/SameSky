@@ -47,6 +47,7 @@ class LiveSession:
     session_id: str
     room_id: str
     peers: dict[str, Peer] = field(default_factory=dict)
+    participants: frozenset[str] = frozenset()
 
 
 class Hub:
@@ -62,6 +63,12 @@ class Hub:
 
     def end_session(self, session_id: str, reason: str) -> None:
         self._threadsafe(self._end(session_id, reason))
+
+    def avatar_changed(self, user_id: str) -> None:
+        """Someone approved, replaced, stopped sharing or deleted their avatar. The notice says only "look
+        again": each connected viewer re-asks GET /v1/users/{id}/avatar with their own authorization, so a
+        private likeness is never revealed and a revoked one stops rendering without a reload."""
+        self._threadsafe(self._avatar_changed(user_id))
 
     def _threadsafe(self, coro) -> None:
         if self.loop is None or self.loop.is_closed():
@@ -84,6 +91,11 @@ class Hub:
                     await peer.ws.send_json({"type": "removed", "reason": reason})
                     await peer.ws.close(code=4403)
                 await self.broadcast(live, {"type": "peer_left", "userId": user_id, "reason": reason})
+
+    async def _avatar_changed(self, user_id: str) -> None:
+        for live in list(self.sessions.values()):
+            if user_id in live.participants:
+                await self.broadcast(live, {"type": "avatar_changed", "userId": user_id}, exclude=user_id)
 
     async def _end(self, session_id: str, reason: str) -> None:
         live = self.sessions.pop(session_id, None)
@@ -200,10 +212,20 @@ async def realtime_endpoint(ws: WebSocket) -> None:
                 return
             state = session_state(session)
             participants = list(session.participant_ids)
-            avatars = {a.user_id: {"definition": a.definition, "version": a.version} for a in db.query(Avatar).filter(Avatar.user_id.in_(participants))}
+            from .serializers import avatar_view
+
+            rows = {a.user_id: a for a in db.query(Avatar).filter(Avatar.user_id.in_(participants))}
+            # Welcome: each avatar as *this* viewer may see it (viewer-bound model URLs). Broadcasts to other
+            # peers carry no URLs; they re-fetch GET /v1/users/{id}/avatar for their own authorized link.
+            avatars = {p: avatar_view(db, p, rows.get(p), user_id) for p in participants}
+            mine = rows.get(user_id)
+            public_mine = None
+            if mine is not None:
+                # no kind/asset id here: whether a private likeness exists isn't broadcast to everyone
+                public_mine = {"definition": mine.definition, "version": mine.version, "refresh": True}
             names = {u.id: u.display_name for u in db.query(User).filter(User.id.in_(participants))}
             room_id = session.room_id
-        live = hub.sessions.setdefault(session_id, LiveSession(session_id=session_id, room_id=room_id))
+        live = hub.sessions.setdefault(session_id, LiveSession(session_id=session_id, room_id=room_id, participants=frozenset(participants)))
         old = live.peers.get(user_id)
         if old is not None:
             with contextlib.suppress(Exception):
@@ -213,7 +235,7 @@ async def realtime_endpoint(ws: WebSocket) -> None:
             "type": "welcome", "userId": user_id, "state": state,
             "participants": [{"userId": p, "displayName": names.get(p, "Member"), "avatar": avatars.get(p), "online": p in live.peers} for p in participants],
         })
-        await hub.broadcast(live, {"type": "peer_joined", "userId": user_id, "displayName": names.get(user_id), "avatar": avatars.get(user_id)}, exclude=user_id)
+        await hub.broadcast(live, {"type": "peer_joined", "userId": user_id, "displayName": names.get(user_id), "avatar": public_mine}, exclude=user_id)
 
         while True:
             message = await ws.receive_json()

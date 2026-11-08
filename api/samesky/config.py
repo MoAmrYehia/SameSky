@@ -71,6 +71,20 @@ class Settings:
     vapid_public_key: str | None = field(default_factory=lambda: _env("VAPID_PUBLIC_KEY"))
     vapid_private_key: str | None = field(default_factory=lambda: _env("VAPID_PRIVATE_KEY"))
     vapid_subject: str = field(default_factory=lambda: _env("VAPID_SUBJECT", "mailto:admin@samesky.invalid"))
+    # Photo-derived avatars. Provider credentials stay on the server. Without them, generation reports itself
+    # unavailable (never faked) and owners can still import a GLB they generated elsewhere, or use a demo avatar.
+    avatar_provider: str = field(default_factory=lambda: _env("SAMESKY_AVATAR_PROVIDER", "metaperson"))
+    metaperson_client_id: str | None = field(default_factory=lambda: _env("METAPERSON_CLIENT_ID"))
+    metaperson_client_secret: str | None = field(default_factory=lambda: _env("METAPERSON_CLIENT_SECRET"))
+    metaperson_api_url: str = field(default_factory=lambda: _env("METAPERSON_API_URL", "https://api.avatarsdk.com"))
+    metaperson_player_uid: str | None = field(default_factory=lambda: _env("METAPERSON_PLAYER_UID"))
+    # Hosts an export download may come from (the API host itself, plus any storage host the provider redirects to).
+    avatar_export_origins: tuple[str, ...] = field(
+        default_factory=lambda: tuple(h.strip() for h in (_env("SAMESKY_AVATAR_EXPORT_ORIGINS", "api.avatarsdk.com") or "").split(",") if h.strip())
+    )
+    avatar_source_retention_days: int = field(default_factory=lambda: _env_int("SAMESKY_AVATAR_SOURCE_RETENTION_DAYS", 7))
+    avatar_max_glb_bytes: int = field(default_factory=lambda: _env_int("SAMESKY_AVATAR_MAX_GLB_BYTES", 40 * 1024 * 1024))
+    avatar_generation_timeout_minutes: int = field(default_factory=lambda: _env_int("SAMESKY_AVATAR_TIMEOUT_MINUTES", 20))
     # Product limits
     direct_capacity: int = 2
     circle_capacity: int = field(default_factory=lambda: _env_int("SAMESKY_CIRCLE_CAPACITY", 6))

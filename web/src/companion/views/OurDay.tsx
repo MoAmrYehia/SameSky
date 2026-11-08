@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cueAt, loadCaptions, type Cue } from '../../shared/captions';
-import type { AvatarDefinition, Moment, Recap } from '../../shared/contracts';
+import type { AvatarView, Moment, Recap } from '../../shared/contracts';
 import { SAMPLE_DAY } from '../../shared/sample';
 import { wallParts } from '../../shared/tz';
 import { useApp } from '../App';
 import { Conversation, MomentDetail } from '../MomentDetail';
 import { StoryPlayer } from '../StoryPlayer';
 import { Avatar, Icon, kindLabel, localWhen, Notice, SourceIcon, Waveform } from '../ui';
+import { InviteCard, NoRoom } from './Setup';
 
 function todayIn(zone: string): string {
   const p = wallParts(Date.now(), zone);
@@ -62,15 +63,8 @@ export function OurDay() {
   const shared = moments.filter((m) => m.sharingState === 'shared');
   const waiting = useMemo(() => [...shared].reverse().find((m) => !m.isMine && m.kind === 'voice') ?? [...shared].reverse().find((m) => !m.isMine) ?? null, [shared]);
 
-  if (!room) {
-    return (
-      <div className="card stack" style={{ maxWidth: 640 }}>
-        <h1 className="page-title">Welcome, {me.displayName}</h1>
-        <p className="muted">Create a direct room for two, or a private circle for up to six, then invite someone.</p>
-        <a className="btn btn-primary" href="#/settings">Set up a room</a>
-      </div>
-    );
-  }
+  if (!room) return <NoRoom />;
+  const alone = ds.mode === 'live' && room.members.length < 2;
 
   const names = recap?.audience?.map((a) => a.displayName) ?? room.members.map((m) => m.displayName);
   const audienceLabel = room.kind === 'direct' ? `Only ${names.join(' + ')}` : `${room.name}: ${names.join(', ')}`;
@@ -92,6 +86,12 @@ export function OurDay() {
 
   return (
     <>
+      {alone ? (
+        <section className="card waiting-card" aria-label="Waiting for someone to join">
+          <InviteCard room={room} title={`Waiting for someone to join ${room.name}`} body="Send them an invite link. They’ll see what you share from the day they join — never anything earlier." />
+        </section>
+      ) : null}
+      {ds.mode === 'live' && me.avatar?.kind !== 'photo_derived' ? <AvatarPrompt /> : null}
       <div className="day-grid">
         <div className="stack" style={{ gap: 18 }}>
           <section className="card" aria-labelledby="day-title">
@@ -120,10 +120,10 @@ export function OurDay() {
                   const chapter = recap?.plan?.chapters.find((c) => c.contributorId === uid);
                   const bg = hero?.kind === 'photo' ? hero.media?.url : hero?.media?.posterUrl ?? hero?.media?.thumbUrl;
                   return (
-                    <button key={uid} className="person-card" onClick={() => hero && setDetail(hero)} aria-label={`Open ${person?.displayName}'s ${hero ? kindLabel(hero.kind, hero.media?.sourceDevice).toLowerCase() : 'moment'}`}>
+                    <button key={uid} className="person-card" onClick={() => hero && setDetail(hero)} aria-label={`Open ${person?.displayName}'s ${hero ? kindLabel(hero.kind, hero.media?.sourceDevice, hero.media?.origin).toLowerCase() : 'moment'}`}>
                       {bg ? <div className="media" style={{ backgroundImage: `url("${bg}")` }} /> : <div className="media text">“{hero?.caption}”</div>}
                       <div className="who">
-                        <Avatar def={person?.avatar?.definition} size={92} name={person?.displayName} />
+                        <Avatar avatar={person?.avatar} size={92} name={person?.displayName} />
                         <div style={{ paddingBottom: 4 }}>
                           <h3>{person?.id === me.id ? 'Your day' : `${person?.displayName}'s day`}</h3>
                           <p>{hero?.caption ?? chapter?.segments[0]?.text}</p>
@@ -171,7 +171,7 @@ export function OurDay() {
                       {m.kind === 'clip' ? <span className="play"><Icon name="play" /></span> : m.kind === 'voice' ? <Waveform bars={12} /> : m.kind === 'text' ? <Icon name="text" /> : null}
                     </span>
                     <span className="meta">
-                      <strong><SourceIcon kind={m.kind} />{kindLabel(m.kind, m.media?.sourceDevice)}</strong>
+                      <strong><SourceIcon kind={m.kind} />{kindLabel(m.kind, m.media?.sourceDevice, m.media?.origin)}</strong>
                       <span className="small muted">{m.ownerName} · {localWhen(m)}</span>
                     </span>
                   </button>
@@ -182,7 +182,7 @@ export function OurDay() {
         </div>
 
         <aside className="stack" style={{ gap: 18 }}>
-          {waiting ? <WaitingForYou moment={waiting} avatar={room.members.find((m) => m.id === waiting.ownerId)?.avatar?.definition} /> : null}
+          {waiting ? <WaitingForYou moment={waiting} avatar={room.members.find((m) => m.id === waiting.ownerId)?.avatar} /> : null}
           <section className="card stack" style={{ gap: 10 }}>
             <span className="lock-hero"><Icon name="lockCheck" /></span>
             <h2 className="section-title" style={{ margin: 0 }}>Approved moments only</h2>
@@ -201,7 +201,7 @@ export function OurDay() {
   );
 }
 
-function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: AvatarDefinition }) {
+function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: AvatarView | null }) {
   const [playing, setPlaying] = useState(false);
   const [replying, setReplying] = useState(false);
   const [cues, setCues] = useState<Cue[]>([]);
@@ -215,12 +215,12 @@ function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: AvatarDefi
     <section className="card waiting" aria-label="Waiting for you">
       <h2 className="section-title" style={{ margin: 0, fontSize: 'clamp(1.5rem, 2vw, 1.95rem)' }}>Waiting for you</h2>
       <div className="row" style={{ gap: 16 }}>
-        <Avatar def={avatar} size={104} name={moment.ownerName} />
+        <Avatar avatar={avatar} size={104} name={moment.ownerName} />
         {moment.kind === 'voice' ? <Waveform playing={playing} /> : null}
       </div>
       <div className="quote">“{moment.caption}”</div>
       <div className="muted" style={{ fontSize: '1.06rem' }}>
-        {moment.ownerName} · {kindLabel(moment.kind, moment.media?.sourceDevice)}{duration ? ` · 0:${String(duration).padStart(2, '0')}` : ''}
+        {moment.ownerName} · {kindLabel(moment.kind, moment.media?.sourceDevice, moment.media?.origin)}{duration ? ` · 0:${String(duration).padStart(2, '0')}` : ''}
       </div>
       {moment.kind === 'voice' && moment.media?.url ? (
         <audio ref={audio} src={moment.media.url} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={(e) => setT(e.currentTarget.currentTime)} />
@@ -291,6 +291,31 @@ function PrivacyCheck() {
       <p className="muted" style={{ margin: 0 }}>
         {count ? `${count} moment${count > 1 ? 's' : ''} from your direct room${count > 1 ? 's are' : ' is'} not part of this circle — not in its story, feed, keepsakes or notifications.` : 'Moments from direct rooms never appear in a circle.'}
       </p>
+    </section>
+  );
+}
+
+/** Onboarding: invite people to make their avatar from their own photos (dismissible; the demo stays labelled). */
+function AvatarPrompt() {
+  const { me } = useApp();
+  const key = `samesky.avatarPrompt.${me.id}`;
+  const [hidden, setHidden] = useState(() => { try { return localStorage.getItem(key) === 'dismissed'; } catch { return false; } });
+  if (hidden) return null;
+  const dismiss = () => {
+    try { localStorage.setItem(key, 'dismissed'); } catch { /* ignore */ }
+    setHidden(true);
+  };
+  return (
+    <section className="card onboarding-avatar" aria-label="Your avatar" style={{ marginBottom: 18 }}>
+      <Avatar avatar={me.avatar} size={84} name={me.displayName} demoBadge />
+      <div className="stack" style={{ gap: 4 }}>
+        <strong style={{ fontSize: '1.1rem' }}>Let people recognise you at the table</strong>
+        <span className="muted small">You’re using a labelled demo avatar. Create a 3D avatar from your own photo — only you see it until you approve it.</span>
+      </div>
+      <div className="row wrap">
+        <a className="btn btn-primary" href="#/settings?avatar=create">Create from my photos</a>
+        <button className="btn btn-quiet" onClick={dismiss}>Keep the demo avatar</button>
+      </div>
     </section>
   );
 }
