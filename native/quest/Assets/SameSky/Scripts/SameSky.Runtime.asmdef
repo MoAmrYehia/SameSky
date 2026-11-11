@@ -1,0 +1,29 @@
+{
+    "name": "SameSky.Runtime",
+    "rootNamespace": "SameSky",
+    "references": [
+        "Oculus.VR",
+        "Oculus.Interaction",
+        "Oculus.Interaction.OVR",
+        "Unity.TextMeshPro",
+        "glTFast",
+        "Unity.XR.OpenXR"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.xr.openxr",
+            "expression": "",
+            "define": "SAMESKY_OPENXR"
+        }
+    ],
+    "noEngineReferences": false
+}

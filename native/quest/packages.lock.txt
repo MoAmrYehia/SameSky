@@ -1,0 +1,5 @@
+# Meta XR SDK packages, pinned and verified by scripts/native/bootstrap.ps1 (sha1 = npm "shasum").
+# Source: Meta's package registry https://npm.developer.oculus.com (Meta Platform Technologies SDK License).
+com.meta.xr.sdk.core 209.0.0 0a6ebbc97c87b119f08c46c195f0328055ef3bbb
+com.meta.xr.sdk.interaction 209.0.0 3e56b37a21fc90a42e9d86f1a05ae5c11ba8e7be
+com.meta.xr.sdk.interaction.ovr 209.0.0 f0066375d995f13280343ed66eb8352205c9d01e

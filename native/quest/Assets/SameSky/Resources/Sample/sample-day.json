@@ -1,0 +1,1271 @@
+{
+  "generatedFrom": "web/src/shared/sample.ts",
+  "note": "Fictional sample. Photos are stock-derived, the voice is synthesized, the clip is a simulated camera pan, recaps are precomputed (no AI call), presence is simulated.",
+  "day": "2026-11-06",
+  "me": "sample-adam",
+  "people": {
+    "sample-adam": {
+      "name": "Adam",
+      "zone": "Asia/Dubai",
+      "city": "Dubai",
+      "avatar": {
+        "skin": "#d29a72",
+        "hair": "short",
+        "hairColor": "#2b1d14",
+        "top": "#3f6b52",
+        "accessory": "none",
+        "face": "defined"
+      }
+    },
+    "sample-maya": {
+      "name": "Maya",
+      "zone": "Asia/Shanghai",
+      "city": "Beijing",
+      "avatar": {
+        "skin": "#e8b896",
+        "hair": "wavy",
+        "hairColor": "#4a2f1f",
+        "top": "#e9e0cf",
+        "accessory": "earrings",
+        "face": "soft"
+      }
+    },
+    "sample-lina": {
+      "name": "Lina",
+      "zone": "Europe/London",
+      "city": "London",
+      "avatar": {
+        "skin": "#f6d7c3",
+        "hair": "bun",
+        "hairColor": "#7a4a2a",
+        "top": "#2f4a6b",
+        "accessory": "glasses",
+        "face": "soft"
+      }
+    }
+  },
+  "rooms": [
+    {
+      "id": "sample-direct",
+      "kind": "direct",
+      "name": "Adam + Maya",
+      "capacity": 2,
+      "reportingZone": "Asia/Dubai",
+      "dailyDraftTime": "22:00",
+      "isOwner": true,
+      "muted": false,
+      "members": [
+        {
+          "id": "sample-adam",
+          "displayName": "Adam",
+          "timeZone": "Asia/Dubai",
+          "avatar": {
+            "definition": {
+              "skin": "#d29a72",
+              "hair": "short",
+              "hairColor": "#2b1d14",
+              "top": "#3f6b52",
+              "accessory": "none",
+              "face": "defined"
+            },
+            "version": 1
+          },
+          "role": "owner",
+          "label": null,
+          "city": "Dubai"
+        },
+        {
+          "id": "sample-maya",
+          "displayName": "Maya",
+          "timeZone": "Asia/Shanghai",
+          "avatar": {
+            "definition": {
+              "skin": "#e8b896",
+              "hair": "wavy",
+              "hairColor": "#4a2f1f",
+              "top": "#e9e0cf",
+              "accessory": "earrings",
+              "face": "soft"
+            },
+            "version": 1
+          },
+          "role": "member",
+          "label": "Partner",
+          "city": "Beijing"
+        }
+      ]
+    },
+    {
+      "id": "sample-family",
+      "kind": "circle",
+      "name": "Family circle",
+      "capacity": 6,
+      "reportingZone": "Asia/Dubai",
+      "dailyDraftTime": null,
+      "isOwner": true,
+      "muted": false,
+      "members": [
+        {
+          "id": "sample-adam",
+          "displayName": "Adam",
+          "timeZone": "Asia/Dubai",
+          "avatar": {
+            "definition": {
+              "skin": "#d29a72",
+              "hair": "short",
+              "hairColor": "#2b1d14",
+              "top": "#3f6b52",
+              "accessory": "none",
+              "face": "defined"
+            },
+            "version": 1
+          },
+          "role": "owner",
+          "label": null,
+          "city": "Dubai"
+        },
+        {
+          "id": "sample-maya",
+          "displayName": "Maya",
+          "timeZone": "Asia/Shanghai",
+          "avatar": {
+            "definition": {
+              "skin": "#e8b896",
+              "hair": "wavy",
+              "hairColor": "#4a2f1f",
+              "top": "#e9e0cf",
+              "accessory": "earrings",
+              "face": "soft"
+            },
+            "version": 1
+          },
+          "role": "member",
+          "label": "Family",
+          "city": "Beijing"
+        },
+        {
+          "id": "sample-lina",
+          "displayName": "Lina",
+          "timeZone": "Europe/London",
+          "avatar": {
+            "definition": {
+              "skin": "#f6d7c3",
+              "hair": "bun",
+              "hairColor": "#7a4a2a",
+              "top": "#2f4a6b",
+              "accessory": "glasses",
+              "face": "soft"
+            },
+            "version": 1
+          },
+          "role": "member",
+          "label": "Sister",
+          "city": "London"
+        }
+      ]
+    }
+  ],
+  "moments": [
+    {
+      "id": "m-maya-park",
+      "roomId": "sample-direct",
+      "ownerId": "sample-maya",
+      "ownerName": "Maya",
+      "kind": "photo",
+      "caption": "A quiet walk after work.",
+      "captureAt": "2026-11-06T10:40:00Z",
+      "captureLocal": {
+        "time": "18:40",
+        "date": "2026-11-06",
+        "zone": "Asia/Shanghai",
+        "abbreviation": "GMT+8"
+      },
+      "roomDate": "2026-11-06",
+      "sharingState": "shared",
+      "sourceVersion": 1,
+      "sharingVersion": 1,
+      "audience": [
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam"
+        }
+      ],
+      "isMine": false,
+      "aiAllowed": true,
+      "recordedGesture": null,
+      "reactions": [],
+      "media": {
+        "id": "asset-m-maya-park",
+        "kind": "image",
+        "processingState": "ready",
+        "sourceDevice": "phone",
+        "origin": "stock",
+        "projection": "flat",
+        "durationMs": null,
+        "width": 1600,
+        "height": 1000,
+        "url": "res:Sample/Media/maya-park",
+        "thumbUrl": "res:Sample/Media/maya-park-thumb"
+      }
+    },
+    {
+      "id": "m-maya-voice",
+      "roomId": "sample-direct",
+      "ownerId": "sample-maya",
+      "ownerName": "Maya",
+      "kind": "voice",
+      "caption": "Saved you a seat.",
+      "captureAt": "2026-11-06T12:55:00Z",
+      "captureLocal": {
+        "time": "20:55",
+        "date": "2026-11-06",
+        "zone": "Asia/Shanghai",
+        "abbreviation": "GMT+8"
+      },
+      "roomDate": "2026-11-06",
+      "sharingState": "shared",
+      "sourceVersion": 1,
+      "sharingVersion": 1,
+      "audience": [
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam"
+        }
+      ],
+      "isMine": false,
+      "aiAllowed": true,
+      "transcript": "Saved you a seat. The bench by the big oak, same as always. Tell me about your sunset when you get home.",
+      "recordedGesture": "wave",
+      "reactions": [],
+      "media": {
+        "id": "asset-m-maya-voice",
+        "kind": "audio",
+        "processingState": "ready",
+        "sourceDevice": "phone",
+        "origin": "synthesized",
+        "projection": "flat",
+        "durationMs": 9300,
+        "width": null,
+        "height": null,
+        "url": "res:Sample/Media/maya-voice",
+        "captions": [
+          {
+            "startMs": 0,
+            "endMs": 1548,
+            "speaker": "Maya",
+            "text": "Saved you a seat."
+          },
+          {
+            "startMs": 1548,
+            "endMs": 5283,
+            "speaker": "Maya",
+            "text": "The bench by the big oak, same as always."
+          },
+          {
+            "startMs": 5283,
+            "endMs": 9290,
+            "speaker": "Maya",
+            "text": "Tell me about your sunset when you get home."
+          }
+        ]
+      }
+    },
+    {
+      "id": "m-adam-waterfront",
+      "roomId": "sample-direct",
+      "ownerId": "sample-adam",
+      "ownerName": "Adam",
+      "kind": "photo",
+      "caption": "An evening walk by the harbour.",
+      "captureAt": "2026-11-06T13:20:00Z",
+      "captureLocal": {
+        "time": "17:20",
+        "date": "2026-11-06",
+        "zone": "Asia/Dubai",
+        "abbreviation": "GMT+4"
+      },
+      "roomDate": "2026-11-06",
+      "sharingState": "shared",
+      "sourceVersion": 1,
+      "sharingVersion": 1,
+      "audience": [
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya"
+        }
+      ],
+      "isMine": true,
+      "aiAllowed": true,
+      "recordedGesture": null,
+      "reactions": [],
+      "media": {
+        "id": "asset-m-adam-waterfront",
+        "kind": "image",
+        "processingState": "ready",
+        "sourceDevice": "phone",
+        "origin": "stock",
+        "projection": "flat",
+        "durationMs": null,
+        "width": 1600,
+        "height": 1000,
+        "url": "res:Sample/Media/adam-waterfront",
+        "thumbUrl": "res:Sample/Media/adam-waterfront-thumb"
+      }
+    },
+    {
+      "id": "m-adam-ride",
+      "roomId": "sample-direct",
+      "ownerId": "sample-adam",
+      "ownerName": "Adam",
+      "kind": "clip",
+      "caption": "Evening lights along the promenade.",
+      "captureAt": "2026-11-06T13:35:00Z",
+      "captureLocal": {
+        "time": "17:35",
+        "date": "2026-11-06",
+        "zone": "Asia/Dubai",
+        "abbreviation": "GMT+4"
+      },
+      "roomDate": "2026-11-06",
+      "sharingState": "shared",
+      "sourceVersion": 1,
+      "sharingVersion": 1,
+      "audience": [
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya"
+        }
+      ],
+      "isMine": true,
+      "aiAllowed": true,
+      "recordedGesture": null,
+      "reactions": [],
+      "media": {
+        "id": "asset-m-adam-ride",
+        "kind": "video",
+        "processingState": "ready",
+        "sourceDevice": "camera",
+        "origin": "simulated",
+        "projection": "flat",
+        "durationMs": 8000,
+        "width": 1280,
+        "height": 720,
+        "url": "res:Sample/Media/adam-clip",
+        "thumbUrl": "res:Sample/Media/adam-clip-thumb",
+        "posterUrl": "res:Sample/Media/adam-clip-poster"
+      }
+    },
+    {
+      "id": "f-maya-text",
+      "roomId": "sample-family",
+      "ownerId": "sample-maya",
+      "ownerName": "Maya",
+      "kind": "text",
+      "caption": "Made dumplings for the whole office. Saving the recipe for our next family dinner.",
+      "captureAt": "2026-11-06T04:30:00Z",
+      "captureLocal": {
+        "time": "12:30",
+        "date": "2026-11-06",
+        "zone": "Asia/Shanghai",
+        "abbreviation": "GMT+8"
+      },
+      "roomDate": "2026-11-06",
+      "sharingState": "shared",
+      "sourceVersion": 1,
+      "sharingVersion": 1,
+      "audience": [
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam"
+        },
+        {
+          "userId": "sample-lina",
+          "displayName": "Lina"
+        }
+      ],
+      "isMine": false,
+      "aiAllowed": true,
+      "recordedGesture": null,
+      "reactions": [],
+      "media": null
+    },
+    {
+      "id": "f-adam-dunes",
+      "roomId": "sample-family",
+      "ownerId": "sample-adam",
+      "ownerName": "Adam",
+      "kind": "photo",
+      "caption": "Desert hills before sunset — thinking of you all.",
+      "captureAt": "2026-11-06T11:50:00Z",
+      "captureLocal": {
+        "time": "15:50",
+        "date": "2026-11-06",
+        "zone": "Asia/Dubai",
+        "abbreviation": "GMT+4"
+      },
+      "roomDate": "2026-11-06",
+      "sharingState": "shared",
+      "sourceVersion": 1,
+      "sharingVersion": 1,
+      "audience": [
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya"
+        },
+        {
+          "userId": "sample-lina",
+          "displayName": "Lina"
+        }
+      ],
+      "isMine": true,
+      "aiAllowed": true,
+      "recordedGesture": null,
+      "reactions": [],
+      "media": {
+        "id": "asset-f-adam-dunes",
+        "kind": "image",
+        "processingState": "ready",
+        "sourceDevice": "camera",
+        "origin": "stock",
+        "projection": "flat",
+        "durationMs": null,
+        "width": 1600,
+        "height": 1000,
+        "url": "res:Sample/Media/adam-desert",
+        "thumbUrl": "res:Sample/Media/adam-desert-thumb"
+      }
+    },
+    {
+      "id": "f-lina-lanterns",
+      "roomId": "sample-family",
+      "ownerId": "sample-lina",
+      "ownerName": "Lina",
+      "kind": "photo",
+      "caption": "A quiet evening at home in the courtyard.",
+      "captureAt": "2026-11-06T18:30:00Z",
+      "captureLocal": {
+        "time": "18:30",
+        "date": "2026-11-06",
+        "zone": "Europe/London",
+        "abbreviation": "GMT"
+      },
+      "roomDate": "2026-11-06",
+      "sharingState": "shared",
+      "sourceVersion": 1,
+      "sharingVersion": 1,
+      "audience": [
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam"
+        },
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya"
+        }
+      ],
+      "isMine": false,
+      "aiAllowed": true,
+      "recordedGesture": null,
+      "reactions": [],
+      "media": {
+        "id": "asset-f-lina-lanterns",
+        "kind": "image",
+        "processingState": "ready",
+        "sourceDevice": "phone",
+        "origin": "stock",
+        "projection": "flat",
+        "durationMs": null,
+        "width": 1600,
+        "height": 1000,
+        "url": "res:Sample/Media/lina-courtyard",
+        "thumbUrl": "res:Sample/Media/lina-courtyard-thumb"
+      }
+    }
+  ],
+  "recaps": [
+    {
+      "id": "r-direct",
+      "roomId": "sample-direct",
+      "roomDate": "2026-11-06",
+      "version": 1,
+      "state": "shared",
+      "generator": "sample",
+      "generatorLabel": "Precomputed sample recap (no AI call)",
+      "omittedCount": 0,
+      "invalidationReason": null,
+      "publishedAt": "2026-11-06T18:05:00Z",
+      "contributors": [
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya",
+          "approved": true
+        },
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam",
+          "approved": true
+        }
+      ],
+      "audience": [
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam"
+        },
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya"
+        }
+      ],
+      "plan": {
+        "schemaVersion": 2,
+        "recapId": "r-direct",
+        "roomId": "sample-direct",
+        "audienceSnapshotId": "sample-snapshot-direct",
+        "roomDate": "2026-11-06",
+        "roomTimeZone": "Asia/Dubai",
+        "title": "Two walks under one sky",
+        "closingLine": "Different cities, the same evening light.",
+        "chapters": [
+          {
+            "contributorId": "sample-maya",
+            "objectType": "frame",
+            "durationSeconds": 45,
+            "playbackMomentIds": [
+              "m-maya-park",
+              "m-maya-voice"
+            ],
+            "segments": [
+              {
+                "text": "Maya took a quiet walk after work.",
+                "kind": "stated",
+                "sources": [
+                  {
+                    "momentId": "m-maya-park",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              },
+              {
+                "text": "The path looks lit by low, golden sun through the trees.",
+                "kind": "visual_interpretation",
+                "sources": [
+                  {
+                    "momentId": "m-maya-park",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              },
+              {
+                "text": "“Saved you a seat. The bench by the big oak, same as always.”",
+                "kind": "quote",
+                "sources": [
+                  {
+                    "momentId": "m-maya-voice",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1,
+                    "transcriptStartMs": 0,
+                    "transcriptEndMs": 5200
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "contributorId": "sample-adam",
+            "objectType": "postcard",
+            "durationSeconds": 40,
+            "playbackMomentIds": [
+              "m-adam-waterfront",
+              "m-adam-ride"
+            ],
+            "segments": [
+              {
+                "text": "Adam took an evening walk by the harbour.",
+                "kind": "stated",
+                "sources": [
+                  {
+                    "momentId": "m-adam-waterfront",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              },
+              {
+                "text": "He filmed the evening lights along the promenade.",
+                "kind": "stated",
+                "sources": [
+                  {
+                    "momentId": "m-adam-ride",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              },
+              {
+                "text": "The water looks still enough to mirror the lights.",
+                "kind": "visual_interpretation",
+                "sources": [
+                  {
+                    "momentId": "m-adam-ride",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "playback": [
+        {
+          "id": "m-maya-park",
+          "roomId": "sample-direct",
+          "ownerId": "sample-maya",
+          "ownerName": "Maya",
+          "kind": "photo",
+          "caption": "A quiet walk after work.",
+          "captureAt": "2026-11-06T10:40:00Z",
+          "captureLocal": {
+            "time": "18:40",
+            "date": "2026-11-06",
+            "zone": "Asia/Shanghai",
+            "abbreviation": "GMT+8"
+          },
+          "roomDate": "2026-11-06",
+          "sharingState": "shared",
+          "sourceVersion": 1,
+          "sharingVersion": 1,
+          "audience": [
+            {
+              "userId": "sample-adam",
+              "displayName": "Adam"
+            }
+          ],
+          "isMine": false,
+          "aiAllowed": true,
+          "recordedGesture": null,
+          "reactions": [],
+          "media": {
+            "id": "asset-m-maya-park",
+            "kind": "image",
+            "processingState": "ready",
+            "sourceDevice": "phone",
+            "origin": "stock",
+            "projection": "flat",
+            "durationMs": null,
+            "width": 1600,
+            "height": 1000,
+            "url": "res:Sample/Media/maya-park",
+            "thumbUrl": "res:Sample/Media/maya-park-thumb"
+          }
+        },
+        {
+          "id": "m-maya-voice",
+          "roomId": "sample-direct",
+          "ownerId": "sample-maya",
+          "ownerName": "Maya",
+          "kind": "voice",
+          "caption": "Saved you a seat.",
+          "captureAt": "2026-11-06T12:55:00Z",
+          "captureLocal": {
+            "time": "20:55",
+            "date": "2026-11-06",
+            "zone": "Asia/Shanghai",
+            "abbreviation": "GMT+8"
+          },
+          "roomDate": "2026-11-06",
+          "sharingState": "shared",
+          "sourceVersion": 1,
+          "sharingVersion": 1,
+          "audience": [
+            {
+              "userId": "sample-adam",
+              "displayName": "Adam"
+            }
+          ],
+          "isMine": false,
+          "aiAllowed": true,
+          "transcript": "Saved you a seat. The bench by the big oak, same as always. Tell me about your sunset when you get home.",
+          "recordedGesture": "wave",
+          "reactions": [],
+          "media": {
+            "id": "asset-m-maya-voice",
+            "kind": "audio",
+            "processingState": "ready",
+            "sourceDevice": "phone",
+            "origin": "synthesized",
+            "projection": "flat",
+            "durationMs": 9300,
+            "width": null,
+            "height": null,
+            "url": "res:Sample/Media/maya-voice",
+            "captions": [
+              {
+                "startMs": 0,
+                "endMs": 1548,
+                "speaker": "Maya",
+                "text": "Saved you a seat."
+              },
+              {
+                "startMs": 1548,
+                "endMs": 5283,
+                "speaker": "Maya",
+                "text": "The bench by the big oak, same as always."
+              },
+              {
+                "startMs": 5283,
+                "endMs": 9290,
+                "speaker": "Maya",
+                "text": "Tell me about your sunset when you get home."
+              }
+            ]
+          }
+        },
+        {
+          "id": "m-adam-waterfront",
+          "roomId": "sample-direct",
+          "ownerId": "sample-adam",
+          "ownerName": "Adam",
+          "kind": "photo",
+          "caption": "An evening walk by the harbour.",
+          "captureAt": "2026-11-06T13:20:00Z",
+          "captureLocal": {
+            "time": "17:20",
+            "date": "2026-11-06",
+            "zone": "Asia/Dubai",
+            "abbreviation": "GMT+4"
+          },
+          "roomDate": "2026-11-06",
+          "sharingState": "shared",
+          "sourceVersion": 1,
+          "sharingVersion": 1,
+          "audience": [
+            {
+              "userId": "sample-maya",
+              "displayName": "Maya"
+            }
+          ],
+          "isMine": true,
+          "aiAllowed": true,
+          "recordedGesture": null,
+          "reactions": [],
+          "media": {
+            "id": "asset-m-adam-waterfront",
+            "kind": "image",
+            "processingState": "ready",
+            "sourceDevice": "phone",
+            "origin": "stock",
+            "projection": "flat",
+            "durationMs": null,
+            "width": 1600,
+            "height": 1000,
+            "url": "res:Sample/Media/adam-waterfront",
+            "thumbUrl": "res:Sample/Media/adam-waterfront-thumb"
+          }
+        },
+        {
+          "id": "m-adam-ride",
+          "roomId": "sample-direct",
+          "ownerId": "sample-adam",
+          "ownerName": "Adam",
+          "kind": "clip",
+          "caption": "Evening lights along the promenade.",
+          "captureAt": "2026-11-06T13:35:00Z",
+          "captureLocal": {
+            "time": "17:35",
+            "date": "2026-11-06",
+            "zone": "Asia/Dubai",
+            "abbreviation": "GMT+4"
+          },
+          "roomDate": "2026-11-06",
+          "sharingState": "shared",
+          "sourceVersion": 1,
+          "sharingVersion": 1,
+          "audience": [
+            {
+              "userId": "sample-maya",
+              "displayName": "Maya"
+            }
+          ],
+          "isMine": true,
+          "aiAllowed": true,
+          "recordedGesture": null,
+          "reactions": [],
+          "media": {
+            "id": "asset-m-adam-ride",
+            "kind": "video",
+            "processingState": "ready",
+            "sourceDevice": "camera",
+            "origin": "simulated",
+            "projection": "flat",
+            "durationMs": 8000,
+            "width": 1280,
+            "height": 720,
+            "url": "res:Sample/Media/adam-clip",
+            "thumbUrl": "res:Sample/Media/adam-clip-thumb",
+            "posterUrl": "res:Sample/Media/adam-clip-poster"
+          }
+        }
+      ]
+    },
+    {
+      "id": "r-family",
+      "roomId": "sample-family",
+      "roomDate": "2026-11-06",
+      "version": 1,
+      "state": "shared",
+      "generator": "sample",
+      "generatorLabel": "Precomputed sample recap (no AI call)",
+      "omittedCount": 0,
+      "invalidationReason": null,
+      "publishedAt": "2026-11-06T19:10:00Z",
+      "contributors": [
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya",
+          "approved": true
+        },
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam",
+          "approved": true
+        },
+        {
+          "userId": "sample-lina",
+          "displayName": "Lina",
+          "approved": true
+        }
+      ],
+      "audience": [
+        {
+          "userId": "sample-adam",
+          "displayName": "Adam"
+        },
+        {
+          "userId": "sample-maya",
+          "displayName": "Maya"
+        },
+        {
+          "userId": "sample-lina",
+          "displayName": "Lina"
+        }
+      ],
+      "plan": {
+        "schemaVersion": 2,
+        "recapId": "r-family",
+        "roomId": "sample-family",
+        "audienceSnapshotId": "sample-snapshot-family",
+        "roomDate": "2026-11-06",
+        "roomTimeZone": "Asia/Dubai",
+        "title": "Dumplings, desert hills and a quiet courtyard",
+        "closingLine": "Three cities, one family table.",
+        "chapters": [
+          {
+            "contributorId": "sample-maya",
+            "objectType": "frame",
+            "durationSeconds": 20,
+            "playbackMomentIds": [],
+            "segments": [
+              {
+                "text": "Maya made dumplings for the whole office and is saving the recipe for the next family dinner.",
+                "kind": "stated",
+                "sources": [
+                  {
+                    "momentId": "f-maya-text",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "contributorId": "sample-adam",
+            "objectType": "frame",
+            "durationSeconds": 20,
+            "playbackMomentIds": [
+              "f-adam-dunes"
+            ],
+            "segments": [
+              {
+                "text": "Adam saw desert hills before sunset and was thinking of everyone.",
+                "kind": "stated",
+                "sources": [
+                  {
+                    "momentId": "f-adam-dunes",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "contributorId": "sample-lina",
+            "objectType": "frame",
+            "durationSeconds": 25,
+            "playbackMomentIds": [
+              "f-lina-lanterns"
+            ],
+            "segments": [
+              {
+                "text": "Lina spent a quiet evening at home in the courtyard.",
+                "kind": "stated",
+                "sources": [
+                  {
+                    "momentId": "f-lina-lanterns",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              },
+              {
+                "text": "The walls look lit by warm porch lamps at dusk.",
+                "kind": "visual_interpretation",
+                "sources": [
+                  {
+                    "momentId": "f-lina-lanterns",
+                    "sourceVersion": 1,
+                    "sharingVersion": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "playback": [
+        {
+          "id": "f-adam-dunes",
+          "roomId": "sample-family",
+          "ownerId": "sample-adam",
+          "ownerName": "Adam",
+          "kind": "photo",
+          "caption": "Desert hills before sunset — thinking of you all.",
+          "captureAt": "2026-11-06T11:50:00Z",
+          "captureLocal": {
+            "time": "15:50",
+            "date": "2026-11-06",
+            "zone": "Asia/Dubai",
+            "abbreviation": "GMT+4"
+          },
+          "roomDate": "2026-11-06",
+          "sharingState": "shared",
+          "sourceVersion": 1,
+          "sharingVersion": 1,
+          "audience": [
+            {
+              "userId": "sample-maya",
+              "displayName": "Maya"
+            },
+            {
+              "userId": "sample-lina",
+              "displayName": "Lina"
+            }
+          ],
+          "isMine": true,
+          "aiAllowed": true,
+          "recordedGesture": null,
+          "reactions": [],
+          "media": {
+            "id": "asset-f-adam-dunes",
+            "kind": "image",
+            "processingState": "ready",
+            "sourceDevice": "camera",
+            "origin": "stock",
+            "projection": "flat",
+            "durationMs": null,
+            "width": 1600,
+            "height": 1000,
+            "url": "res:Sample/Media/adam-desert",
+            "thumbUrl": "res:Sample/Media/adam-desert-thumb"
+          }
+        },
+        {
+          "id": "f-lina-lanterns",
+          "roomId": "sample-family",
+          "ownerId": "sample-lina",
+          "ownerName": "Lina",
+          "kind": "photo",
+          "caption": "A quiet evening at home in the courtyard.",
+          "captureAt": "2026-11-06T18:30:00Z",
+          "captureLocal": {
+            "time": "18:30",
+            "date": "2026-11-06",
+            "zone": "Europe/London",
+            "abbreviation": "GMT"
+          },
+          "roomDate": "2026-11-06",
+          "sharingState": "shared",
+          "sourceVersion": 1,
+          "sharingVersion": 1,
+          "audience": [
+            {
+              "userId": "sample-adam",
+              "displayName": "Adam"
+            },
+            {
+              "userId": "sample-maya",
+              "displayName": "Maya"
+            }
+          ],
+          "isMine": false,
+          "aiAllowed": true,
+          "recordedGesture": null,
+          "reactions": [],
+          "media": {
+            "id": "asset-f-lina-lanterns",
+            "kind": "image",
+            "processingState": "ready",
+            "sourceDevice": "phone",
+            "origin": "stock",
+            "projection": "flat",
+            "durationMs": null,
+            "width": 1600,
+            "height": 1000,
+            "url": "res:Sample/Media/lina-courtyard",
+            "thumbUrl": "res:Sample/Media/lina-courtyard-thumb"
+          }
+        }
+      ]
+    }
+  ],
+  "replies": [
+    {
+      "id": "reply-seed-1",
+      "momentId": "m-adam-waterfront",
+      "authorId": "sample-maya",
+      "authorName": "Maya",
+      "text": "Those reflections! Save me a spot on that bench.",
+      "createdAt": "2026-11-06T14:02:00Z",
+      "label": "Recorded message"
+    }
+  ],
+  "awards": {
+    "sample-direct": [
+      {
+        "milestone": "first_shared_day",
+        "title": "First Shared Day",
+        "trigger": "Publish the first room-wide capsule with contributions from at least two members.",
+        "keepsake": "frame",
+        "earned": true,
+        "earnedAt": "2026-10-31T18:00:00Z",
+        "progress": 1,
+        "target": 1,
+        "sourceRecapId": null
+      },
+      {
+        "milestone": "conversation_continued",
+        "title": "A Conversation Continued",
+        "trigger": "At least two members each reply to a room-wide shared moment.",
+        "keepsake": "linked_sculptures",
+        "earned": true,
+        "earnedAt": "2026-11-02T19:30:00Z",
+        "progress": 2,
+        "target": 2,
+        "sourceRecapId": null
+      },
+      {
+        "milestone": "seven_days",
+        "title": "Seven Days of Us",
+        "trigger": "Publish qualifying shared capsules on seven distinct room dates.",
+        "keepsake": "memory_tree",
+        "earned": false,
+        "earnedAt": null,
+        "progress": 5,
+        "target": 7,
+        "sourceRecapId": null
+      }
+    ],
+    "sample-family": [
+      {
+        "milestone": "first_shared_day",
+        "title": "First Shared Day",
+        "trigger": "Publish the first room-wide capsule with contributions from at least two members.",
+        "keepsake": "frame",
+        "earned": true,
+        "earnedAt": "2026-11-06T19:10:00Z",
+        "progress": 1,
+        "target": 1,
+        "sourceRecapId": "r-family"
+      },
+      {
+        "milestone": "conversation_continued",
+        "title": "A Conversation Continued",
+        "trigger": "At least two members each reply to a room-wide shared moment.",
+        "keepsake": "linked_sculptures",
+        "earned": false,
+        "earnedAt": null,
+        "progress": 0,
+        "target": 2,
+        "sourceRecapId": null
+      },
+      {
+        "milestone": "seven_days",
+        "title": "Seven Days of Us",
+        "trigger": "Publish qualifying shared capsules on seven distinct room dates.",
+        "keepsake": "memory_tree",
+        "earned": false,
+        "earnedAt": null,
+        "progress": 1,
+        "target": 7,
+        "sourceRecapId": null
+      }
+    ]
+  },
+  "schedules": {
+    "sample-adam": {
+      "rules": [
+        {
+          "weekday": 0,
+          "start": "17:00",
+          "end": "18:30"
+        },
+        {
+          "weekday": 1,
+          "start": "17:00",
+          "end": "18:30"
+        },
+        {
+          "weekday": 2,
+          "start": "17:00",
+          "end": "18:30"
+        },
+        {
+          "weekday": 3,
+          "start": "17:00",
+          "end": "18:30"
+        },
+        {
+          "weekday": 4,
+          "start": "17:00",
+          "end": "18:30"
+        },
+        {
+          "weekday": 5,
+          "start": "10:00",
+          "end": "12:00"
+        },
+        {
+          "weekday": 6,
+          "start": "10:00",
+          "end": "12:00"
+        }
+      ],
+      "quiet": {
+        "start": "23:00",
+        "end": "07:00"
+      }
+    },
+    "sample-maya": {
+      "rules": [
+        {
+          "weekday": 0,
+          "start": "21:00",
+          "end": "22:30"
+        },
+        {
+          "weekday": 1,
+          "start": "21:00",
+          "end": "22:30"
+        },
+        {
+          "weekday": 2,
+          "start": "21:00",
+          "end": "22:30"
+        },
+        {
+          "weekday": 3,
+          "start": "21:00",
+          "end": "22:30"
+        },
+        {
+          "weekday": 4,
+          "start": "21:00",
+          "end": "22:30"
+        },
+        {
+          "weekday": 5,
+          "start": "14:00",
+          "end": "16:00"
+        },
+        {
+          "weekday": 6,
+          "start": "14:00",
+          "end": "16:00"
+        }
+      ],
+      "quiet": {
+        "start": "23:30",
+        "end": "07:30"
+      }
+    },
+    "sample-lina": {
+      "rules": [
+        {
+          "weekday": 0,
+          "start": "18:00",
+          "end": "21:00"
+        },
+        {
+          "weekday": 1,
+          "start": "18:00",
+          "end": "21:00"
+        },
+        {
+          "weekday": 2,
+          "start": "18:00",
+          "end": "21:00"
+        },
+        {
+          "weekday": 3,
+          "start": "18:00",
+          "end": "21:00"
+        },
+        {
+          "weekday": 4,
+          "start": "18:00",
+          "end": "21:00"
+        },
+        {
+          "weekday": 5,
+          "start": "09:00",
+          "end": "12:00"
+        },
+        {
+          "weekday": 6,
+          "start": "09:00",
+          "end": "12:00"
+        }
+      ],
+      "quiet": {
+        "start": "22:30",
+        "end": "07:00"
+      }
+    }
+  },
+  "inbox": [
+    {
+      "id": "n-1",
+      "kind": "recap_ready",
+      "roomId": "sample-direct",
+      "resourceType": "recap",
+      "resourceId": "r-direct",
+      "text": "A shared moment is waiting.",
+      "createdAt": "2026-11-06T18:05:00Z",
+      "read": false
+    },
+    {
+      "id": "n-2",
+      "kind": "reply_received",
+      "roomId": "sample-direct",
+      "resourceType": "reply",
+      "resourceId": "reply-seed-1",
+      "text": "Someone left you a reply.",
+      "createdAt": "2026-11-06T14:02:00Z",
+      "read": true
+    }
+  ]
+}

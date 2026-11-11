@@ -697,6 +697,65 @@
         }
       }
     },
+    "/v1/invites/redeem-code": {
+      "post": {
+        "summary": "Redeem Code",
+        "description": "Joins with the short code shown beside an invitation (typed on a phone or a headset keypad).",
+        "operationId": "redeem_code_v1_invites_redeem_code_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedeemCodeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Redeem Code V1 Invites Redeem Code Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/rooms/{room_id}/members/{member_id}": {
       "delete": {
         "summary": "Remove Member",
@@ -5280,6 +5339,33 @@
           "room_date"
         ],
         "title": "RecapIn"
+      },
+      "RedeemCodeIn": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 8,
+            "title": "Code"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "RedeemCodeIn"
       },
       "RedeemIn": {
         "properties": {

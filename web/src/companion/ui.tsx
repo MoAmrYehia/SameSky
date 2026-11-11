@@ -156,7 +156,7 @@ export function SourceIcon({ kind }: { kind: string }) {
 }
 
 export function deviceLabel(device?: string | null): string {
-  return ({ phone: 'Phone', tablet: 'Tablet', webcam: 'Webcam', laptop: 'Laptop', camera: 'Camera', action_camera: 'Action camera', drone: 'Drone', glasses: 'AI glasses', other: 'Other device' } as Record<string, string>)[device ?? ''] ?? 'Device';
+  return ({ phone: 'Phone', tablet: 'Tablet', webcam: 'Webcam', laptop: 'Laptop', camera: 'Camera', action_camera: 'Action camera', drone: 'Drone', glasses: 'AI glasses', headset: 'Headset', other: 'Other device' } as Record<string, string>)[device ?? ''] ?? 'Device';
 }
 
 /** "20:55 in Beijing": original local capture time, named by city rather than an opaque abbreviation. */

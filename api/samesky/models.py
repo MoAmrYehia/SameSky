@@ -220,12 +220,23 @@ class Invitation(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
     room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), index=True)
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    # HMAC of the short hand-typed code (security.hash_invite_code); NULL for invitations made before codes.
+    code_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True, index=True)
     created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
     expires_at: Mapped[datetime] = mapped_column(UTCDateTime)
     redeemed_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     redeemed_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
+class InviteCodeAttempt(Base):
+    """A short code that matched no invitation. Counted per account to rate-limit guessing."""
+
+    __tablename__ = "invite_code_attempts"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow, index=True)
 
 
 # ---------------------------------------------------------------------------

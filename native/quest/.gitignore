@@ -1,0 +1,29 @@
+# Unity-generated (never commit)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+*.apk
+*.aab
+*.unitypackage
+sysinfo.txt
+crashlytics-buildid.txt
+# Meta XR SDK tarballs fetched by scripts/native/bootstrap (pinned + checksummed in packages.lock.txt)
+/.packages/
+# Local signing material for release builds: never commit
+/Signing/
+*.keystore
+*.jks
+# Test and build evidence lands in docs/native/ instead
+/TestResults*.xml

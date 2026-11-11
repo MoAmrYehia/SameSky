@@ -3,7 +3,7 @@
 
 export type RoomKind = 'direct' | 'circle';
 export type MomentKind = 'photo' | 'clip' | 'voice' | 'text';
-export type SourceDevice = 'phone' | 'tablet' | 'webcam' | 'laptop' | 'camera' | 'action_camera' | 'drone' | 'glasses' | 'other';
+export type SourceDevice = 'phone' | 'tablet' | 'webcam' | 'laptop' | 'camera' | 'action_camera' | 'drone' | 'glasses' | 'headset' | 'other';
 export type ObjectType = 'frame' | 'cup' | 'postcard' | 'audioStone' | 'note';
 export type ReactionKind = 'heart' | 'smile' | 'wow' | 'hug' | 'sun';
 

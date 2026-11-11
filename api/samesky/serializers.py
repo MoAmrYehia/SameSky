@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -156,6 +157,8 @@ def moment(db: Session, m: Moment, viewer: User) -> dict:
             media["url"] = media_url(asset.id, "display", viewer.id)
             if asset.thumbnail_path:
                 media["thumbUrl"] = media_url(asset.id, "thumb", viewer.id)
+            if asset.kind == "audio" and asset.derivative_path and Path(asset.derivative_path).with_suffix(".ogg").exists():
+                media["oggUrl"] = media_url(asset.id, "ogg", viewer.id)  # for native clients without AAC decoding
         if m.owner_id != viewer.id:
             media.pop("inputProfile", None)
             media.pop("safeError", None)

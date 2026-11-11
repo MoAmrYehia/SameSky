@@ -234,8 +234,14 @@ def patch_room(room_id: str, body: RoomPatch, user: User = Depends(current_user)
 
 @router.post("/rooms/{room_id}/invites")
 def create_invite(room_id: str, user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
-    invite, token = rooms.issue_invite(db, room_id, user)
-    return {"id": invite.id, "token": token, "expiresAt": invite.expires_at.isoformat(), "path": f"/join/{token}"}
+    invite, token, code = rooms.issue_invite(db, room_id, user)
+    return {
+        "id": invite.id,
+        "token": token,
+        "code": code,
+        "expiresAt": invite.expires_at.isoformat(),
+        "path": f"/join/{token}",
+    }
 
 
 @router.delete("/rooms/{room_id}/invites/{invite_id}")
@@ -252,6 +258,19 @@ class RedeemIn(BaseModel):
 @router.post("/invites/redeem")
 def redeem(body: RedeemIn, user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
     membership: Membership = rooms.redeem_invite(db, body.token, user, body.label)
+    room, _ = require_member(db, membership.room_id, user.id)
+    return serializers.room(db, room, user)
+
+
+class RedeemCodeIn(BaseModel):
+    code: str = Field(min_length=8, max_length=16)
+    label: str | None = Field(default=None, max_length=40)
+
+
+@router.post("/invites/redeem-code")
+def redeem_code(body: RedeemCodeIn, user: User = Depends(current_user), db: Session = Depends(get_db)) -> dict:
+    """Joins with the short code shown beside an invitation (typed on a phone or a headset keypad)."""
+    membership: Membership = rooms.redeem_invite_code(db, body.code, user, body.label)
     room, _ = require_member(db, membership.room_id, user.id)
     return serializers.room(db, room, user)
 

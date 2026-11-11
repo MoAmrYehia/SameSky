@@ -508,3 +508,5 @@ details > summary::-webkit-details-marker { display: none; }
 .chip.preset[aria-pressed="true"] { background: var(--green-soft); color: var(--green-soft-ink); border-color: var(--green); }
 .chip.preset .icon { width: 16px; height: 16px; }
 .soft-rule { border: 0; border-top: 1px solid var(--line); margin: 4px 0; width: 100%; }
+.invite-code-line { display: block; }
+.invite-code { display: inline-block; padding: 2px 8px; margin-left: 4px; font-size: 1rem; letter-spacing: 0.08em; }

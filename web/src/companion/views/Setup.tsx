@@ -16,6 +16,7 @@ import { Avatar, Icon, Notice } from '../ui';
 export function InviteCard({ room, title, body }: { room: Room; title?: string; body?: string }) {
   const { ds, toast } = useApp();
   const [url, setUrl] = useState<string | null>(null);
+  const [code, setCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
   const make = async () => {
@@ -23,6 +24,7 @@ export function InviteCard({ room, title, body }: { room: Room; title?: string; 
     try {
       const inv = await ds.invite(room.id);
       setUrl(`${location.origin}/#/join/${inv.token}`);
+      setCode(inv.code ?? null);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create an invite.');
     } finally {
@@ -58,6 +60,11 @@ export function InviteCard({ room, title, body }: { room: Room; title?: string; 
       {url ? (
         <>
           <span className="code invite-url" aria-label="Invite link">{url}</span>
+          {code ? (
+            <span className="muted small invite-code-line">
+              In a headset? They can type this code instead: <strong className="code invite-code" aria-label="Invite code">{code}</strong>
+            </span>
+          ) : null}
           <div className="row wrap">
             {canShare ? <button className="btn btn-primary" onClick={() => void share()}><Icon name="share" />Share link</button> : null}
             <button className={`btn ${canShare ? 'btn-outline' : 'btn-primary'}`} onClick={() => void copy()}><Icon name="link" />Copy link</button>
@@ -182,8 +189,27 @@ export function GetStarted() {
       setBusy(false);
     }
   };
-  const join = () => {
-    const token = joinCode.trim().split('/join/').pop()?.replace(/^#?\/?/, '');
+  const join = async () => {
+    const raw = joinCode.trim();
+    if (!raw) return;
+    // A short code (8 letters/digits, dashes optional) joins directly; anything else is treated as a link.
+    const compact = raw.toUpperCase().replace(/[\s_-]/g, '');
+    if (/^[A-Z0-9]{8}$/.test(compact) && !raw.includes('/')) {
+      setBusy(true);
+      try {
+        const r = await ds.redeemCode(compact);
+        setSetupOpen(false);
+        await refresh();
+        setRoomId(r.id);
+        navigate('day');
+      } catch (e) {
+        toast(e instanceof Error ? e.message : 'That code didn’t work.');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    const token = raw.split('/join/').pop()?.replace(/^#?\/?/, '');
     if (!token) return;
     setSetupOpen(false);
     location.hash = `/join/${token}`;
@@ -249,12 +275,12 @@ export function GetStarted() {
               <input className="input" value={roomName} maxLength={80} placeholder={kind === 'direct' ? 'e.g. Nora + Sam' : 'e.g. The Okafor family'} onChange={(e) => setRoomName(e.target.value)} /></label>
             <div className="row wrap setup-actions">
               <button className="btn btn-primary btn-lg" disabled={busy} onClick={() => void createRoom()}>{busy ? 'Creating…' : 'Create the room'}</button>
-              <button className="btn btn-quiet" onClick={() => setJoining((j) => !j)} aria-expanded={joining}>I have an invite link</button>
+              <button className="btn btn-quiet" onClick={() => setJoining((j) => !j)} aria-expanded={joining}>I have an invite link or code</button>
             </div>
             {joining ? (
               <div className="row wrap" style={{ gap: 8 }}>
-                <input className="input grow" aria-label="Invite link" placeholder="Paste the link someone sent you" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') join(); }} />
-                <button className="btn btn-outline" disabled={!joinCode.trim()} onClick={join}>Join</button>
+                <input className="input grow" aria-label="Invite link or code" placeholder="Paste the link, or type the code (e.g. K7PQ-4XMR)" value={joinCode} onChange={(e) => setJoinCode(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void join(); }} />
+                <button className="btn btn-outline" disabled={!joinCode.trim() || busy} onClick={() => void join()}>Join</button>
               </div>
             ) : null}
             <button className="btn btn-quiet setup-back" onClick={() => setStep('about')}>Back</button>

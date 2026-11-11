@@ -53,8 +53,10 @@ export interface DataSource {
   userAvatar(userId: string): Promise<{ userId: string; displayName: string; avatar: AvatarView | null }>;
   rooms(): Promise<Room[]>;
   createRoom(kind: 'direct' | 'circle', name: string): Promise<Room>;
-  invite(roomId: string): Promise<{ token: string; path: string; expiresAt: string }>;
+  invite(roomId: string): Promise<{ token: string; code: string; path: string; expiresAt: string }>;
   redeem(token: string): Promise<Room>;
+  /** Join with the short code shown beside an invitation (e.g. typed from a headset). */
+  redeemCode(code: string): Promise<Room>;
   removeMember(roomId: string, userId: string): Promise<void>;
   setRoom(roomId: string, patch: { muted?: boolean; daily_draft_time?: string }): Promise<Room>;
   moments(roomId: string, date?: string): Promise<Moment[]>;
@@ -194,8 +196,9 @@ export class LiveSource implements DataSource {
   }
   rooms() { return apiFetch<Room[]>('/v1/rooms'); }
   createRoom(kind: 'direct' | 'circle', name: string) { return apiFetch<Room>('/v1/rooms', json({ kind, name })); }
-  invite(roomId: string) { return apiFetch<{ token: string; path: string; expiresAt: string }>(`/v1/rooms/${roomId}/invites`, { method: 'POST' }); }
+  invite(roomId: string) { return apiFetch<{ token: string; code: string; path: string; expiresAt: string }>(`/v1/rooms/${roomId}/invites`, { method: 'POST' }); }
   redeem(token: string) { return apiFetch<Room>('/v1/invites/redeem', json({ token })); }
+  redeemCode(code: string) { return apiFetch<Room>('/v1/invites/redeem-code', json({ code })); }
   async removeMember(roomId: string, userId: string) { await apiFetch(`/v1/rooms/${roomId}/members/${userId}`, { method: 'DELETE' }); }
   setRoom(roomId: string, patch: { muted?: boolean; daily_draft_time?: string }) { return apiFetch<Room>(`/v1/rooms/${roomId}`, { method: 'PATCH', body: JSON.stringify(patch) }); }
   moments(roomId: string, date?: string) { return apiFetch<Moment[]>(`/v1/rooms/${roomId}/moments${date ? `?room_date=${date}` : ''}`); }
@@ -467,10 +470,13 @@ export class SampleSource implements DataSource {
   async createRoom(): Promise<Room> {
     throw new ApiError(400, 'sample_mode', 'Sample mode has fixed rooms. Create an account to make your own.');
   }
-  async invite(): Promise<{ token: string; path: string; expiresAt: string }> {
+  async invite(): Promise<{ token: string; code: string; path: string; expiresAt: string }> {
     throw new ApiError(400, 'sample_mode', 'Invitations need a real account. Sample mode never contacts anyone.');
   }
   async redeem(): Promise<Room> {
+    throw new ApiError(400, 'sample_mode', 'Sign in to join a real room.');
+  }
+  async redeemCode(): Promise<Room> {
     throw new ApiError(400, 'sample_mode', 'Sign in to join a real room.');
   }
   async removeMember() {
