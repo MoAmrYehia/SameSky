@@ -75,7 +75,9 @@ namespace SameSky.App
             {
                 var bytes = await app.Api.Download(view.ModelUrl, ct, 120);
                 var gltf = new GltfImport();
-                if (!await gltf.LoadGltfBinary(bytes, new Uri(app.Api.Absolute(view.ModelUrl)))) throw new Exception("model didn't load");
+                // glTFast's generic Load(byte[] data, Uri uri = null, ImportSettings = null, CancellationToken = default)
+                // detects glTF-Binary from the bytes; LoadGltfBinary is obsolete since glTFast 6.11.
+                if (!await gltf.Load(bytes, new Uri(app.Api.Absolute(view.ModelUrl)))) throw new Exception("model didn't load");
                 if (root == null) { gltf.Dispose(); return; }
                 var holder = new GameObject("Approved avatar " + view.AssetId + "@" + view.AssetVersion).transform;
                 holder.SetParent(root, false);

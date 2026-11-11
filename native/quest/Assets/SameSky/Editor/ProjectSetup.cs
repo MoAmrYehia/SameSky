@@ -90,7 +90,25 @@ namespace SameSky.EditorTools
             PlayerSettings.defaultScreenHeight = 720;
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
             EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
+            // glTFast's .gltf/.glb importer is editor code compiled with the active build target's defines, so both targets
+            // need this define. With it, GltfImporter registers as the default importer for those extensions
+            // (glTFast Editor/Scripts/GltfImporter.cs). Without it, the first setup run imported them with DefaultImporter
+            // and BuildScene placed placeholders.
+            AddScriptingDefine(NamedBuildTarget.Android, GltfDefaultImporterDefine);
+            AddScriptingDefine(NamedBuildTarget.Standalone, GltfDefaultImporterDefine);
             Log("player settings applied");
+        }
+
+        const string GltfDefaultImporterDefine = "GLTFAST_FORCE_DEFAULT_IMPORTER_ON";
+
+        /// <summary>Adds <paramref name="define"/> to the target's scripting defines, keeping the ones already set.</summary>
+        static void AddScriptingDefine(NamedBuildTarget target, string define)
+        {
+            PlayerSettings.GetScriptingDefineSymbols(target, out var defines);
+            if (defines.Contains(define)) return;
+            PlayerSettings.SetScriptingDefineSymbols(target, defines.Append(define).ToArray());
+            // Defines take effect when scripts recompile after this run; Unity then re-imports the glTF files.
+            Log($"added scripting define {define} for {target.TargetName}; run the setup again after the recompile so the scene uses the imported models");
         }
 
         // ------------------------------------------------------------ URP for a standalone headset
