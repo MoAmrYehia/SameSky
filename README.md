@@ -80,6 +80,8 @@ cd web && node scripts/avatar-e2e.mjs           # photo-derived avatar import, a
 ## Documentation
 
 - [docs/STATUS.md](docs/STATUS.md) — what is implemented, what was actually tested where, and what is still unverified
+- [docs/NATIVE_QUICKSTART.md](docs/NATIVE_QUICKSTART.md) — the native Quest app (Unity, `native/quest/`): setup, local services, running it in Meta XR Simulator, building the APK
+- [docs/NATIVE_STATUS.md](docs/NATIVE_STATUS.md) — the native app's results, kept apart by kind of evidence (compiled, simulator-tested, real-service-tested, APK-built, headset-tested)
 - [docs/AVATARS.md](docs/AVATARS.md) — photo-derived avatars: journey, provider setup, privacy, rig contract, results table
 - [docs/EMULATOR.md](docs/EMULATOR.md) — testing the room in Meta's Immersive Web Emulator (emulated Quest 3), what it found and fixed
 - [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) — testing instructions for the judged flow

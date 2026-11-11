@@ -40,6 +40,25 @@ The sample's people, captions and recaps are fictional. The photos are crops of 
 with no identifiable people. They stand in for what a user would share, and are labelled *Sample photo*
 (`origin: 'stock'`) rather than as a phone or camera photo.
 
+## Native app copies (`native/quest/Assets/SameSky/`)
+
+The Unity app ships its own copies of the assets above. Unity can't import the web room's WebP-in-glTF props
+or decode AAC audio clips, so it gets the original formats instead. Nothing new comes in:
+`scripts/native/build_native_assets.py` copies or converts from the same sources, and the characters come from
+the same kit.
+
+| Path | What it is | Origin and licence | Size |
+|---|---|---|---|
+| `Art/Models/{table,armchair,side-table,plant,vase}/` | The five room props as Poly Haven's 1k glTF: `.gltf`, `.bin` and 1024 px JPG maps (diffuse, normal and ARM; the vase has roughness instead of ARM) | CC0, the same Poly Haven assets as the web props above; authors, URLs and SHA-256 in [`asset-provenance.json`](asset-provenance.json). Copied unchanged from `.asset-cache/` (`scripts/assets/fetch_polyhaven.py`) | 5.68 MB, 25 files |
+| `Art/Textures/{herringbone_parquet,clay_plaster,american_walnut_veneer,wool_boucle,knitted_fleece}/` | Tiling sets for the floor, walls, wood, rug and knit: diffuse, normal, roughness and AO JPGs, 1024 px wide | CC0 Poly Haven, as above, unchanged | 14.13 MB, 20 files |
+| `Art/Env/lythwood_lounge_1k.hdr` | Interior light for the skybox and reflections | CC0 Poly Haven HDRI *Lythwood Lounge* (Greg Zaal), unchanged | 1.54 MB |
+| `Art/Textures/window-skyline.jpg` | The window plate | Copy of `sample/window-skyline.jpg` above (same derivation, same "no geographic claim") | 123 KB |
+| `Resources/Characters/{maya,adam,lina}.glb` | The sample people's demo characters, one per fictional person, seated across the table | **Original.** Exported from the companion's character kit (`models/avatars/characters.glb` above) by `web/scripts/export-characters.mjs` through `web/dev/export-characters.html` (needs `npm run dev`). Procedural sculpts: no scan, no photo, no likeness | 3.49–3.55 MB each |
+| `Resources/Characters/demo-figure.glb` | The labelled demo figure in live rooms, for someone without an approved avatar | **Original.** Byte-identical copy of the test mannequin `web/tests/fixtures/test-mannequin.glb` (see *Test fixtures*); not a likeness | 905 KB |
+| `Resources/Sample/Media/*.jpg`, `adam-clip.mp4` | The sample day's photos, the clip, its poster and the thumbnails | Byte-identical copies of `web/public/assets/sample/`. The native app labels them *Stock photo (sample)* and *Simulated camera pan (sample)* (`OriginLabel` in `SameSkyApp.Room.cs`) | 5.36 MB, 11 files |
+| `Resources/Sample/Media/maya-voice.ogg` | Maya's voice note in the cup | **Original.** Converted from the synthesized `sample/maya-voice.m4a` to Ogg Vorbis (mono, 44.1 kHz, quality 5) by `build_native_assets.py`. Still the operating system's text-to-speech voice, not a recording; labelled *Synthesized voice (sample)* on the cup | 55 KB |
+| `Resources/Sample/sample-day.json` | The fictional sample day, captions included as timed cues | Exported from `web/src/shared/sample.ts` by `scripts/native/export_sample.mjs` | 34 KB |
+
 ## Derived renders (not files)
 
 - **Companion portraits** are rendered at runtime from `characters.glb` by `src/shared/portrait.ts`. It uses the same

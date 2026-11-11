@@ -113,6 +113,34 @@ See [VISUAL_QA.md](VISUAL_QA.md) for captures, comparisons and remaining differe
 | Test inside Meta's emulator | `web/scripts/xr-emulator-test.mjs` drives IWER's emulated Quest 3 (hands: poke, point + pinch, tracking loss; controller: ray + trigger; recenter; leave); `docs/EMULATOR.md` | ✅ 13 checks / 🟡 real headset still needed |
 | Fix what the emulator finds | `src/xr/emulator.ts` (dev-only session shim), leaves instanced at real size + no phantom touch volumes, far-select proxies for table objects, flash/hint spacing, headset reply-sheet placement | ✅ |
 
+## Native Quest application (instructions of 11 November 2026)
+
+A native Unity client for Quest in `native/quest/`, tested in Meta XR Simulator, plus an APK. It uses Unity
+6000.3.28f1, the Meta XR Core and Interaction SDK 209, OpenXR, URP and glTFast. The statuses come from
+[NATIVE_STATUS.md](NATIVE_STATUS.md), which keeps the kinds of evidence apart. The legend above doesn't apply: a
+desktop or IWER result says nothing about the native client.
+
+`scripts/native/acceptance.ps1` runs the acceptance checks (marked *check n* below) in the simulator. None has
+run yet: Unity, the simulator and the Android SDK are on one Windows machine. The rows follow the acceptance
+checks in these instructions; the brief itself isn't in this repository.
+
+| Acceptance row | Where | Status |
+|---|---|---|
+| Native app on the same API and authorization as the companion (no special endpoints) | `native/quest/Assets/SameSky/Scripts` (`Api/ApiClient.cs`, `Api/RealtimeClient.cs`, `App/`) | Implemented. Compiled at `cf2a5a3` (0 errors); the C# edits since are not compiled. Not simulator-tested |
+| XR session in the simulator: simulated Meta Quest 3, hand input | `scripts/native/play_in_sim.ps1`, `sim.ps1`, the probe (`App/TestProbe.cs`); check 1 | Not run yet |
+| A dock button pressed by hand | `SameSkyApp.SetDock`, `Interaction/Pressable.cs` (poke, or point and pinch; a press counts on release); check 2 | Implemented and compiled; not simulator-tested |
+| The cup grabbed by hand | `SameSkyApp.Room.cs` (`BuildCup`), `Interaction/GrabbableObject.cs` (hand grab, distance grab); check 3 | Implemented and compiled; not simulator-tested |
+| The waiting voice note heard within the first minute | Offline sample day (`App/RoomData.cs`, `Resources/Sample/`), `PlayWaiting` with timed captions; check 4 | Implemented and compiled; not simulator-tested |
+| A reply on the table survives an app restart and an API restart | `StartReply` and `RestoreNotes` (`SameSkyApp.Room.cs`); `test_replies_and_placements_survive_restart`; check 5 (`stop.ps1`, `start.ps1`) | API ✅ automated. App not simulator-tested; the probe events check 5 relies on are not compiled yet |
+| Recenter, pause and exit | `SameSkyApp.Recenter`, `SetPaused`, `ShowPause`, `ConfirmExit`; check 6 | Implemented and compiled; not simulator-tested. The system pause (Meta button, headset off) needs a headset |
+| Tracking loss without ghost presses | `Pressable.cs` (a cancelled select never becomes a press), `GrabbableObject.cs` (clean release); check 7 (`metavr xrsim input source --hand right --source none`) | Implemented and compiled; not simulator-tested |
+| MP4 of the simulator run | Check 8 (`metavr xrsim record start` and `stop`, one file per app session) | Not recorded yet |
+| Invite codes typed by hand (headset keypad) | `POST /v1/invites/redeem-code`, `test_invite_codes.py` (6 tests); companion join step; `UI/SpatialKeyboard.cs` code keypad | API ✅ automated, and real-service-tested (`seed.ps1` redeems codes); keypad not simulator-tested |
+| Voice notes playable in the native app | Ogg copy (`services/media.py`, `oggUrl`); `RoomData` `Audio()` | API ✅ `test_headset_voice_note_gets_an_ogg_twin_for_native_playback`; app playback not simulator-tested |
+| Repeatable local setup: preflight, bootstrap, start/stop/seed, per-user installs | `scripts/native/*.ps1` (and `.sh` for macOS/Linux) | start, stop and seed real-service-tested on the Windows machine |
+| APK for Quest 3/3S | `scripts/native/build.ps1 -Target Android`, `Editor/BuildScript.cs` | Not built: the Android SDK and NDK aren't unpacked yet (`install_unity_user.ps1`) |
+| Installed on a headset and measured there | `docs/NATIVE_QUICKSTART.md` (section 5) | Not done: no Quest |
+
 ## P1 (not implemented)
 
 More than two live avatars · WebRTC audio/video and TURN · live phone/webcam streaming · 360°/stereo footage ·

@@ -4,6 +4,11 @@ Updated: 8 November 2026 (photo-derived avatars and visual QA pass 2; first writ
 the brief's distinction between *implemented*, *tested on a headset*, *tested in an emulator/desktop*, and *still
 unverified*. Nothing below is claimed beyond what was run.
 
+**Native Quest app:** this page covers the web room, the companion and the API. The native Unity client in
+`native/quest/` has its own page, [NATIVE_STATUS.md](NATIVE_STATUS.md), which separates implemented, compiled,
+simulator-tested, real-service-tested, APK-built and headset-tested evidence. A browser or emulator (IWER) result
+on this page says nothing about the native client.
+
 ## Photo-derived avatars — results
 
 Each row stands on its own evidence; none is proved by another (details in `docs/AVATARS.md`).
