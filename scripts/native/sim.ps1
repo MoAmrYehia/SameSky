@@ -62,6 +62,7 @@ using System.Runtime.InteropServices;
 public static class SimInput {
   [DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
   [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr h);
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
   [DllImport("user32.dll")] static extern bool GetWindowRect(IntPtr h, out RECT r);
   [DllImport("user32.dll")] static extern bool SetCursorPos(int x, int y);
   [DllImport("user32.dll")] static extern void mouse_event(uint f, int dx, int dy, int d, UIntPtr e);
@@ -69,12 +70,26 @@ public static class SimInput {
   [DllImport("user32.dll")] static extern uint MapVirtualKey(uint code, uint type);
   public struct RECT { public int L, T, R, B; }
   public static Rectangle Focus(IntPtr h) { SetForegroundWindow(h); RECT r; GetWindowRect(h, out r); return new Rectangle(r.L, r.T, r.R - r.L, r.B - r.T); }
+  // Arrows, Page Up/Down, Home/End, Insert and Delete need KEYEVENTF_EXTENDEDKEY, or they arrive as numpad keys.
+  static uint Ext(byte vk) { return ((vk >= 0x21 && vk <= 0x28) || vk == 0x2D || vk == 0x2E) ? 1u : 0u; }
   public static void Key(byte vk, int holdMs) {
     byte sc = (byte)MapVirtualKey(vk, 0);
-    keybd_event(vk, sc, 0, UIntPtr.Zero); System.Threading.Thread.Sleep(holdMs); keybd_event(vk, sc, 2, UIntPtr.Zero);
+    keybd_event(vk, sc, Ext(vk), UIntPtr.Zero); System.Threading.Thread.Sleep(holdMs); keybd_event(vk, sc, Ext(vk) | 2u, UIntPtr.Zero);
   }
-  public static void KeyDown(byte vk) { keybd_event(vk, (byte)MapVirtualKey(vk, 0), 0, UIntPtr.Zero); }
-  public static void KeyUp(byte vk) { keybd_event(vk, (byte)MapVirtualKey(vk, 0), 2, UIntPtr.Zero); }
+  public static void KeyDown(byte vk) { keybd_event(vk, (byte)MapVirtualKey(vk, 0), Ext(vk), UIntPtr.Zero); }
+  public static void KeyUp(byte vk) { keybd_event(vk, (byte)MapVirtualKey(vk, 0), Ext(vk) | 2u, UIntPtr.Zero); }
+  // Holds several keys at once, each for its own time, so a simulated hand moves along a diagonal, not a staircase.
+  public static void Chord(byte[] vks, int[] holdMs) {
+    int start = Environment.TickCount;
+    bool[] up = new bool[vks.Length];
+    int left = vks.Length;
+    for (int i = 0; i < vks.Length; i++) KeyDown(vks[i]);
+    while (left > 0) {
+      int t = Environment.TickCount - start;
+      for (int i = 0; i < vks.Length; i++) if (!up[i] && t >= holdMs[i]) { KeyUp(vks[i]); up[i] = true; left--; }
+      System.Threading.Thread.Sleep(1);
+    }
+  }
   public static void MoveTo(int x, int y) { SetCursorPos(x, y); }
   public static void MoveBy(int dx, int dy) { mouse_event(0x0001, dx, dy, 0, UIntPtr.Zero); }
   public static void Down(bool right) { mouse_event(right ? 0x0008u : 0x0002u, 0, 0, 0, UIntPtr.Zero); }
@@ -93,7 +108,19 @@ function Get-SimWindow {
   Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and ($_.ProcessName -match 'MetaXRSimulator|XRSimulator' -or $_.MainWindowTitle -match 'Simulator') } | Select-Object -First 1
 }
 
-function Focus-Sim { $w = Get-SimWindow; if (-not $w) { throw 'simulator window not found' }; return [SimInput]::Focus($w.MainWindowHandle) }
+# Brings a window to the front so keys reach it. Windows can refuse SetForegroundWindow to a background process;
+# WScript.Shell's AppActivate is the fallback. Returns the window rectangle.
+function Focus-Window([System.Diagnostics.Process]$Process) {
+  $rect = [SimInput]::Focus($Process.MainWindowHandle)
+  for ($i = 0; $i -lt 5 -and [SimInput]::GetForegroundWindow() -ne $Process.MainWindowHandle; $i++) {
+    try { [void](New-Object -ComObject WScript.Shell).AppActivate($Process.Id) } catch { }
+    Start-Sleep -Milliseconds 100
+    $rect = [SimInput]::Focus($Process.MainWindowHandle)
+  }
+  return $rect
+}
+
+function Focus-Sim { $w = Get-SimWindow; if (-not $w) { throw 'simulator window not found' }; return Focus-Window $w }
 
 function Save-SimShot([string]$Path) {
   $rect = Focus-Sim
@@ -106,4 +133,13 @@ function Send-SimKey([string]$Key, [int]$HoldMs = 120) {
   $vk = [byte][System.Windows.Forms.Keys]$Key
   Focus-Sim | Out-Null
   [SimInput]::Key($vk, $HoldMs)
+}
+
+# Holds several keys together, e.g. @{ W = 120; D = 60 }: a straighter diagonal move than one key after another.
+function Send-SimChord([System.Collections.IDictionary]$KeyHolds) {
+  if ($KeyHolds.Count -eq 0) { return }
+  $vks = [byte[]]@($KeyHolds.Keys | ForEach-Object { [byte][System.Windows.Forms.Keys]$_ })
+  $ms = [int[]]@($KeyHolds.Values | ForEach-Object { [int]$_ })
+  Focus-Sim | Out-Null
+  [SimInput]::Chord($vks, $ms)
 }

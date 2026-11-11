@@ -95,6 +95,23 @@ metavr xrsim record start -o docs/native/evidence/run.mp4
 metavr xrsim record stop
 ```
 
+### Acceptance run
+
+`scripts/native/acceptance.ps1` runs the eight acceptance checks in the simulator. It opens Unity itself (close
+it first), uses its own `acceptance` profile, and starts and seeds the local services. It drives the app only
+through the simulator's own hand controls, and keeps a check as passed only when the app's probe recorded it.
+Leave the keyboard and mouse alone while it runs. If it can't make a gesture, it asks you to make it in the
+simulator and watches the probe for it.
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/native/acceptance.ps1
+```
+
+- **Results:** `docs/native/evidence/<date>/acceptance-<time>.md` and `.json`. Probe events, state snapshots,
+  screenshots and MP4s go in the `acceptance-<time>/` folder next to them.
+- **Options:** `-Assist` makes every gesture yours; `-NonInteractive` never asks; `-SkipRecording` skips the MP4s.
+- **Before committing:** the MP4s can be large. Check the files before you commit the folder.
+
 ## 4. Build for the headset
 
 ```bash

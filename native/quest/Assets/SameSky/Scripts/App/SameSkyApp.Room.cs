@@ -286,7 +286,7 @@ namespace SameSky.App
                     var slot = NextNoteSlot();
                     var placed = await Data.Place(CurrentRoom.Id, "note", _waiting.Id, reply.Id, slot, 0f, ct);
                     BuildNote(reply, slot);
-                    TestProbe.Event("reply", "placed");
+                    TestProbe.Event("reply", "placed:" + reply.Id); // ids only: acceptance runs match it after restarts
                     Toast(Data.IsSample ? "Your reply is on the table (kept in the sample on this device)." : $"Sent. Your reply waits on the table for {_waiting.OwnerName}.");
                 }, "Your reply wasn't saved", StartReply);
             }, null, "A short note. It stays beside the cup.", 280);
@@ -303,12 +303,15 @@ namespace SameSky.App
             if (_waiting == null) return;
             var replies = await Data.Replies(_waiting.Id, ct);
             var objects = await Data.Objects(CurrentRoom.Id, ct);
+            var restored = new List<string>();
             foreach (var r in replies.Where(r => r.AuthorId == Data.Me.Id))
             {
                 var o = objects.FirstOrDefault(x => x.ReplyId == r.Id || x.Id == $"note:{r.Id}");
                 var pos = o != null ? new Vector3(o.Transform.X, o.Transform.Y, o.Transform.Z) : NextNoteSlot();
                 BuildNote(r, pos);
+                restored.Add(r.Id);
             }
+            TestProbe.Event("reply", "restored:" + string.Join(",", restored));
         }
 
         void BuildNote(Reply reply, Vector3 pos)
