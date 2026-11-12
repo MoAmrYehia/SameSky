@@ -64,6 +64,9 @@ namespace SameSky.App
             Api = new ApiClient(AppConfig.ApiUrl);
             Api.Unauthorized += OnUnauthorized;
             if (TestProbe.Enabled) gameObject.AddComponent<TestProbe>();
+            gameObject.AddComponent<HandSkin>();   // skin on the tracked hands
+            if (_world.GetComponent<RoomDecor>() == null) _world.gameObject.AddComponent<RoomDecor>();   // the marketplace's furniture
+            ApplyHandTone();
         }
 
         IEnumerator Start()
@@ -197,6 +200,7 @@ namespace SameSky.App
             _screenCts.Cancel();
             _screenCts = new CancellationTokenSource();
             CloseKeyboard();
+            if (screen != "market") EndDecorPreview();   // furniture that was only being tried goes back
             Screen = screen;
             // the pause menu's pause lasts while it (or its "Leave SameSky?" question) is open
             if (screen != "pause" && screen != "exit") SetPaused(false, "menu");
@@ -249,6 +253,7 @@ namespace SameSky.App
                 _panel.rotation = rotation;
                 _panel.position = edge + rotation * Vector3.up * (h / 2 + below);
                 _panelAtTable = true;
+                RefreshCupLabel();
                 if (_dock != null && _dock.gameObject.activeSelf) { _dock.gameObject.SetActive(false); _dockHiddenForPanel = true; }
                 return;
             }
@@ -268,6 +273,7 @@ namespace SameSky.App
             if (_panel != null) Destroy(_panel.gameObject);
             _panel = null;
             _panelAtTable = false;
+            RefreshCupLabel();
             if (_dockHiddenForPanel && _dock != null && _dock.childCount > 0) _dock.gameObject.SetActive(true);
             _dockHiddenForPanel = false;
         }
@@ -383,7 +389,7 @@ namespace SameSky.App
         static readonly System.Collections.Generic.Dictionary<string, string> DockIcons = new()
         {
             ["day"] = Icons.Calendar, ["share"] = Icons.Share, ["together"] = Icons.Users, ["keepsakes"] = Icons.Layers,
-            ["settings"] = Icons.Settings, ["pause"] = Icons.CirclePause, ["recenter"] = Icons.Recenter,
+            ["settings"] = Icons.Settings, ["pause"] = Icons.CirclePause, ["recenter"] = Icons.Recenter, ["market"] = Icons.Armchair,
         };
 
         void SetDock(params (string id, string label, Action action)[] items)
@@ -391,8 +397,12 @@ namespace SameSky.App
             Ui.Clear(_dock);
             _dockButtons.Clear();
             _dockHiddenForPanel = false;
-            const float w = 0.084f, round = 0.046f, h = 0.046f, gap = 0.004f;
+            const float round = 0.046f, h = 0.046f, gap = 0.004f;
             bool Compact(string id) => id is "pause" or "recenter";
+            // six named items share the bar: each a little narrower, so the bar stays within easy reach
+            var named = 0;
+            foreach (var it in items) if (!Compact(it.id)) named++;
+            var w = named > 5 ? 0.078f : 0.084f;
             var total = 0f;
             foreach (var it in items) total += (Compact(it.id) ? round : w) + gap;
             total -= gap;

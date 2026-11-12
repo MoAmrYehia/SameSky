@@ -42,12 +42,13 @@ namespace SameSky.UI
         public const string Sparkles = "";
         public const string CirclePause = "";
         public const string BookOpen = "";
+        public const string Armchair = "\uE2C0";
         public const string Gift = "";
 
         /// <summary>Every icon used, for prebuilding the icon atlas (no hitch the first time one shows).</summary>
         public const string All = Calendar + Users + Layers + Settings + Play + Pause + Mic + Video + Image + Replay + Reply + Cup
             + Recenter + Hand + Pointer + ShieldCheck + Folder + Leave + Share + Send + Refresh + Check + Close + Waveform + Captions
-            + Sound + TextSize + SignIn + UserPlus + Sprout + Clock + MapPin + Heart + Sun + Sparkles + CirclePause + BookOpen + Gift;
+            + Sound + TextSize + SignIn + UserPlus + Sprout + Clock + MapPin + Heart + Sun + Sparkles + CirclePause + BookOpen + Gift + Armchair;
 
         /// <summary>An icon before a label, with a little air between them.</summary>
         public static string With(string icon, string label) => string.IsNullOrEmpty(label) ? icon : $"{icon}<space=0.35em>{label}";

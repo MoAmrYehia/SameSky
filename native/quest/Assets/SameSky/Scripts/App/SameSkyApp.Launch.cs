@@ -16,13 +16,17 @@ namespace SameSky.App
             SetDock();
             ClearRoom();
             ClearScreenFor(null);
+            // no room is open: the lounge shows its usual furniture
+            _decorPreview = null;
+            _decorSaved = null;
+            if (RoomDecor.Instance != null && FurnitureCatalog.Current.Slots.Count > 0) RoomDecor.Instance.Apply(FurnitureCatalog.Current.Defaults());
             // visual reference 10: a small, calm welcome with one clear first step, and the room visible around it
             var l = NewPanel("launch", 0.37f);
             l.Muted("<b>SameSky</b>");
             l.Title("A little closer, wherever you are");
             l.Underline();
             l.Button("launch:sample", Icons.With(Icons.Play, "Try a sample day"), () => _ = EnterSample(), PressStyle.Primary);
-            l.Muted("Works offline. Fictional people, a synthesized voice and a simulated clip, all labelled.");
+            l.Muted("Works offline. Fictional people, stock photos and footage, and a synthesized voice, all labelled.");
             var stored = StoredSession.Load();
             if (!string.IsNullOrEmpty(stored.token) && stored.apiUrl == AppConfig.ApiUrl)
                 l.Button("launch:continue", Icons.With(Icons.SignIn, $"Continue as {stored.email}"), () => _ = ResumeLive(stored), PressStyle.Secondary);

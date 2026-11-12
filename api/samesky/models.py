@@ -416,6 +416,18 @@ class RoomObject(Base):
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
+class RoomDecor(Base):
+    """How a room is furnished: which catalogue piece and finish fills each slot (services/furniture.py).
+    One row per room, created the first time someone changes anything."""
+
+    __tablename__ = "room_decor"
+    room_id: Mapped[str] = mapped_column(ForeignKey("rooms.id", ondelete="CASCADE"), primary_key=True)
+    choices: Mapped[dict] = mapped_column(JSON, default=dict)   # slot id -> {"item": ..., "finish": ...}
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    updated_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+
 # ---------------------------------------------------------------------------
 # Live viewing sessions
 # ---------------------------------------------------------------------------

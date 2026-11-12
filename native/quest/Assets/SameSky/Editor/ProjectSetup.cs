@@ -39,6 +39,8 @@ namespace SameSky.EditorTools
             ConfigureImports();
             FontSetup.Run();
             CreateMaterials();
+            HandSkinSetup.Run();
+            Log("hands: skin maps baked for the tracked hand meshes");
             CharacterSetup.Run();
             Log("characters: Rocketbox stock adults for the sample's fictional people");
             BuildScene();
@@ -131,7 +133,10 @@ namespace SameSky.EditorTools
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone, "com.samesky.quest");
             PlayerSettings.Android.bundleVersionCode = 9;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel32;
-            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
+            // Meta's manifest rules: an app created since 1 March 2026 must target API level 34 (immersive apps: 32 to
+            // 34). "Automatic" took the newest installed platform, 36, which those rules don't allow.
+            // developers.meta.com/horizon/resources/publish-mobile-manifest, read 13 November 2026
+            PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)34;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingImplementation.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
             PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);

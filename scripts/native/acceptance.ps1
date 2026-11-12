@@ -8,7 +8,8 @@
 #   -FingertipOffset "x,y,z" metres from the right-hand anchor to the index fingertip in the poke pose (world axes)
 #   -Only 5,7                run only these checks (check 1 always runs: it calibrates the hand controls)
 #   -Renders                 also save fixed seated views of the other screens (Our day, Share, Together, Keepsakes,
-#                            Settings, the story, the family circle), opened through the development probe rather
+#                            Settings, the story, the family circle, the marketplace and the room in two of its
+#                            ready-made looks), opened through the development probe rather
 #                            than by hand: pictures for comparing with the visual references, not checks
 #
 # Checks (results: docs/native/evidence/<date>/acceptance-<time>.json and .md; files in acceptance-<time>/):
@@ -22,6 +23,8 @@
 #   7 right-hand tracking lost mid-press and found again, with no ghost press
 #   8 an MP4 of the simulator for every app session that runs checks: metavr xrsim record start/stop, or, when the
 #     runtime has no recorder (207.1 hasn't), FFmpeg capturing the simulator window
+#   9 the furniture marketplace: a chair fabric chosen and kept with a simulated hand (dock, tab, fabric, Keep) is
+#     stored by the server and shown again after an app restart
 # The first minute is timed on a fresh profile with nothing in between, so checks 3 and 4 run before check 2. The
 # report lists the checks in the order above.
 #
@@ -33,7 +36,7 @@
 # (probe/state.json: targets with id, position and normal; head, headForward, handsAt, pokeAt), and every step is
 # confirmed in probe/events.jsonl. A check passes only with probe evidence; what can't be automated is listed as a
 # manual step. The script drives the simulator window with the keyboard and mouse: don't use either while it runs.
-# Live mode (check 5) signs in Nora, a development account from dev-seed.json: the script gets her token from the
+# Live mode (checks 5 and 9) signs in Nora, a development account from dev-seed.json: the script gets her token from the
 # public API and writes it to the acceptance profile's session.json before the app starts.
 [CmdletBinding()]
 param(
@@ -46,7 +49,8 @@ param(
   [string]$Only = '',   # e.g. 5 or 2,3,4 (a string: powershell -File passes it as one)
   [switch]$Renders,
   [int]$UnityStartTimeoutSec = 600,
-  [int]$FirstMinuteSec = 60
+  [int]$FirstMinuteSec = 60,
+  [switch]$Library      # define everything and stop before the run: scripts/demo/film.ps1 dot-sources this file for its hand control
 )
 
 . "$PSScriptRoot/sim.ps1"
@@ -407,13 +411,15 @@ function Save-Shot([string]$Name) {
 # A fixed render from the seated eye (the app's probe draws it with its own camera, whatever the simulated headset is
 # doing): the same framing every run, to compare with the visual references. Yaw and pitch in degrees from the
 # seat's forward; negative pitch looks down.
-function Save-SeatView([string]$Name, [double]$Yaw = 0, [double]$Pitch = -12, [string]$What = '', [string]$Open = '', [double]$Wait = 1.4, [double]$Fov = 60) {
+function Save-SeatView([string]$Name, [double]$Yaw = 0, [double]$Pitch = -12, [string]$What = '', [string]$Open = '', [double]$Wait = 1.4, [double]$Fov = 60, [string]$View = '') {
   try {
     $png = Join-Path $ProbeDirectory "snap-$Name.png"
     Remove-Item -Force -ErrorAction SilentlyContinue $png
     $req = [ordered]@{ name = $Name; yaw = $Yaw; pitch = $Pitch; fov = $Fov; width = 1600; height = 900 }
     # -Open: the probe opens that screen itself first (development shortcut, SameSkyApp.DevOpen), then waits, then draws
     if ($Open) { $req.open = $Open; $req.wait = $Wait }
+    # -View hands|palms: a close-up of the tracked hands from where the head is, or from the other side
+    if ($View) { $req.view = $View }
     Write-Utf8 (Join-Path $ProbeDirectory 'snap-request.json') ($req | ConvertTo-Json -Compress)
     # in the Editor the first render of a view can wait a while for its shaders to compile (TestProbe.Snap)
     $deadline = (Get-Date).AddSeconds(50 + $(if ($Open) { $Wait } else { 0 }))
@@ -456,7 +462,20 @@ function Invoke-RenderTour {
     @{ n = 'partner';   open = '';          yaw = 0;   pitch = -1;  wait = 0;   fov = 22; what = "the partner's face, close (natural proportions, eyes, expression: reference 01)" },
     @{ n = 'left';      open = '';          yaw = -48; pitch = -8;  wait = 0;   what = 'the room to the left: window light and shadows on the wall and floor' },
     @{ n = 'right';     open = '';          yaw = 46;  pitch = -8;  wait = 0;   what = 'the room to the right: the lamp and side table' },
-    @{ n = 'reply';     open = 'reply';     yaw = 0;   pitch = -26; wait = 2;   what = 'replying on the keyboard at the table edge (reference 03)' }
+    @{ n = 'reply';     open = 'reply';     yaw = 0;   pitch = -26; wait = 2;   what = 'replying on the keyboard at the table edge (reference 03)' },
+    # the furniture marketplace: its tabs, then the room in two of its ready-made looks (tried, not kept)
+    @{ n = 'market';        open = 'market';              yaw = 0;   pitch = -26; wait = 3;   what = 'Marketplace: ready-made looks' },
+    @{ n = 'market-table';  open = 'market:table';        yaw = 0;   pitch = -26; wait = 3;   what = 'Marketplace: tables and their finishes' },
+    @{ n = 'market-chairs'; open = 'market:chairs';       yaw = 0;   pitch = -26; wait = 3;   what = 'Marketplace: chair fabrics' },
+    @{ n = 'market-lamp';   open = 'market:lamp';         yaw = 0;   pitch = -26; wait = 3;   what = 'Marketplace: lamps' },
+    @{ n = 'market-walls';  open = 'market:walls';        yaw = 0;   pitch = -26; wait = 3;   what = 'Marketplace: wall colours' },
+    @{ n = 'look-coastal';  open = 'look:coastal-oak';    yaw = 0;   pitch = -10; wait = 2.5; what = 'the room in the Coastal oak look' },
+    @{ n = 'look-coastal-left';  open = '';               yaw = -48; pitch = -8;  wait = 0;   what = 'Coastal oak: the wall, rug and plant to the left' },
+    @{ n = 'look-coastal-right'; open = '';               yaw = 46;  pitch = -8;  wait = 0;   what = 'Coastal oak: the tripod lamp to the right' },
+    @{ n = 'look-evening';  open = 'look:evening-study';  yaw = 0;   pitch = -10; wait = 2.5; what = 'the room in the Evening study look' },
+    @{ n = 'look-evening-right'; open = '';               yaw = 46;  pitch = -8;  wait = 0;   what = 'Evening study: the globe lamp to the right' },
+    @{ n = 'hands-panel';   open = 'hands';               yaw = 0;   pitch = -24; wait = 2;   what = 'Your hands: the skin tone choice' },
+    @{ n = 'direct-again';  open = 'room';                yaw = 0;   pitch = -10; wait = 3;   what = 'back in the room as it is kept' }
   )
   $saved = 0
   foreach ($v in $views) {
@@ -496,7 +515,7 @@ function Start-UnityEditor {
   Start-Process -FilePath $Unity -ArgumentList $unityArgs | Out-Null
 }
 
-# Ctrl+P in the editor enters or leaves Play mode.
+# Ctrl+P in the editor enters or leaves Play mode. Only the fallback now: see Request-UnityPlayMode.
 function Send-UnityPlayToggle {
   $u = Get-UnityEditor
   if (-not $u) { throw 'The Unity Editor with native/quest is not running.' }
@@ -507,6 +526,77 @@ function Send-UnityPlayToggle {
   [SimInput]::Key(0x50, 60)
   Start-Sleep -Milliseconds 40
   [SimInput]::KeyUp(0x11)
+}
+
+# Play mode in a running editor is asked for through a file. The editor script (Assets/SameSky/Editor/SimRun.cs) reads
+# Temp/SameSkySim/request.txt on its own tick and answers in ack.txt, so it works whichever window has the keyboard.
+# Until 12 November this script pressed Ctrl+P instead; that day, with a Preferences window left open in the editor,
+# the editor acted on the keys only after the script had ended, and two runs couldn't start their sessions.
+$UnityRequestDir = Join-Path $Project 'Temp/SameSkySim'
+$UnityAnswers = @('starting', 'queued', 'stopping', 'already', 'unknown')
+
+function Read-UnityAnswer([string]$Id) {
+  $ack = Join-Path $UnityRequestDir 'ack.txt'
+  if (-not (Test-Path $ack)) { return $null }
+  try { $a = @((Read-SharedText $ack).Trim() -split ' ') } catch { return $null }
+  if ($a.Count -ge 3 -and $a[0] -eq $Id -and $UnityAnswers -contains $a[2]) { return $a[2] }
+  return $null
+}
+
+# Returns what the editor did ('starting', 'queued', 'stopping', 'already'), 'taken' when it took the request but its
+# answer couldn't be read, or $null when it didn't react within $WaitSec (the request is then withdrawn).
+function Send-UnityRequest([string]$Action, [double]$WaitSec = 10) {
+  $req = Join-Path $UnityRequestDir 'request.txt'
+  $tmp = Join-Path $UnityRequestDir 'request.tmp'
+  $id = [guid]::NewGuid().ToString('N')
+  try {
+    New-Item -ItemType Directory -Force $UnityRequestDir | Out-Null
+    Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $UnityRequestDir 'ack.txt'), $req, $tmp
+    Write-Utf8 $tmp "$Action $id"
+    [System.IO.File]::Move($tmp, $req)   # whole or not at all: the editor never reads half a request
+  } catch { return $null }
+  $deadline = (Get-Date).AddSeconds($WaitSec)
+  do {
+    Start-Sleep -Milliseconds 150
+    $did = Read-UnityAnswer $id
+    if ($did) { return $did }
+  } while ((Get-Date) -lt $deadline)
+  if (-not (Test-Path $req)) { return 'taken' }
+  Remove-Item -Force -ErrorAction SilentlyContinue $req
+  Start-Sleep -Milliseconds 400   # the editor may have read it in the same instant
+  return (Read-UnityAnswer $id)
+}
+
+# 'play' or 'stop'. Returns the editor's answer, or 'keys' when it gave none and Ctrl+P was pressed instead.
+function Request-UnityPlayMode([string]$Action, [double]$WaitSec = 10) {
+  $u = Get-UnityEditor
+  if (-not $u) { throw 'The Unity Editor with native/quest is not running.' }
+  [void](Focus-Window $u.Process)   # in front, the editor also imports changed assets and compiles changed scripts
+  $did = Send-UnityRequest $Action $WaitSec
+  if ($did) { return $did }
+  if (-not $script:PlayKeysNoted) {
+    $script:PlayKeysNoted = $true
+    [void]$script:Notes.Add("The editor didn't answer a Play mode request (Temp/SameSkySim/request.txt) within $WaitSec s; Ctrl+P was pressed instead.")
+  }
+  $running = Test-AppRunning
+  if (($Action -eq 'play' -and -not $running) -or ($Action -eq 'stop' -and $running)) { Send-UnityPlayToggle }
+  return 'keys'
+}
+
+# No app a minute and a half after Play mode was asked for: ask the editor again. If it answers that it is already
+# entering Play mode, it is waiting on the simulator (OpenXR start-up blocks until the runtime answers), so the
+# simulator is stopped: the OpenXR runtime inside the editor starts a fresh one when it finds none.
+function Invoke-StartNudge([int]$AfterSec) {
+  $again = Send-UnityRequest 'play' 10
+  $what = if ($again) { "the editor answered '$again'" } else { "the editor didn't answer" }
+  if ($again -eq 'already') {
+    $sims = @(Get-Process -Name MetaXRSimulator -ErrorAction SilentlyContinue)
+    foreach ($p in $sims) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue }
+    Start-Sleep -Seconds 3
+    $what += ", so it was waiting on the simulator; the simulator was stopped ($($sims.Count) process) for the OpenXR runtime to start a fresh one"
+  }
+  [void]$script:Notes.Add("App session $($script:Session) hadn't started after $AfterSec s: $what.")
+  Write-Host "    no app after $AfterSec s: $what" -ForegroundColor Yellow
 }
 
 function Reset-AppProfile {
@@ -535,6 +625,9 @@ function Start-App([switch]$FreshProfile, [string]$Record = '') {
   $script:EventCursor = 0
   $script:SessionMark = $script:AllEvents.Count
   $timeout = 180
+  $asked = $null       # how Play mode was asked for in this session (the running editor's answer, or 'launched')
+  $nudgeSec = 90       # with no app after this long, the editor is asked again (Invoke-StartNudge)
+  $toFront = $false    # a newly launched editor is brought to the front once its window is there
   if ($Target -eq 'WindowsBuild') {
     $script:AppProcess = Start-SameSkyInSim -Api $ApiUrl -Profile $AppProfile
     $timeout = 120
@@ -543,10 +636,31 @@ function Start-App([switch]$FreshProfile, [string]$Record = '') {
     if (-not $u) {
       Start-UnityEditor
       $timeout = $UnityStartTimeoutSec
+      # Opening the project, compiling and entering Play mode took about 70 s here; four minutes without an app
+      # means the launch's own play request (-executeMethod) got lost, and the request file can still make it.
+      $asked = 'launched'; $nudgeSec = 240; $toFront = $true
       Write-Host "    Unity is opening native/quest and entering Play mode (up to $timeout s)"
-    } else { Send-UnityPlayToggle }
+    } else {
+      # the first start of a run can find changed assets and scripts: the editor imports and recompiles before it
+      # plays (and before it reads the request, when the request reader itself is among the changed scripts)
+      if ($script:Session -eq 1) { $timeout = 420 }
+      $asked = Request-UnityPlayMode 'play' $(if ($script:Session -eq 1) { 90 } else { 10 })
+    }
   }
-  $start = Wait-EventSince $script:SessionMark 'start' '' $timeout
+  $start = $null
+  $deadline = (Get-Date).AddSeconds($timeout)
+  $nudgeAt = (Get-Date).AddSeconds($nudgeSec)
+  while (-not $start -and (Get-Date) -lt $deadline) {
+    $start = Wait-EventSince $script:SessionMark 'start' '' 5
+    if ($start) { break }
+    if ($toFront) {
+      # Windows doesn't hand the foreground to a program that a background script started, and a Unity editor that
+      # isn't in front leaves some of its work waiting (EditorApplication.delayCall, for one).
+      $u = Get-UnityEditor
+      if ($u) { $toFront = $false; [void](Focus-Window $u.Process) }
+    }
+    if ($asked -and (Get-Date) -ge $nudgeAt) { $asked = $null; Invoke-StartNudge $nudgeSec }
+  }
   if (-not $start) {
     $script:AppStartFailures = $script:AppStartFailures + 1
     throw "The app didn't start within $timeout s (no 'start' event in the probe). Unity log: $(Get-RelPath $UnityLog)"
@@ -574,7 +688,7 @@ function Stop-App {
   Save-SessionFiles
   if ($Target -eq 'WindowsBuild') {
     if ($script:AppProcess -and -not $script:AppProcess.HasExited) { Stop-Process -Id $script:AppProcess.Id -Force -ErrorAction SilentlyContinue }
-  } elseif (Test-AppRunning) { Send-UnityPlayToggle }
+  } elseif (Test-AppRunning) { [void](Request-UnityPlayMode 'stop') }
   $deadline = (Get-Date).AddSeconds(60)
   while ((Test-AppRunning) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 300 }
   if (Test-AppRunning) { throw 'The app did not stop.' }
@@ -592,11 +706,15 @@ function Get-UnityRuntimeLine {
 # ---------------------------------------------------------------- MP4 of the simulator (check 8)
 # metavr xrsim record captures the runtime's compositor. A runtime built without the recording service (207.1 is)
 # makes metavr say so and suggest a screen recorder: from then on FFmpeg records the simulator window instead
-# (gdigrab of its screen area; the script keeps that window in front while it drives it).
+# (gdigrab of its screen area). While a recording runs the simulator window is kept above every other window, so
+# nothing can cover the area being recorded. One thing that doesn't help with: when the app leaves, the simulator
+# closes its own window, and until the recorder stops the area shows what was behind it. A session that ends with
+# Leave (check 6) therefore ends with two or three seconds of the Unity editor (runs 125054 and 130714).
 function Start-WindowRecorder([string]$File) {
   $ff = Get-FfmpegExe
   $w = Get-SimWindow
   if (-not $ff -or -not $w) { return $null }
+  try { [SimInput]::Topmost($w.MainWindowHandle, $true) } catch { }
   $r = [SimInput]::Frame($w.MainWindowHandle)
   $width = $r.Width - ($r.Width % 2); $height = $r.Height - ($r.Height % 2)   # even sizes for yuv420p
   $psi = New-Object System.Diagnostics.ProcessStartInfo $ff
@@ -606,7 +724,7 @@ function Start-WindowRecorder([string]$File) {
   $psi.RedirectStandardInput = $true
   $psi.RedirectStandardError = $true
   $p = [System.Diagnostics.Process]::Start($psi)
-  return [pscustomobject]@{ process = $p; errors = $p.StandardError.ReadToEndAsync(); command = "ffmpeg -f gdigrab (simulator window, ${width}x$height at 15 fps) -c:v libx264 $(Split-Path $File -Leaf)" }
+  return [pscustomobject]@{ process = $p; window = $w.MainWindowHandle; errors = $p.StandardError.ReadToEndAsync(); command = "ffmpeg -f gdigrab (simulator window, ${width}x$height at 15 fps) -c:v libx264 $(Split-Path $File -Leaf)" }
 }
 
 function Stop-WindowRecorder($Rec) {
@@ -615,6 +733,7 @@ function Stop-WindowRecorder($Rec) {
     try { $p.StandardInput.Write('q'); $p.StandardInput.Flush() } catch { }   # q: finish the file properly
     if (-not $p.WaitForExit(20000)) { try { $p.Kill() } catch { }; [void]$p.WaitForExit(5000) }
   }
+  try { [SimInput]::Topmost($Rec.window, $false) } catch { }   # the window may be gone already: the simulator can leave with the app
   $err = ''
   try { $err = Protect-Text ([string]$Rec.errors.Result).Trim() } catch { }
   return [ordered]@{ command = $Rec.command; exit = $(if ($p.HasExited) { $p.ExitCode } else { -1 }); timedOut = $false; output = $err }
@@ -930,9 +1049,85 @@ function Update-HandControl {
   } catch { $script:Calib.ok = $false; $script:Calib.note = "re-calibration failed: $(Protect-Text $_.Exception.Message)" }
 }
 
+# In the simulator both hands move with the head, half a metre apart: while the right index presses a button the
+# left one comes down too, and can land on another button. With eight items on the dock, a press on Pause at its
+# right end had the left index on Our day at its left end, which opened Our day instead (run 120650). A person keeps
+# the other hand out of the way. The simulator can't move one hand, and switching one hand's tracking off switches
+# both off (run 122623), so the script turns the head a little to the left for that press: the left hand swings
+# back toward the person, the right index still reaches the button, and the head turns back afterwards.
+# Returns the id of the button the left index would touch during a press on $Target, or $null.
+function Get-LeftHandObstacle($State, $Target, [double[]]$Aim, [double[]]$Normal, [double[]]$Fingertip) {
+  if ($null -eq $State -or -not $State.hands.left) { return $null }
+  $right = V3 $State.handsAt.right
+  $left = V3 $State.handsAt.left
+  if ($null -eq $right -or $null -eq $left) { return $null }
+  # the left index in the same pose as the right one: the right fingertip's offset, mirrored across the line the head faces
+  $forward = V3 $State.headForward
+  $side = VNorm ([double[]]@($forward[2], 0, (-$forward[0])))   # to the person's right
+  $leftTip = VSub $Fingertip (VScale $side (2 * (VDot $Fingertip $side)))
+  $between = VSub (VAdd (VSub $left $right) $leftTip) $Fingertip   # from the right fingertip to the left one
+  foreach ($o in @($State.targets)) {
+    if ("$($o.id)" -eq "$($Target.id)") { continue }
+    $on = VNorm (V3 $o.normal)
+    $ob = Get-PlaneBasis $on
+    foreach ($depth in 0.06, 0.03, 0.0, -0.025) {   # along the press: in front of the face, on it, behind it
+      $v = VSub (VAdd (VAdd $Aim (VScale $Normal $depth)) $between) (V3 $o.at)
+      $inside = [math]::Abs((VDot $v $ob.u)) -le ([double]$o.size[0] / 2 + 0.02) -and [math]::Abs((VDot $v $ob.v)) -le ([double]$o.size[1] / 2 + 0.02)
+      if ($inside -and [math]::Abs((VDot $v $on)) -le 0.035) { return "$($o.id)" }
+    }
+  }
+  return $null
+}
+
+# A vector turned about the vertical axis by the angle the head turned (positive: to the right, as YawDeg counts).
+function Rotate-Yaw([double[]]$v, [double]$Degrees) {
+  $a = $Degrees * [math]::PI / 180.0
+  $c = [math]::Cos($a); $q = [math]::Sin($a)
+  return ,([double[]]@(($v[0] * $c + $v[2] * $q), $v[1], (-$v[0] * $q + $v[2] * $c)))
+}
+
+# Turns the head so the left index stays clear of every button while the right one presses $Id. Left first (the left
+# hand comes back toward the person); if that puts it over something else, the other way. Returns $true when the
+# head was turned ($script:AsideTurn holds by how much, for turning back).
+function Step-LeftHandAside([string]$Id, [string]$Obstacle) {
+  foreach ($deg in -20, 40) {
+    $turn = Rotate-HeadYaw $deg
+    if (-not $turn.ok) { break }
+    $script:AsideTurn += [double]$turn.turned
+    Update-HandControl
+    $s = Wait-NextProbe
+    $t = Find-Target $s $Id
+    if (-not $t) { break }
+    $f = Get-ProbeFingertip $s
+    if (-not $f) { $f = Rotate-Yaw $script:Calib.fingertip $script:AsideTurn }
+    if (-not (Get-LeftHandObstacle $s $t (V3 $t.at) (VNorm (V3 $t.normal)) $f)) { break }
+  }
+  if ($script:AsideTurn -eq 0) { return $false }
+  $line = "For $Id the head was turned $([math]::Round($script:AsideTurn)) degrees during the press and back afterwards: the simulator moves both hands together, and the left index would have come down on $Obstacle."
+  if (-not $script:Notes.Contains($line)) { [void]$script:Notes.Add($line) }
+  Write-Host "    head turned $([math]::Round($script:AsideTurn)) degrees for this press (the left index would have come down on $Obstacle)" -ForegroundColor DarkGray
+  return $true
+}
+
 # Poke a button: in front of it, through its face, back out. A press counts on release (Pressable.cs).
 # Misses try nearby points; a wrong button pressed corrects the fingertip offset.
 function Invoke-AutoPress([string]$Id, [string]$Accept, [switch]$KeepIn) {
+  $script:AsideTurn = 0.0
+  try { return (Invoke-AutoPressCore -Id $Id -Accept $Accept -KeepIn:$KeepIn) }
+  finally {
+    if ($script:AsideTurn -ne 0) {
+      $back = -$script:AsideTurn
+      $script:AsideTurn = 0.0
+      try {
+        # a recenter has just turned the room to face the head: there is nothing to turn back to
+        if ($Id -notmatch 'recenter') { [void](Rotate-HeadYaw $back) }
+        Update-HandControl
+      } catch { }
+    }
+  }
+}
+
+function Invoke-AutoPressCore([string]$Id, [string]$Accept, [switch]$KeepIn) {
   if (-not $script:Calib.ok) { return [pscustomobject]@{ ok = $false; note = "no automatic aiming ($($script:Calib.note))" } }
   $pattern = @(@(0, 0), @(0, 0.6), @(0, -0.6), @(0.4, 0), @(-0.4, 0), @(0, 1.2), @(0, -1.2))
   $tries = New-Object System.Collections.ArrayList
@@ -951,22 +1146,36 @@ function Invoke-AutoPress([string]$Id, [string]$Accept, [switch]$KeepIn) {
     $shift = VAdd (VScale $b.u $offU) (VScale $b.v $offV)
     $aim = VAdd $c $shift
     $f = Get-Fingertip $s
+    if (-not $KeepIn -and $script:AsideTurn -eq 0 -and -not $script:NoAsideTurn) {
+      $obstacle = Get-LeftHandObstacle $s $t $aim $n $f
+      if ($obstacle -and (Step-LeftHandAside $Id $obstacle)) {
+        # the room hasn't moved, but the hands and the fingertip's offset have turned with the head
+        $s = Wait-NextProbe
+        $f = Get-ProbeFingertip $s
+        if (-not $f) { $f = Rotate-Yaw $script:Calib.fingertip $script:AsideTurn }
+      }
+    }
     $mark = New-Mark
     [void](Move-HandTo (VSub (VAdd $aim (VScale $n 0.12)) $f) 0.02 6)    # well in front of the button
     $pre = Move-HandTo (VSub (VAdd $aim (VScale $n 0.04)) $f) 0.008 8     # fingertip 4 cm in front
     # Close the loop on the fingertip itself before pushing. The app reports it (probe pokeAt) only while the hand's
     # poke interactor is the active one; pointing across the dock can leave the ray active until the finger is this
     # close, and the stored offset alone was several centimetres out after a recenter (it pressed the next button).
+    # When the app still doesn't report the fingertip at 4 cm (the ray is still the active interactor), come closer a
+    # centimetre at a time, down to 2 cm, and look again: the poke takes over as the finger nears the button.
+    $front = 0.04
     if (-not $FingertipOffset) {
-      for ($k = 0; $k -lt 3; $k++) {
+      $live = $null
+      for ($k = 0; $k -lt 7 -and -not $live; $k++) {
         $live = Get-ProbeFingertip (Wait-NextProbe)
-        if ($live) {
-          if ((VLen (VSub $live $f)) -gt 0.004) { $f = $live; $pre = Move-HandTo (VSub (VAdd $aim (VScale $n 0.04)) $f) 0.006 6 }
-          break
+        if (-not $live -and $k -ge 1 -and $front -gt 0.021) {
+          $front -= 0.01
+          Move-HandBy (VScale $n (-0.01))
         }
       }
+      if ($live -and (VLen (VSub $live $f)) -gt 0.004) { $f = $live; $pre = Move-HandTo (VSub (VAdd $aim (VScale $n $front)) $f) 0.006 6 }
     }
-    Move-HandBy (VScale $n (-0.065))                                      # through the face to 2.5 cm behind it
+    Move-HandBy (VScale $n (-($front + 0.025)))                           # through the face to 2.5 cm behind it
     if ($KeepIn) {
       # The press has to be really held when the caller drops tracking: the probe says whether the button is down.
       # If it isn't yet, go a little deeper.
@@ -992,7 +1201,9 @@ function Invoke-AutoPress([string]$Id, [string]$Accept, [switch]$KeepIn) {
     }
     if ($others.Count -gt 0) {
       $o = Find-Target $s $others[0].detail
-      if ($o) { Update-Fingertip (VAdd $f (VSub (V3 $o.at) $aim)) "pressed $($others[0].detail) instead of $Id" }
+      # Only a neighbour says something about where the fingertip really is; a button far from the aim was pressed
+      # by something else (the other hand), and correcting by that would throw the aim off by the same distance.
+      if ($o -and (VLen (VSub (V3 $o.at) $aim)) -lt 0.12) { Update-Fingertip (VAdd $f (VSub (V3 $o.at) $aim)) "pressed $($others[0].detail) instead of $Id" }
       return [pscustomobject]@{ ok = $false; wrong = $others[0].detail; note = "pressed $($others[0].detail) instead of $Id"; tries = $tries }
     }
     [void](Move-HandTo (VSub (VAdd $aim (VScale $n 0.12)) $f) 0.03 3)    # back off and try the next point
@@ -1067,7 +1278,20 @@ function Invoke-HandPress([string]$Id, [string]$Label, [string]$Accept = '') {
     Instruction = "press '$Label' with a simulated hand (poke it, or point at it and pinch). If another screen opened, go back first."
     AutoCommand = 'Invoke-AutoPress'; AutoArgs = @{ Id = $Id; Accept = $Accept }; Kind = 'press'; Pattern = $Accept
   }
-  return (Invoke-Gesture @gesture)
+  $r = Invoke-Gesture @gesture
+  # A press that landed on the neighbouring dock button opened that button's screen. Do what a person would: go
+  # back and press again (the miss has already corrected the fingertip estimate). The miss stays in the report.
+  if (-not $r.ok -and -not $Assist -and $r.auto -and "$($r.auto.wrong)" -match '^dock:' -and $Id -match '^dock:') {
+    $back = @((Wait-NextProbe).targets | Where-Object { "$($_.id)" -match ':back$' })
+    if ($back.Count -gt 0) {
+      $backId = "$($back[0].id)"
+      [void]$script:Notes.Add("Pressed $($r.auto.wrong) instead of $Id; went back ($backId) and pressed again.")
+      $backPattern = '^' + [regex]::Escape($backId) + '$'
+      $b = Invoke-Gesture -Instruction "press Back ($backId)" -AutoCommand 'Invoke-AutoPress' -AutoArgs @{ Id = $backId; Accept = $backPattern } -Kind 'press' -Pattern $backPattern
+      if ($b.ok -and (Wait-Target $Id 8)) { $r = Invoke-Gesture @gesture }
+    }
+  }
+  return $r
 }
 
 function Add-DriverOf($Check, $Result) {
@@ -1215,6 +1439,15 @@ function Invoke-Check1 {
     Start-Sleep -Seconds 2
     $script:Calib.note = ''
     Initialize-HandControl
+  }
+  # close-ups of the tracked hands and their skin, in this untimed session (the next one is timed)
+  if (-not $Assist) {
+    Set-HandPose 'PoseDefault'
+    [void](Save-SeatView 'hands' 0 0 'the tracked hands from where the head is: skin tone, nails, knuckles, their shadow' '' 1.4 42 'hands')
+    [void](Save-SeatView 'palms' 0 0 'the tracked hands from the other side: palms, creases, finger pads' '' 1.4 42 'palms')
+    Set-HandPose 'PosePinch'
+    [void](Save-SeatView 'hands-pinch' 0 0 'the tracked hands pinching' '' 1.4 42 'hands')
+    Set-HandPose 'PosePoke'
   }
   Stop-App
   [void](Start-App -FreshProfile -Record 'sample')
@@ -1430,6 +1663,71 @@ function Invoke-Check5 {
   if ($ok) { Complete-Check $c 'pass' $summary } else { Complete-Check $c 'fail' $summary }
 }
 
+function Get-RoomDecor([string]$RoomId) {
+  return Invoke-RestMethod -Method Get -Uri "$ApiUrl/v1/rooms/$RoomId/decor" -Headers @{ Authorization = "Bearer $($script:NoraToken)" } -TimeoutSec 20
+}
+
+function Invoke-Check9 {
+  $c = New-Check 9 'Furniture chosen in the marketplace by a simulated hand is kept across an app restart'
+  if (-not $script:Seed -or -not $script:Seed.rooms -or -not $script:Seed.rooms.pair) { Complete-Check $c 'blocked' 'no seeded room'; return }
+  $roomId = $script:Seed.rooms.pair
+  # How the room is furnished now, asked of the server as Nora. The hand then picks a chair fabric that isn't
+  # the current one, so every run makes a real change.
+  $before = Get-RoomDecor $roomId
+  $was = "$($before.choices.chairs.finish)"
+  $want = @('sage', 'charcoal', 'cognac', 'cream' | Where-Object { $_ -ne $was })[0]
+  Add-Evidence $c 'api' ([ordered]@{ version = $before.version; chairs = $before.choices.chairs }) 'the room on the server before'
+  $live = $false
+  try { $st = Wait-NextProbe; $live = (Test-AppRunning) -and "$($st.mode)" -eq 'live' -and "$($st.screen)" -eq 'room' } catch { }
+  if (-not $live) {
+    Stop-App
+    Set-LiveSession
+    [void](Start-App -Record 'live-market')
+    if (-not (Enter-LiveRoom $c 'for the marketplace')) { Complete-Check $c 'fail' "couldn't open Nora's room"; return }
+  }
+  if (-not (Wait-Target 'dock:market' 15)) { Complete-Check $c 'fail' 'the dock has no Market button'; return }
+  $mark = New-Mark
+  $presses = @(
+    @{ id = 'dock:market'; label = 'Market (on the dock at the table edge)'; next = 'market:tab-chairs' },
+    @{ id = 'market:tab-chairs'; label = 'the Chairs tab'; next = "market:finish-chairs-$want" },
+    @{ id = "market:finish-chairs-$want"; label = "the $want fabric"; next = 'market:keep' },
+    @{ id = 'market:keep'; label = 'Keep'; next = '' }
+  )
+  foreach ($step in $presses) {
+    $p = Invoke-HandPress $step.id $step.label
+    Add-DriverOf $c $p
+    Add-EventEvidence $c $p.event "$($step.id) pressed"
+    if (-not $p.ok) { if ($p.note) { Add-Note $c $p.note }; Complete-Check $c 'fail' "couldn't press $($step.label)"; return }
+    if ($step.id -eq "market:finish-chairs-$want") { [void](Save-Shot 'check9-trying'); [void](Save-SeatView 'market-trying' 0 -18 "the marketplace open, the chairs tried in $want") }
+    if ($step.next -and -not (Wait-Target $step.next 10)) { Complete-Check $c 'fail' "after $($step.label): $($step.next) never showed"; return }
+  }
+  $tried = Find-EventSince $mark 'decor' "^try chairs=tub/$want"
+  Add-EventEvidence $c $tried 'the fabric tried in the room (not kept yet)'
+  $kept = Wait-EventSince $mark 'decor' '^kept v' 15
+  Add-EventEvidence $c $kept 'kept'
+  $after = Get-RoomDecor $roomId
+  Add-Evidence $c 'api' ([ordered]@{ version = $after.version; chairs = $after.choices.chairs; updatedByNora = ("$($after.updatedBy)" -eq "$($script:NoraId)") }) 'the room on the server after Keep'
+  [void](Wait-EventSince $mark 'screen' '^room$' 10)
+  [void](Save-SeatView 'market-kept' 0 -10 "the live room with the chairs in $want, kept from the marketplace")
+  # the app restarts and reads the room again
+  Stop-App
+  [void](Start-App -Record 'live-market-restarted')
+  $shown = $null
+  $state = $null
+  if (Enter-LiveRoom $c 'after an app restart') {
+    $shown = Wait-EventSince $script:SessionMark 'decor' '^shown v' 20
+    $w = Wait-ProbeState { param($st) "$($st.decor)" -match "chairs=tub/$want" } 10
+    $state = $w.state
+  }
+  Add-EventEvidence $c $shown 'furniture shown after the restart'
+  Add-StateEvidence $c $state 'check9-restarted' @('screen', 'mode', 'room', 'decor', 'decorVersion', 'decorUnsaved')
+  [void](Save-Shot 'check9-after-app-restart')
+  $ok = [bool]$tried -and [bool]$kept -and "$($after.choices.chairs.finish)" -eq $want -and ([int]$after.version -gt [int]$before.version) `
+    -and $null -ne $state -and ("$($state.decor)" -match "chairs=tub/$want") -and -not $state.decorUnsaved
+  $summary = "chairs changed from '$was' to '$want' by hand in the marketplace and kept; server version $($before.version) -> $($after.version); after an app restart the room shows: $($state.decor)"
+  if ($ok) { Complete-Check $c 'pass' $summary } else { Complete-Check $c 'fail' $summary }
+}
+
 function Rotate-HeadYaw([double]$Degrees) {
   $s0 = Wait-NextProbe
   $y0 = YawDeg (V3 $s0.headForward)
@@ -1456,7 +1754,7 @@ function Invoke-Check6 {
   # recenter: turn the head away from the table first, so the recenter has something to correct
   $turn = $null
   if (-not $Assist -and $script:Calib.ok) {
-    $turn = Rotate-HeadYaw 35
+    $turn = Rotate-HeadYaw -35   # to the left: the left hand comes back toward the person, not out over the table
     if ($turn.ok) {
       Add-StateEvidence $c $turn.state 'check6-turned' @('head', 'headForward')
       Update-HandControl
@@ -1512,6 +1810,7 @@ function Invoke-Check6 {
   foreach ($r in @($e1, $e2, $e3)) { Add-DriverOf $c $r }
   $quit = Wait-EventSince $mark 'exit' '^quit$' 5
   Add-EventEvidence $c $quit 'exit'
+  if ($quit) { Stop-Recording }   # as soon as the script knows the app has left (it was still drawing the hand back)
   $deadline = (Get-Date).AddSeconds(20)
   while ((Test-AppRunning) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 300 }
   $ended = -not (Test-AppRunning)
@@ -1693,19 +1992,21 @@ function Save-Results {
 }
 
 # ---------------------------------------------------------------- run
+if ($Library) { return }
 $script:StartedAt = (Get-Date).ToString('o')
 $script:Commit = ''
 $script:Clean = $false
 $script:Environment = $null
 $script:AppStartFailures = 0
+$script:PlayKeysNoted = $false
 Write-Step "SameSky native acceptance run ($RunName, $Target)"
 try {
   Initialize-Run
   Initialize-Services
   Initialize-Simulator
-  $steps = @('Invoke-Check1', 'Invoke-FirstMinute', 'Invoke-Check2', 'Invoke-Check5', 'Invoke-Check6', 'Invoke-Check7')
+  $steps = @('Invoke-Check1', 'Invoke-FirstMinute', 'Invoke-Check2', 'Invoke-Check5', 'Invoke-Check9', 'Invoke-Check6', 'Invoke-Check7')
   if ($OnlyIds.Count) {
-    $covers = @{ 'Invoke-FirstMinute' = @(3, 4); 'Invoke-Check2' = @(2); 'Invoke-Check5' = @(5); 'Invoke-Check6' = @(6); 'Invoke-Check7' = @(7) }
+    $covers = @{ 'Invoke-FirstMinute' = @(3, 4); 'Invoke-Check2' = @(2); 'Invoke-Check5' = @(5); 'Invoke-Check9' = @(9); 'Invoke-Check6' = @(6); 'Invoke-Check7' = @(7) }
     $steps = @('Invoke-Check1') + @($steps | Where-Object { $covers.ContainsKey($_) -and @($covers[$_] | Where-Object { $OnlyIds -contains $_ }).Count -gt 0 })
   }
   if ($Renders) {
@@ -1732,8 +2033,8 @@ try {
   try { Stop-Recording } catch { }
   try { if (Test-AppRunning) { Stop-App } } catch { }
   try { Complete-Check8 } catch { }
-  $names = @{ 1 = 'XR session active: simulated Meta Quest 3 with hand input'; 2 = 'Dock button pressed by a simulated hand'; 3 = 'Cup grabbed by a simulated hand'; 4 = 'Voice note heard within the first minute of a fresh start (sample day)'; 5 = 'Reply on the table survives an app restart and an API restart'; 6 = 'Recenter, pause and exit'; 7 = 'Hand tracking lost mid-press and found again: no ghost press'; 8 = 'MP4 of the simulator for every app session' }
-  foreach ($id in 1..7) {
+  $names = @{ 1 = 'XR session active: simulated Meta Quest 3 with hand input'; 2 = 'Dock button pressed by a simulated hand'; 3 = 'Cup grabbed by a simulated hand'; 4 = 'Voice note heard within the first minute of a fresh start (sample day)'; 5 = 'Reply on the table survives an app restart and an API restart'; 6 = 'Recenter, pause and exit'; 7 = 'Hand tracking lost mid-press and found again: no ghost press'; 8 = 'MP4 of the simulator for every app session'; 9 = 'Furniture chosen in the marketplace by a simulated hand is kept across an app restart' }
+  foreach ($id in @(1..7) + 9) {
     if (-not $script:Checks.Contains("$id")) {
       $c = New-Check $id $names[$id]
       if ($OnlyIds.Count -and $OnlyIds -notcontains $id -and $id -ne 1) { Complete-Check $c 'skipped' 'not selected (-Only)' }

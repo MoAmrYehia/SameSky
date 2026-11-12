@@ -1,0 +1,83 @@
+{
+  "note": "The real photographs and footage the sample day is built from. Each file is fetched from Wikimedia Commons by scripts/assets/fetch_sample_media.py and turned into the app's copies by scripts/assets/build_real_sample_media.py. The people in the sample day are fictional: none of these authors is one of them, and none of these pictures was taken for SameSky.",
+  "items": [
+    {
+      "id": "park-path",
+      "kind": "photo",
+      "out": "maya-park",
+      "title": "Autumn path, Dumitru Rascanu park",
+      "page": "https://commons.wikimedia.org/wiki/File:Autumn_path,_Dumitru_Rascanu_park.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Autumn_path%2C_Dumitru_Rascanu_park.jpg",
+      "file": "Autumn_path_Dumitru_Rascanu_park.jpg",
+      "author": "Iurie Nistor",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "bytes": 16645294,
+      "sha256": "73d46236670c5d79268926942e53d6be17176e8b01392e8290044876f30aee55",
+      "focus": [0.5, 0.56]
+    },
+    {
+      "id": "creek-dusk",
+      "kind": "photo",
+      "out": "adam-waterfront",
+      "title": "Deira Dubai Creek",
+      "page": "https://commons.wikimedia.org/wiki/File:Deira_Dubai_Creek.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Deira_Dubai_Creek.jpg",
+      "file": "Deira_Dubai_Creek.jpg",
+      "author": "kallerna",
+      "licence": "CC0 1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "bytes": 1464686,
+      "sha256": "e0450dde7d99bcbf8c5a9c32c63836e9b06b3e323a6cc7eefc8e4f4b83269175",
+      "focus": [0.5, 0.45]
+    },
+    {
+      "id": "desert-sunset",
+      "kind": "photo",
+      "out": "adam-desert",
+      "title": "Sharah Desert at sunset, UAE",
+      "page": "https://commons.wikimedia.org/wiki/File:Sharah_Desert_at_sunset,_UAE.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Sharah_Desert_at_sunset%2C_UAE.jpg",
+      "file": "Sharah_Desert_at_sunset_UAE.jpg",
+      "author": "Lxs",
+      "licence": "CC BY 4.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "bytes": 1783972,
+      "sha256": "2a4159c74621df33d53401ae615ad5bd3187f11f2f71f866bf367938cece3ecb",
+      "focus": [0.5, 0.5]
+    },
+    {
+      "id": "courtyard-night",
+      "kind": "photo",
+      "out": "lina-courtyard",
+      "title": "Tower block and courtyard in Dunedin Chinese Garden at night",
+      "page": "https://commons.wikimedia.org/wiki/File:Tower_block_and_courtyard_in_Dunedin_Chinese_Garden_at_night.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/59/Tower_block_and_courtyard_in_Dunedin_Chinese_Garden_at_night.jpg",
+      "file": "Dunedin_Chinese_Garden_courtyard_at_night.jpg",
+      "author": "Pseudopanax",
+      "licence": "Public domain (released by the author)",
+      "licenceUrl": "https://commons.wikimedia.org/wiki/File:Tower_block_and_courtyard_in_Dunedin_Chinese_Garden_at_night.jpg",
+      "bytes": 5340970,
+      "sha256": "0fed8e747a3606d918665655d449ddbd38bcdda092e07349f8f3838ef0187644",
+      "focus": [0.5, 0.5]
+    },
+    {
+      "id": "creek-crossing",
+      "kind": "video",
+      "out": "adam-clip",
+      "title": "Dubai Part I - Aug 10, 2012",
+      "page": "https://commons.wikimedia.org/wiki/File:Dubai_Part_I_-_Aug_10,_2012.webm",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/3/35/Dubai_Part_I_-_Aug_10%2C_2012.webm",
+      "file": "Dubai_Part_I_Aug_10_2012.webm",
+      "author": "54t4n0d",
+      "licence": "CC BY 3.0",
+      "licenceUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "bytes": 180890186,
+      "sha256": "00c546c9c681178c9e7ce9dd5d26b91401227209ce2b58faa4bc66c34b947a5a",
+      "start": 16.0,
+      "seconds": 8.5,
+      "audio": "none",
+      "poster_at": 6.5
+    }
+  ]
+}

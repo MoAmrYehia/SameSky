@@ -26,6 +26,17 @@ namespace SameSky.App
                 case "settings": ShowSettings(); return true;
                 case "pause": ShowPause(); return true;
                 case "avatar": ShowAvatarSettings(EnterRoom); return true;
+                case "hands": ShowHandsSettings(EnterRoom); return true;
+                case "market": ShowMarket("looks"); return true;
+                case var tab when tab.StartsWith("market:"): ShowMarket(tab.Substring(7)); return true;
+                case var name when name.StartsWith("look:"):
+                    // the room in one of the ready-made looks, tried but not kept (the next screen puts it back)
+                    var look = FurnitureCatalog.Current.Looks.FirstOrDefault(k => k.Id == name.Substring(5));
+                    if (look == null || RoomDecor.Instance == null || _decorSaved == null) return false;
+                    HidePanel();
+                    _decorPreview = look.Decor.Clone();
+                    RoomDecor.Instance.Apply(_decorPreview);
+                    return true;
                 case "rooms": ShowRooms(); return true;
                 case "reply": StartReply(); return true;
                 case "story":

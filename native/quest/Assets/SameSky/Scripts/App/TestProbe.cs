@@ -119,6 +119,12 @@ namespace SameSky.App
                 ["story"] = app != null ? app.StoryState : "none",
                 ["live"] = app != null ? app.LiveState : "none",
                 ["driftMs"] = app != null ? Math.Round(app.LastDriftMs) : 0,
+                // how the room is furnished (the marketplace), and whether what it shows has been kept
+                ["decor"] = app != null ? app.DecorSummary : "",
+                ["decorVersion"] = app != null ? app.DecorVersion : 0,
+                ["decorUnsaved"] = app != null && app.DecorUnsaved,
+                // how many tracked-hand meshes wear the skin material, and its tone
+                ["handSkin"] = HandSkin.Instance != null ? new { dressed = HandSkin.Instance.Dressed, tone = "#" + ColorUtility.ToHtmlStringRGB(HandSkin.Instance.Tone) } : null,
                 // what can be pressed right now, with where it is: lets a test aim simulated hands at real targets
                 ["targets"] = Targets(),
             };
@@ -126,6 +132,9 @@ namespace SameSky.App
             _frameTime = 0;
             try { File.WriteAllText(Path.Combine(_dir, "state.json"), JsonConvert.SerializeObject(state, Formatting.Indented)); } catch (IOException) { /* next tick */ }
             CheckSnapRequest();
+#if UNITY_EDITOR
+            FilmRig.Check(_dir, this);   // the demo film's capture-only camera (Editor only)
+#endif
         }
 
         // ------------------------------------------------------------ fixed seated views for render comparisons
@@ -146,6 +155,9 @@ namespace SameSky.App
             /// story, circle, direct, room...), wait, then render.</summary>
             public string open;
             public float wait = 1.4f;
+            /// <summary>Optional: "hands" looks at the tracked hands from where the head is (their backs), "palms" from
+            /// the other side. The seat view is used when no hand is tracked.</summary>
+            public string view;
         }
 
         bool _snapping;
@@ -178,6 +190,21 @@ namespace SameSky.App
             var position = eye != null ? eye.position : new Vector3(0, 1.18f, 0);
             var facing = eye != null ? eye.rotation : Quaternion.identity;
             if (r.at is { Length: 3 }) position += facing * new Vector3(r.at[0], r.at[1], r.at[2]);
+            var look = facing * Quaternion.Euler(-r.pitch, r.yaw, 0);
+            var near = 0.02f;
+            if (r.view is "hands" or "palms")
+            {
+                // The hand's own palm joint says where the hand is and which way it faces (its up is the back of the
+                // hand, its forward runs along the fingers): look square at the back or at the palm, fingers up.
+                var palm = HandJoint(Handedness.Right, "Palm") ?? HandJoint(Handedness.Left, "Palm");
+                if (palm != null)
+                {
+                    var target = palm.position + palm.forward * 0.045f;
+                    position = target + palm.up * (r.view == "hands" ? 0.3f : -0.3f);
+                    look = Quaternion.LookRotation(target - position, palm.forward);
+                    near = 0.14f;   // a panel or the table top between the camera and the hand is left out
+                }
+            }
             int w = Mathf.Clamp(r.width, 64, 3840), h = Mathf.Clamp(r.height, 64, 2160);
             var go = new GameObject("Snapshot camera");
             var cam = go.AddComponent<Camera>();
@@ -185,10 +212,10 @@ namespace SameSky.App
             cam.stereoTargetEye = StereoTargetEyeMask.None;
             cam.clearFlags = CameraClearFlags.Skybox;
             cam.fieldOfView = Mathf.Clamp(r.fov, 20f, 120f);
-            cam.nearClipPlane = 0.02f;
+            cam.nearClipPlane = near;
             cam.farClipPlane = 300f;
             if (Camera.main != null) cam.cullingMask = Camera.main.cullingMask;
-            go.transform.SetPositionAndRotation(position, facing * Quaternion.Euler(-r.pitch, r.yaw, 0));
+            go.transform.SetPositionAndRotation(position, look);
             var msaa = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB) { antiAliasing = 4 };
             var resolved = new RenderTexture(w, h, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
@@ -226,6 +253,19 @@ namespace SameSky.App
                 Destroy(go);
                 _snapping = false;
             }
+        }
+
+        /// <summary>A joint of the tracked hand that is being drawn (by the end of its name: "Palm", "IndexTip"...).</summary>
+        static Transform HandJoint(Handedness which, string nameEnd)
+        {
+            foreach (var visual in FindObjectsByType<HandVisual>(FindObjectsSortMode.None))
+            {
+                if (visual.Hand == null || visual.Hand.Handedness != which || !visual.Hand.IsTrackedDataValid) continue;
+                foreach (var smr in visual.GetComponentsInChildren<SkinnedMeshRenderer>(false))
+                    foreach (var bone in smr.bones)
+                        if (bone != null && bone.name.EndsWith(nameEnd)) return bone;
+            }
+            return null;
         }
 
         static float Round(float v) => (float)Math.Round(v, 3);

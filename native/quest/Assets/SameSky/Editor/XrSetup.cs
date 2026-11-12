@@ -116,9 +116,26 @@ namespace SameSky.EditorTools
             if (cfg == null) { Debug.LogWarning("[SameSky:setup] OVRProjectConfig instance not available"); return; }
             SetEnum(cfg, "handTrackingSupport", "ControllersAndHands");
             SetEnum(cfg, "handTrackingFrequency", "HIGH");
+            SetDevices(cfg, "Quest3", "Quest3S");
             commit?.Invoke(null, new[] { cfg });
             EditorUtility.SetDirty((UnityEngine.Object)cfg);
             Debug.Log("[SameSky:setup] Meta project config: hands and controllers");
+        }
+
+        /// <summary>
+        /// The devices the app says it supports (the manifest's com.oculus.supportedDevices): the two it is built and
+        /// judged for. The SDK's default list also names devices nothing here was tried on; the same list is written
+        /// in Assets/Plugins/Android/AndroidManifest.xml, which is what the build uses.
+        /// </summary>
+        static void SetDevices(object cfg, params string[] names)
+        {
+            var field = cfg.GetType().GetField("targetDeviceTypes", BindingFlags.Public | BindingFlags.Instance);
+            var device = cfg.GetType().GetNestedType("DeviceType");
+            if (field == null || device == null || !device.IsEnum) { Debug.LogWarning("[SameSky:setup] OVRProjectConfig.targetDeviceTypes not found"); return; }
+            var list = (System.Collections.IList)Activator.CreateInstance(typeof(System.Collections.Generic.List<>).MakeGenericType(device));
+            foreach (var name in names)
+                if (Enum.IsDefined(device, name)) list.Add(Enum.Parse(device, name));
+            if (list.Count > 0) field.SetValue(cfg, list);
         }
 
         static void SetEnum(object target, string field, string value)

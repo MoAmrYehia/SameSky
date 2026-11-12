@@ -169,16 +169,14 @@ def main():
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT.parent / "backdrops").mkdir(parents=True, exist_ok=True)
-    if "--skip-photos" in sys.argv:
+    # The sample day's photos and clip are real photographs and footage now (build_real_sample_media.py). The
+    # panorama crops and the simulated pan are only written when asked for, so a routine run can't replace them.
+    if "--panorama-samples" in sys.argv:
+        photo("ballawley_park", "maya-park", yaw=18, pitch=4, fov=64, warmth=0.9, contrast=1.05, lift=-0.01, saturation=1.05)
+        photo("golden_bay", "adam-waterfront", yaw=142, pitch=2, fov=62, warmth=0.2, contrast=1.04)
+        photo("courtyard_night", "lina-courtyard", yaw=-92, pitch=9, fov=74, warmth=0.15, contrast=1.03)
+        photo("rogland_sunset", "adam-desert", yaw=24, pitch=3, fov=62, warmth=0.8, contrast=1.06)
         clip()
-        window_plate()
-        backdrops()
-        return
-    photo("ballawley_park", "maya-park", yaw=18, pitch=4, fov=64, warmth=0.9, contrast=1.05, lift=-0.01, saturation=1.05)
-    photo("golden_bay", "adam-waterfront", yaw=142, pitch=2, fov=62, warmth=0.2, contrast=1.04)
-    photo("courtyard_night", "lina-courtyard", yaw=-92, pitch=9, fov=74, warmth=0.15, contrast=1.03)
-    photo("rogland_sunset", "adam-desert", yaw=24, pitch=3, fov=62, warmth=0.8, contrast=1.06)
-    clip()
     window_plate()
     backdrops()
     # the synthesized voice note and its captions move with the rest of the sample

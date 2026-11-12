@@ -202,6 +202,12 @@ namespace SameSky.Api
         public Task<JToken> LeaveRoom(string roomId, CancellationToken ct = default) => Delete<JToken>($"/v1/rooms/{roomId}/members/me", ct);
         public Task<List<Award>> Awards(string roomId, CancellationToken ct = default) => Get<List<Award>>($"/v1/rooms/{roomId}/awards", ct);
 
+        // the furniture marketplace: how a room is furnished
+        public Task<DecorInfo> Decor(string roomId, CancellationToken ct = default) => Get<DecorInfo>($"/v1/rooms/{roomId}/decor", ct);
+
+        public Task<DecorInfo> SaveDecor(string roomId, JObject choices, int? expectedVersion, CancellationToken ct = default) =>
+            Put<DecorInfo>($"/v1/rooms/{roomId}/decor", new JObject { ["choices"] = choices, ["expected_version"] = expectedVersion }, ct);
+
         // ------------------------------------------------------------------ moments, sharing, replies
 
         public Task<List<Moment>> Moments(string roomId, string roomDate = null, CancellationToken ct = default) =>

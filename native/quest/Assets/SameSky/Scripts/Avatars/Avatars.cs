@@ -196,6 +196,9 @@ namespace SameSky.App
                 if (Root != null)
                 {
                     Rigs.Remove(Root);
+                    // Destroy only takes effect at the end of the frame: switched off now, so a second portrait made in
+                    // the same frame (the two tiles on Together) doesn't have this figure standing in its picture
+                    Root.gameObject.SetActive(false);
                     UnityEngine.Object.Destroy(Root.gameObject);
                 }
                 if (_camera != null) UnityEngine.Object.Destroy(_camera.gameObject);

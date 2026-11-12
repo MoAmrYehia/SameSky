@@ -159,6 +159,7 @@ namespace SameSky.App
                 l.Gap(0.004f);
                 l.Body($"<b>Account</b> · {Data.Me.Email}");
                 l.Row(("settings:avatar", "Your avatar", () => ShowAvatarSettings(ShowSettings), PressStyle.Secondary),
+                      ("settings:hands", "Your hands", () => ShowHandsSettings(ShowSettings), PressStyle.Secondary),
                       ("settings:times", "Usual times", () => TimesPanel("availability", ShowSettings, null), PressStyle.Secondary));
                 l.Body($"<b>Room</b> · {CurrentRoom.Name} ({CurrentRoom.Members.Count} of {CurrentRoom.Capacity})");
                 var roomRow = l.Row(("settings:mute", CurrentRoom.Muted ? "Notifications: off" : "Notifications: on", () => Run(async ct =>
@@ -183,6 +184,7 @@ namespace SameSky.App
             {
                 l.Muted("Sample · fictional people, nothing leaves this device");
                 l.Row(("settings:avatar", "Your avatar", () => ShowAvatarSettings(ShowSettings), PressStyle.Secondary),
+                      ("settings:hands", "Your hands", () => ShowHandsSettings(ShowSettings), PressStyle.Secondary),
                       ("settings:account", "Use my account", () => { Data = null; ShowLaunch(); }, PressStyle.Secondary));
                 l.Row(("settings:reset-sample", "Reset the sample", () => { SampleState.Reset(); _sampleTogether = false; Prefs.Current.sampleIntroDone = false; Prefs.Save(); Toast("The sample is fresh again."); EnterRoom(); }, PressStyle.Quiet),
                       ("settings:exit", Icons.With(Icons.Leave, "Leave SameSky"), ConfirmExit, PressStyle.Quiet));
@@ -190,6 +192,58 @@ namespace SameSky.App
             // which build this is, in plain words; addresses and the like stay in the logs
             l.Muted($"SameSky {Application.version}{(Debug.isDebugBuild ? " · development build" : "")}");
             FinishPanel(l, ("settings:back", "Back", EnterRoom, PressStyle.Dark));
+        }
+
+        // ------------------------------------------------------------ your hands
+
+        /// <summary>The colour the avatar's skin was given, when the avatar says (designed avatars do; photo ones don't).</summary>
+        string AvatarSkinHex() => (string)MeAsMember()?.Avatar?.Definition?["skin"];
+
+        /// <summary>Colours the tracked hands: the chosen tone, or the avatar's skin, or a middle tone.</summary>
+        void ApplyHandTone()
+        {
+            var skin = HandSkin.Instance;
+            if (skin == null) return;
+            var chosen = Prefs.Current.handTone;
+            if (chosen >= 0 && chosen < HandSkin.Tones.Length) skin.SetTone(HandSkin.Tones[chosen].Tone);
+            else skin.SetTone(HandSkin.TryParseTone(AvatarSkinHex(), out var tone) ? tone : HandSkin.Tones[HandSkin.DefaultTone].Tone);
+        }
+
+        void ShowHandsSettings(Action back)
+        {
+            var l = NewPanel("hands", 0.46f);
+            l.Title("Your hands");
+            l.Body("Choose the skin tone of your hands. This changes how your own hands look to you.");
+            const float cell = 0.058f, gap = 0.01f;
+            var strip = l.Block(cell);
+            var n = HandSkin.Tones.Length;
+            var chosen = Prefs.Current.handTone;
+            for (var i = 0; i < n; i++)
+            {
+                var index = i;
+                var p = Pressable.Create(strip, $"hands:tone-{i + 1}", "", new Vector2(cell, cell), () =>
+                {
+                    Prefs.Current.handTone = index;
+                    Prefs.Save();
+                    ApplyHandTone();
+                    TestProbe.Event("hands", $"tone-{index + 1}");
+                    ShowHandsSettings(back);
+                }, PressStyle.Surface, new Vector3((i - (n - 1) / 2f) * (cell + gap), 0, 0));
+                Ui.Panel(p.transform, "Swatch", new Vector2(cell - 0.014f, cell - 0.014f), HandSkin.Tones[i].Tone, (cell - 0.014f) / 2, new Vector3(0, 0, -0.0012f),
+                    i == chosen ? Theme.Green : new Color(0, 0, 0, 0.18f), i == chosen ? 0.003f : 0.0008f, Ui.OrderFill);
+                l.Buttons.Add(p);
+            }
+            var fromAvatar = HandSkin.TryParseTone(AvatarSkinHex(), out _);
+            var follow = l.Button("hands:follow", fromAvatar ? "Match my avatar" : "Use the usual tone", () =>
+            {
+                Prefs.Current.handTone = -1;
+                Prefs.Save();
+                ApplyHandTone();
+                TestProbe.Event("hands", "follow");
+                ShowHandsSettings(back);
+            }, PressStyle.Chip);
+            follow.SetToggled(chosen < 0);
+            FinishPanel(l, ("hands:back", "Back", back, PressStyle.Dark));
         }
 
         void ConfirmLeaveRoom()

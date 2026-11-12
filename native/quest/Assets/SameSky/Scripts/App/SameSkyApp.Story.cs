@@ -27,6 +27,7 @@ namespace SameSky.App
         Transform _screenRoot;
         Renderer _screenImage;
         TextMeshPro _screenCaption, _screenMeta;
+        GameObject _screenShade;
         VideoPlayer _video;
         RenderTexture _videoTexture;
         AudioSource _storyAudio;
@@ -34,6 +35,7 @@ namespace SameSky.App
         TextMeshPro _storyLine;
         Renderer _storyProgress;
         float _storyProgressWidth;
+        int _pictureChapter = -1;   // the chapter whose picture the screen is showing (-1: none)
 
         public bool StoryPlaying => _story != null && !_storyPaused;
         public string StoryState => _story == null ? "none" : $"{(_storyPaused ? "paused" : "playing")}:{_chapter}:{_item}";
@@ -159,6 +161,11 @@ namespace SameSky.App
             _screenMeta.textWrappingMode = TextWrappingModes.NoWrap;
             _screenMeta.overflowMode = TextOverflowModes.Ellipsis;
             _screenCaption = Ui.Text(_screenRoot, "Caption", "", Theme.Body * 1.5f, Theme.OnDark, 0.6f, TextAlignmentOptions.Bottom, new Vector3(0, -0.11f, -0.002f), height: 0.08f);
+            // The caption lies over the foot of the picture: a shade behind it, so white type reads on a bright
+            // photograph as well as on a dark one. Shown only while there is a caption (UpdateStory).
+            _screenShade = Ui.Panel(_screenRoot, "Caption shade", new Vector2(0.64f, 0.078f), new Color(0.03f, 0.03f, 0.04f, 0.74f), 0.008f,
+                new Vector3(0, -0.121f, 0.0004f), new Color(0, 0, 0, 0), 0f, Ui.OrderFill).gameObject;
+            _screenShade.SetActive(false);
             _video = _screenRoot.gameObject.AddComponent<VideoPlayer>();
             _video.playOnAwake = false;
             _video.renderMode = VideoRenderMode.RenderTexture;
@@ -187,7 +194,13 @@ namespace SameSky.App
             _storyPanel = l;
             l.Title(_story.Plan?.Title ?? "Our day");
             l.Tag(_story.GeneratorLabel);
-            _storyLine = l.Body("");
+            // The line changes with each item (UpdateStoryText): room is kept for the chapter line and two lines of
+            // text, and a longer one ends in an ellipsis instead of running over the progress bar and the buttons.
+            // The room is measured with words, because lines of spaces alone have no height to measure.
+            _storyLine = l.Body("Chapter\nfirst line\nsecond line");
+            _storyLine.rectTransform.sizeDelta += new Vector2(0, Theme.Body * Theme.TextScale * 0.25f);
+            _storyLine.overflowMode = TextOverflowModes.Ellipsis;
+            _storyLine.text = "";
             var bar = l.Progress(0f);
             _storyProgress = bar.fill;
             _storyProgressWidth = l.Width - Layout.Pad * 2;
@@ -241,15 +254,16 @@ namespace SameSky.App
             {
                 _screenMeta.text = $"{m.OwnerName} · {m.CaptureLocal?.Time} {m.CaptureLocal?.Abbreviation} · {SourceLabel(m.Media)}{(OriginLabel(m.Media) is { } o ? " · " + o : "")}";
                 var ct = ScreenToken;
-                if (m.Media.Kind == "video") _ = PlayVideo(m, ct);
+                if (m.Media.Kind == "video") { _pictureChapter = _chapter; _ = PlayVideo(m, ct); }
                 else if (m.Media.Kind == "audio") _ = PlayStoryVoice(m, ct);
-                else _ = ShowStill(m, ct);
+                else { _pictureChapter = _chapter; _ = ShowStill(m, ct); }
                 if (m.Media.DurationMs is > 0) duration = Mathf.Max(duration, m.Media.DurationMs.Value / 1000f + 0.5f);
             }
             else
             {
                 _screenMeta.text = ch.ContributorId != null ? $"From {NameOf(ch.ContributorId)}" : "";
-                Ui.SetImage(_screenImage, null);
+                Ui.SetImage(_screenImage, Ui.Blank);
+                _pictureChapter = -1;
             }
             _itemUntil = Time.unscaledTime + duration;
             UpdateStoryText();
@@ -280,7 +294,9 @@ namespace SameSky.App
         {
             try
             {
-                Ui.SetImage(_screenImage, null);
+                // A voice note has no picture of its own: it plays over the picture its chapter is showing (the line
+                // beside it still describes that picture), and over a plain dark screen when the chapter has none.
+                if (_pictureChapter != _chapter) { Ui.SetImage(_screenImage, Ui.Blank); _pictureChapter = -1; }
                 var clip = await Data.Media.Audio(m.Media, ct);
                 _storyAudio.clip = clip;
                 _storyAudio.Play();
@@ -291,6 +307,11 @@ namespace SameSky.App
 
         void UpdateStory()
         {
+            if (_screenShade != null)
+            {
+                var captioned = _screenCaption != null && !string.IsNullOrEmpty(_screenCaption.text);
+                if (_screenShade.activeSelf != captioned) _screenShade.SetActive(captioned);
+            }
             if (_story == null || _storyPaused || Paused) return;
             var m = CurrentStoryMoment();
             if (m?.Media?.Kind == "audio" && _storyAudio != null && _storyAudio.isPlaying)
@@ -362,6 +383,7 @@ namespace SameSky.App
             _screenImage = null;
             _screenMeta = null;
             _screenCaption = null;
+            _screenShade = null;
             _video = null;
             _storyAudio = null;
         }
@@ -371,6 +393,7 @@ namespace SameSky.App
             _story = null;
             _storyLine = null;
             _storyProgress = null;
+            _pictureChapter = -1;
             if (_video != null) _video.Stop();
             if (_storyAudio != null) _storyAudio.Stop();
             if (_screenCaption != null) _screenCaption.text = "";

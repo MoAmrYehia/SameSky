@@ -52,7 +52,9 @@ namespace SameSky.App
         {
             if (CurrentRoom == null) { ShowSetup(); return; }
             CloseBooth();
+            EndDecorPreview();   // furniture that was only being tried goes back
             HidePanel();
+            ApplyHandTone();   // the room knows who I am now: the hands can follow my avatar's skin
             Screen = "room";
             SetPaused(false, "menu"); // back from the pause menu by any path (Resume, or Leave then Stay)
             ScreenChanged?.Invoke(Screen);
@@ -62,6 +64,7 @@ namespace SameSky.App
                 ("share", "Share", ShowShare),
                 ("together", "Together", ShowTogether),
                 ("keepsakes", "Keepsakes", ShowKeepsakes),
+                ("market", "Market", ShowMarket),
                 ("settings", "Settings", ShowSettings),
                 ("pause", "Pause", ShowPause),
                 ("recenter", "Recenter", () => Recenter()));
@@ -89,6 +92,7 @@ namespace SameSky.App
             ClearScreenFor(CurrentRoom.Id);
             _roomContent = new GameObject("Room content").transform;
             _roomContent.SetParent(_world, false);
+            await LoadDecor(ct);   // the room's own furniture first, then what stands on it
             _moments = await Data.Moments(CurrentRoom.Id, ct);
             ct.ThrowIfCancellationRequested();
             var others = CurrentRoom.Members.Where(m => m.Id != Data.Me.Id).ToList();
@@ -281,6 +285,11 @@ namespace SameSky.App
             _captionMeta = Ui.Text(_captionPlate, "Meta", "", Theme.Small, Theme.GreenSoft, 0.266f, TextAlignmentOptions.Left, new Vector3(0.033f, 0.042f, 0), height: 0.02f);
             _captionMeta.textWrappingMode = TextWrappingModes.NoWrap;
             _captionMeta.overflowMode = TextOverflowModes.Ellipsis;
+            // who, when and what kind of recording ("Synthesized voice (sample)") all have to be readable: the line
+            // shrinks a little before it is cut short
+            _captionMeta.enableAutoSizing = true;
+            _captionMeta.fontSizeMax = _captionMeta.fontSize;
+            _captionMeta.fontSizeMin = _captionMeta.fontSize * 0.68f;
             _captionText = Ui.Text(_captionPlate, "Line", "", Theme.Body, Theme.OnDark, 0.332f, TextAlignmentOptions.TopLeft, new Vector3(0, 0.002f, 0), FontStyles.Italic, 0.046f);
             // where the recording is: a thin track and the time
             Ui.Panel(_captionPlate, "Track", new Vector2(MsgTrackWidth, 0.004f), new Color(1, 1, 1, 0.16f), 0.002f, new Vector3(MsgTrackLeft + MsgTrackWidth / 2f, -0.036f, 0.001f), new Color(1, 1, 1, 0), 0);
@@ -354,7 +363,8 @@ namespace SameSky.App
             }
             var heard = _heardThisVisit || SampleState.Current.voiceNoteHeard || !Data.IsSample;
             // one teaching cue at a time: the label waits while the pick-up cue points at the cup or the note plays
-            _cupLabel.gameObject.SetActive(!_heardThisVisit && _pinchCue == null && !_cupVoicePlaying);
+            // (and it steps aside for a panel lying at the table edge: the label would stand in front of it)
+            _cupLabel.gameObject.SetActive(!_heardThisVisit && _pinchCue == null && !_cupVoicePlaying && !_panelAtTable);
             _cupLabelText.text = "A moment is waiting";
             _cupPlay.Interactable = true;
             _cupReply.Interactable = heard;
@@ -712,6 +722,7 @@ namespace SameSky.App
             l.Title(m.Caption.Length > 0 ? m.Caption : m.Kind == "voice" ? "Voice note" : "Moment");
             l.Muted($"{m.OwnerName} · {m.CaptureLocal?.Time} {m.CaptureLocal?.Abbreviation} ({m.CaptureLocal?.Zone?.Replace('_', ' ')}) · {SourceLabel(m.Media)}");
             if (OriginLabel(m.Media) is { } origin) l.Tag(origin);
+            if (!string.IsNullOrEmpty(m.Media?.Credit)) l.Muted(m.Media.Credit);   // whose photograph or footage it really is
             if (m.Media != null && m.Media.Kind != "audio")
             {
                 var img = l.Image(null, (float)(m.Media.Width ?? 16) / (m.Media.Height ?? 10), 0.22f);
@@ -871,7 +882,7 @@ namespace SameSky.App
         {
             "synthesized" => "Synthesized voice (sample)",
             "simulated" => "Simulated camera pan (sample)",
-            "stock" => "Stock photo (sample)",
+            "stock" => media.Kind == "video" ? "Stock footage (sample)" : "Stock photo (sample)",
             _ => null,
         };
 

@@ -28,7 +28,9 @@ namespace SameSky.Tests
             Assert.That(voice.Media.Captions, Is.Not.Empty, "the voice note needs timed captions");
             Assert.AreEqual("Maya", voice.Media.Captions[0].Speaker);
             var clip = data.FindMoment("m-adam-ride");
-            Assert.AreEqual("simulated", clip.Media.Origin, "the sample clip must say it is a simulated camera pan");
+            Assert.AreEqual("stock", clip.Media.Origin, "the sample clip must say it is stock footage, not the fictional person's own");
+            Assert.AreEqual("Stock footage (sample)", SameSkyApp.OriginLabel(clip.Media));
+            StringAssert.Contains("CC BY", clip.Media.Credit, "stock footage under an attribution licence must carry its credit");
             var recaps = data.Recaps(SampleData.DirectRoom).Result;
             Assert.AreEqual("sample", recaps[0].Generator);
             StringAssert.Contains("no AI call", recaps[0].GeneratorLabel);

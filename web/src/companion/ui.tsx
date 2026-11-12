@@ -169,6 +169,7 @@ export function kindLabel(kind: string, device?: string | null, origin?: MediaIn
   if (origin === 'simulated' && kind === 'clip') return 'Simulated camera pan';
   if (origin === 'synthesized' && kind === 'voice') return 'Synthesized voice note';
   if (origin === 'stock' && kind === 'photo') return 'Sample photo';
+  if (origin === 'stock' && kind === 'clip') return 'Sample clip';
   if (kind === 'voice') return 'Voice note';
   if (kind === 'text') return 'Note';
   if (kind === 'clip') return `${deviceLabel(device)} clip`;

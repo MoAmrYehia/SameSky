@@ -222,6 +222,7 @@ function WaitingForYou({ moment, avatar }: { moment: Moment; avatar?: AvatarView
       <div className="muted" style={{ fontSize: '1.06rem' }}>
         {moment.ownerName} · {kindLabel(moment.kind, moment.media?.sourceDevice, moment.media?.origin)}{duration ? ` · 0:${String(duration).padStart(2, '0')}` : ''}
       </div>
+      {moment.media?.credit ? <div className="muted small">{moment.media.credit}</div> : null}
       {moment.kind === 'voice' && moment.media?.url ? (
         <audio ref={audio} src={moment.media.url} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)} onTimeUpdate={(e) => setT(e.currentTarget.currentTime)} />
       ) : null}

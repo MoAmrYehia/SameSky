@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "maker": "SameSky Studio",
+  "note": "Every piece is included with SameSky. Nothing here is sold and there are no purchases.",
+  "slots": [
+    {
+      "id": "table",
+      "name": "Table",
+      "items": [
+        { "id": "pedestal", "name": "Pedestal table", "blurb": "The round table you share, on one turned stem and a disc foot.", "finishes": ["walnut", "oak", "ash", "marble"] },
+        { "id": "tripod", "name": "Tripod table", "blurb": "The same round top on three splayed legs.", "finishes": ["walnut", "oak", "ash", "marble"] },
+        { "id": "drum", "name": "Drum table", "blurb": "The same round top on a fluted drum.", "finishes": ["walnut", "oak", "ash", "marble"] }
+      ]
+    },
+    {
+      "id": "chairs",
+      "name": "Chairs",
+      "items": [
+        { "id": "tub", "name": "Tub chairs", "blurb": "Two rounded armchairs, one for each of you.", "finishes": ["cream", "sage", "charcoal", "cognac"] }
+      ]
+    },
+    {
+      "id": "rug",
+      "name": "Rug",
+      "items": [
+        { "id": "round", "name": "Round knit rug", "blurb": "A soft round rug under the table.", "finishes": ["oatmeal", "sage", "charcoal", "clay"] },
+        { "id": "rectangle", "name": "Flatweave rug", "blurb": "A wide flatweave with a plain border.", "finishes": ["oatmeal", "sage", "charcoal", "clay"] },
+        { "id": "none", "name": "No rug", "blurb": "Bare parquet.", "finishes": [] }
+      ]
+    },
+    {
+      "id": "lamp",
+      "name": "Lamp",
+      "items": [
+        { "id": "drum", "name": "Drum-shade lamp", "blurb": "A slim pole with a linen drum shade.", "finishes": ["brass", "bronze", "black"] },
+        { "id": "globe", "name": "Globe lamp", "blurb": "An opal glass globe on a slim pole.", "finishes": ["brass", "bronze", "black"] },
+        { "id": "tripod", "name": "Tripod lamp", "blurb": "Three legs and a tall linen shade.", "finishes": ["brass", "bronze", "black"] }
+      ]
+    },
+    {
+      "id": "plant",
+      "name": "Plant",
+      "items": [
+        { "id": "leafy", "name": "Leafy plant", "blurb": "A potted plant by the window.", "finishes": [] },
+        { "id": "snake", "name": "Snake plant", "blurb": "Tall upright leaves in a cream pot.", "finishes": [] },
+        { "id": "none", "name": "No plant", "blurb": "Leave the corner empty.", "finishes": [] }
+      ]
+    },
+    {
+      "id": "walls",
+      "name": "Walls",
+      "items": [
+        { "id": "plaster", "name": "Plaster walls", "blurb": "Hand-finished plaster in the colour you choose.", "finishes": ["ivory", "sage", "sand", "mist", "rose"] }
+      ]
+    },
+    {
+      "id": "floor",
+      "name": "Floor",
+      "items": [
+        { "id": "parquet", "name": "Herringbone parquet", "blurb": "Oak herringbone in three tones.", "finishes": ["natural", "honey", "smoked"] }
+      ]
+    }
+  ],
+  "finishes": {
+    "walnut": { "name": "Walnut", "swatch": "#8B5E3C" },
+    "oak": { "name": "Natural oak", "swatch": "#C9A26B" },
+    "ash": { "name": "Black ash", "swatch": "#2E2A27" },
+    "marble": { "name": "White marble", "swatch": "#ECE9E4" },
+    "cream": { "name": "Cream bouclé", "swatch": "#E3DACA" },
+    "sage": { "name": "Sage", "swatch": "#A7B595" },
+    "charcoal": { "name": "Charcoal", "swatch": "#3B3F3D" },
+    "cognac": { "name": "Cognac leather", "swatch": "#9A5B34" },
+    "oatmeal": { "name": "Oatmeal", "swatch": "#D6CCBA" },
+    "clay": { "name": "Clay", "swatch": "#B9806A" },
+    "brass": { "name": "Brass", "swatch": "#C9A65C" },
+    "bronze": { "name": "Dark bronze", "swatch": "#5C4F40" },
+    "black": { "name": "Matte black", "swatch": "#232323" },
+    "ivory": { "name": "Ivory", "swatch": "#F0ECE3" },
+    "sand": { "name": "Warm sand", "swatch": "#E2D3BC" },
+    "mist": { "name": "Mist blue", "swatch": "#D5DEE2" },
+    "rose": { "name": "Clay rose", "swatch": "#E3CFC6" },
+    "natural": { "name": "Natural", "swatch": "#C8AE8A" },
+    "honey": { "name": "Honey", "swatch": "#B98952" },
+    "smoked": { "name": "Smoked", "swatch": "#6E5642" }
+  },
+  "looks": [
+    {
+      "id": "walnut-ivory",
+      "name": "Walnut and ivory",
+      "blurb": "The room as it comes.",
+      "choices": {
+        "table": { "item": "pedestal", "finish": "walnut" },
+        "chairs": { "item": "tub", "finish": "cream" },
+        "rug": { "item": "round", "finish": "oatmeal" },
+        "lamp": { "item": "drum", "finish": "brass" },
+        "plant": { "item": "leafy", "finish": null },
+        "walls": { "item": "plaster", "finish": "ivory" },
+        "floor": { "item": "parquet", "finish": "natural" }
+      }
+    },
+    {
+      "id": "coastal-oak",
+      "name": "Coastal oak",
+      "blurb": "Pale oak, sage and morning-blue walls.",
+      "choices": {
+        "table": { "item": "tripod", "finish": "oak" },
+        "chairs": { "item": "tub", "finish": "sage" },
+        "rug": { "item": "rectangle", "finish": "oatmeal" },
+        "lamp": { "item": "tripod", "finish": "brass" },
+        "plant": { "item": "snake", "finish": null },
+        "walls": { "item": "plaster", "finish": "mist" },
+        "floor": { "item": "parquet", "finish": "natural" }
+      }
+    },
+    {
+      "id": "evening-study",
+      "name": "Evening study",
+      "blurb": "Black ash, charcoal wool and warm sand walls.",
+      "choices": {
+        "table": { "item": "drum", "finish": "ash" },
+        "chairs": { "item": "tub", "finish": "charcoal" },
+        "rug": { "item": "round", "finish": "clay" },
+        "lamp": { "item": "globe", "finish": "bronze" },
+        "plant": { "item": "leafy", "finish": null },
+        "walls": { "item": "plaster", "finish": "sand" },
+        "floor": { "item": "parquet", "finish": "smoked" }
+      }
+    }
+  ]
+}
