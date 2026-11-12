@@ -54,6 +54,16 @@ foreach ($z in 'platform-34-ext7_r02.zip', 'platform-35_r01.zip', 'platform-36_r
 if (-not (Test-Path "$sdk/cmdline-tools/16.0")) { Expand-To (Join-Path $Downloads 'commandlinetools-win-12266719_latest.zip') "$sdk/cmdline-tools" "$sdk/cmdline-tools/cmdline-tools" "$sdk/cmdline-tools/16.0" }
 Write-Step 'Android NDK r27c'
 if (-not (Test-Path (Join-Path $player 'NDK/source.properties'))) { Expand-To (Join-Path $Downloads 'android-ndk-r27c-windows.zip') (Join-Path $player 'NDK') (Join-Path $player 'NDK/android-ndk-r27c') (Join-Path $player 'NDK') }
+Write-Step 'CMake 3.22.1 (Unity 6 Android builds need it)'
+if (-not (Test-Path "$sdk/cmake/3.22.1/bin/cmake.exe")) {
+  # Running this script means you accept Google's Android SDK License Terms (as Unity Hub asks for its Android
+  # module); sdkmanager reads that acceptance from licenses/android-sdk-license, the standard CI way to record it.
+  New-Item -ItemType Directory -Force "$sdk/licenses" | Out-Null
+  [IO.File]::WriteAllText("$sdk/licenses/android-sdk-license", "`n24333f8a63b6825ea9c5514f83c2829b004d1fee`nd56f5187479451eabf01fb78af6dfcb131a6481e", (New-Object System.Text.UTF8Encoding $false))
+  $env:JAVA_HOME = Join-Path $player 'OpenJDK'
+  cmd /c "`"$sdk/cmdline-tools/16.0/bin/sdkmanager.bat`" --sdk_root=`"$sdk`" --install cmake;3.22.1"
+  if (-not (Test-Path "$sdk/cmake/3.22.1/bin/cmake.exe")) { throw 'CMake 3.22.1 did not install (sdkmanager, see above)' }
+}
 Write-Step 'Registering the editor with Unity Hub'
 $hub = "$env:ProgramFiles\Unity Hub\Unity Hub.exe"
 if (Test-Path $hub) { & $hub -- --headless editors --add (Join-Path $root 'Editor/Unity.exe') 2>$null | Out-Null }

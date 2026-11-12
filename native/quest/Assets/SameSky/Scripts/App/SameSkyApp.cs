@@ -87,12 +87,16 @@ namespace SameSky.App
             yield return null; // let the XR session start and tracking settle for a frame
             yield return new WaitForSeconds(0.4f);
             Recenter(silent: true);
+            // glossy things reflect the room as it is lit now: drawn once (static geometry only)
+            foreach (var probe in FindObjectsByType<ReflectionProbe>(FindObjectsSortMode.None))
+                if (probe.mode == UnityEngine.Rendering.ReflectionProbeMode.Realtime) probe.RenderProbe();
             ShowLaunch();
         }
 
         void Update()
         {
-            if (_toast != null && _toast.gameObject.activeSelf && Time.unscaledTime > _toastUntil) _toast.gameObject.SetActive(false);
+            // the whole toast (text and its pill) goes: hiding only the text left an empty pill behind for good
+            if (_toast != null && Time.unscaledTime > _toastUntil && _toast.transform.parent.gameObject.activeSelf) _toast.transform.parent.gameObject.SetActive(false);
             KeepPanelInView();
             UpdateRoom();
             UpdateStory();
@@ -100,18 +104,49 @@ namespace SameSky.App
             PollForNewMembers();
         }
 
-        void OnApplicationPause(bool paused) => SetPaused(paused, "system");
-        void OnApplicationFocus(bool focus) => SetPaused(!focus, "focus");
+        // Why the app is paused; sound and stories stop while any reason holds:
+        //   "system" the OS backgrounded the app        "focus" the app lost focus (system menu, overlay)
+        //   "input"  OpenXR input focus went elsewhere   "menu"  the person opened SameSky's pause menu
+        readonly System.Collections.Generic.HashSet<string> _pauseReasons = new();
 
-        /// <summary>Headset removed, system menu opened or app backgrounded: audio and video stop; resume picks up where it was.</summary>
+        void OnEnable()
+        {
+            OVRManager.InputFocusLost += OnInputFocusLost;
+            OVRManager.InputFocusAcquired += OnInputFocusAcquired;
+        }
+
+        void OnDisable()
+        {
+            OVRManager.InputFocusLost -= OnInputFocusLost;
+            OVRManager.InputFocusAcquired -= OnInputFocusAcquired;
+        }
+
+        void OnInputFocusLost() => SetPaused(true, "input");
+        void OnInputFocusAcquired() => SetPaused(false, "input");
+        void OnApplicationPause(bool paused) => SetPaused(paused, "system");
+
+        void OnApplicationFocus(bool focus)
+        {
+#if UNITY_EDITOR || UNITY_STANDALONE
+            // On a PC (Play mode, or a Windows build in Meta XR Simulator) window focus says nothing about the headset:
+            // the simulator's window has the keyboard while the app runs. OpenXR input focus is the signal there.
+            if (UnityEngine.XR.XRSettings.isDeviceActive) return;
+#endif
+            SetPaused(!focus, "focus");
+        }
+
+        /// <summary>Headset removed, system menu opened, app backgrounded or the pause menu open: audio and video
+        /// stop; resume picks up where it was.</summary>
         void SetPaused(bool paused, string reason)
         {
-            if (Paused == paused) return;
-            Paused = paused;
-            AudioListener.pause = paused;
-            PauseStory(paused);
-            TestProbe.Event("pause", paused ? reason : "resume");
-            if (!paused && Screen == "room") Toast("Welcome back.");
+            var changed = paused ? _pauseReasons.Add(reason) : _pauseReasons.Remove(reason);
+            var now = _pauseReasons.Count > 0;
+            if (!changed || now == Paused) return;
+            Paused = now;
+            AudioListener.pause = now;
+            PauseStory(now);
+            TestProbe.Event("pause", now ? reason : "resume");
+            if (!now && Screen == "room") Toast("Welcome back.");
         }
 
         // ------------------------------------------------------------ positions (seated)
@@ -131,7 +166,7 @@ namespace SameSky.App
 
         void KeepPanelInView()
         {
-            if (_panel == null || !_panel.gameObject.activeSelf) return;
+            if (_panel == null || !_panel.gameObject.activeSelf || _panelAtTable) return;
             // Panels are placed once per screen; only re-face the person if they leaned far (comfort: no swimming).
             var to = _panel.position - HeadPosition;
             if (Vector3.Angle(_panel.forward, to) > 25f) _panel.rotation = Quaternion.Slerp(_panel.rotation, Quaternion.LookRotation(to.normalized, Vector3.up), Time.unscaledDeltaTime * 2f);
@@ -163,12 +198,16 @@ namespace SameSky.App
             _screenCts = new CancellationTokenSource();
             CloseKeyboard();
             Screen = screen;
+            // the pause menu's pause lasts while it (or its "Leave SameSky?" question) is open
+            if (screen != "pause" && screen != "exit") SetPaused(false, "menu");
             if (_panel != null) Destroy(_panel.gameObject);
+            StopVoice();   // a screen takes over: the cup's message and its card step aside
             _panel = new GameObject("Panel " + screen).transform;
             _panel.SetParent(_uiRoot, false);
             _panel.position = PanelPose(out var rot);
             _panel.rotation = rot;
-            _panelBg = Ui.Panel(_panel, "Background", new Vector2(width, 0.3f), Theme.Card, 0.024f, new Vector3(0, 0, 0.003f));
+            _panelAtTable = false;
+            _panelBg = Ui.Panel(_panel, "Background", new Vector2(width, 0.3f), Theme.Card, 0.024f, new Vector3(0, 0, 0.003f), order: Ui.OrderBackground);
             TestProbe.Event("screen", screen);
             ScreenChanged?.Invoke(screen);
             var content = Ui.Node(_panel, "Content").transform;
@@ -176,24 +215,61 @@ namespace SameSky.App
         }
 
         /// <summary>Sizes the panel background to its content and anchors the content's top at the panel top.</summary>
-        public void FinishPanel(Layout l)
+        public void FinishPanel(Layout l, params (string id, string label, Action action, PressStyle style)[] footers)
         {
             var h = Mathf.Max(0.12f, l.Height);
             l.Root.localPosition = new Vector3(0, h / 2, 0);
-            Ui.SetPanel(_panelBg, new Vector2(l.Width, h), Theme.Card, 0.024f, Theme.Border, 0.0012f);
+            Ui.SetPanel(_panelBg, new Vector2(l.Width, h), Theme.Card, 0.03f, new Color(1, 1, 1, 0.6f), 0.0012f);
             _panelBg.transform.localScale = new Vector3(l.Width, h, 1);
-            // keep the panel's bottom edge above the table top
+            // pills under the panel (Recenter and Leave on the launch screen), as in the references
+            var below = 0f;
+            if (footers is { Length: > 0 })
+            {
+                const float fh = 0.046f, fw = 0.15f, gap = 0.014f;
+                var x = -(footers.Length * fw + (footers.Length - 1) * gap) / 2f + fw / 2f;
+                foreach (var f in footers)
+                {
+                    Pressable.Create(_panel, f.id, f.label, new Vector2(fw, fh), f.action, f.style, new Vector3(x, -h / 2 - 0.018f - fh / 2, 0));
+                    x += fw + gap;
+                }
+                below = 0.018f + fh;
+            }
             var tableTop = Anchor("TableTop") != null ? Anchor("TableTop").position.y : 0.74f;
-            var bottom = _panel.position.y - h / 2;
-            if (bottom < tableTop + 0.06f) _panel.position += Vector3.up * (tableTop + 0.06f - bottom);
+            if (_roomContent != null)
+            {
+                // In the room a panel lies low at the table's near edge, tilted up like a tablet, so the person across
+                // the table stays in view above it (visual references 02 and 05). It takes the dock's place; the dock
+                // comes back when the panel closes.
+                var dock = Anchor("Dock");
+                var near = dock != null ? dock.position : new Vector3(0, 0.865f, 0.3f);
+                // taller panels lie flatter, so their top edge stays below the other person's face
+                var tilt = Mathf.Lerp(40f, 54f, Mathf.InverseLerp(0.4f, 0.6f, h));
+                var rotation = (dock != null && dock.parent != null ? dock.parent.rotation : Quaternion.identity) * Quaternion.Euler(tilt, 0, 0);
+                var edge = new Vector3(near.x, tableTop + 0.035f, near.z) + rotation * Vector3.back * 0.02f;
+                _panel.rotation = rotation;
+                _panel.position = edge + rotation * Vector3.up * (h / 2 + below);
+                _panelAtTable = true;
+                if (_dock != null && _dock.gameObject.activeSelf) { _dock.gameObject.SetActive(false); _dockHiddenForPanel = true; }
+                return;
+            }
+            // before there is a room (launch, sign-in, setup) it stands upright in front of the seat, above the table top
+            var bottom = _panel.position.y - h / 2 - below;
+            if (bottom < tableTop + 0.1f) _panel.position += Vector3.up * (tableTop + 0.1f - bottom);
         }
+
+        bool _panelAtTable, _dockHiddenForPanel;
 
         public void HidePanel()
         {
+            // the hidden screen's pending work stops; what starts next (the room, a story) gets a fresh token
             _screenCts.Cancel();
+            _screenCts = new CancellationTokenSource();
             CloseKeyboard();
             if (_panel != null) Destroy(_panel.gameObject);
             _panel = null;
+            _panelAtTable = false;
+            if (_dockHiddenForPanel && _dock != null && _dock.childCount > 0) _dock.gameObject.SetActive(true);
+            _dockHiddenForPanel = false;
         }
 
         public CancellationToken ScreenToken => _screenCts.Token;
@@ -211,6 +287,8 @@ namespace SameSky.App
             // tilt it like a laptop keyboard toward the eyes
             _keyboard.transform.rotation = Quaternion.LookRotation((pos - head).normalized, Vector3.up);
             if (_panel != null) _panel.gameObject.SetActive(false);
+            // the keyboard sits where the dock is: hide the dock so a reach for a key can't press a dock button
+            if (_dock != null && _dock.gameObject.activeSelf) { _dock.gameObject.SetActive(false); _dockHiddenForKeyboard = true; }
             _keyboard.Submitted += v => onDone?.Invoke(v);
             _keyboard.Cancelled += () =>
             {
@@ -226,7 +304,11 @@ namespace SameSky.App
             if (_keyboard != null) Destroy(_keyboard.gameObject);
             _keyboard = null;
             if (_panel != null) _panel.gameObject.SetActive(true);
+            if (_dockHiddenForKeyboard && _dock != null) _dock.gameObject.SetActive(true);
+            _dockHiddenForKeyboard = false;
         }
+
+        bool _dockHiddenForKeyboard;
 
         // ------------------------------------------------------------ toast and status
 
@@ -234,7 +316,7 @@ namespace SameSky.App
         {
             var go = Ui.Node(_uiRoot, "Toast");
             _toast = Ui.Text(go.transform, "Text", "", Theme.Body, Theme.OnDark, 0.5f, TextAlignmentOptions.Center);
-            Ui.Panel(go.transform, "Bg", new Vector2(0.52f, 0.05f), Theme.CardDark, 0.025f, new Vector3(0, 0, 0.002f));
+            Ui.Panel(go.transform, "Bg", new Vector2(0.52f, 0.05f), Theme.CardDark, 0.025f, new Vector3(0, 0, 0.002f), order: Ui.OrderBackground);
             go.SetActive(false);
         }
 
@@ -243,10 +325,11 @@ namespace SameSky.App
             if (_toast == null) return;
             var go = _toast.transform.parent.gameObject;
             go.SetActive(true);
+            if (!_toast.gameObject.activeSelf) _toast.gameObject.SetActive(true);
             _toast.text = message;
             var head = HeadPosition;
             var fwd = _head != null ? Vector3.ProjectOnPlane(_head.forward, Vector3.up).normalized : Vector3.forward;
-            go.transform.position = head + fwd * 0.75f + Vector3.up * 0.16f;
+            go.transform.position = head + fwd * 0.75f + Vector3.up * 0.3f;   // above the partner's presence label, not over it
             go.transform.rotation = Quaternion.LookRotation(fwd, Vector3.up);
             _toastUntil = Time.unscaledTime + seconds;
             TestProbe.Event("toast", message.Length > 60 ? message.Substring(0, 60) : message);
@@ -296,20 +379,43 @@ namespace SameSky.App
             _dock.gameObject.SetActive(false);
         }
 
+        // dock icons; Pause and Recenter are compact round icon buttons at the ends of the bar
+        static readonly System.Collections.Generic.Dictionary<string, string> DockIcons = new()
+        {
+            ["day"] = Icons.Calendar, ["share"] = Icons.Share, ["together"] = Icons.Users, ["keepsakes"] = Icons.Layers,
+            ["settings"] = Icons.Settings, ["pause"] = Icons.CirclePause, ["recenter"] = Icons.Recenter,
+        };
+
         void SetDock(params (string id, string label, Action action)[] items)
         {
             Ui.Clear(_dock);
             _dockButtons.Clear();
-            const float w = 0.078f, h = 0.044f, gap = 0.008f;
-            var total = items.Length * w + (items.Length - 1) * gap;
-            Ui.Panel(_dock, "DockBg", new Vector2(total + 0.024f, h + 0.02f), new Color(0.12f, 0.15f, 0.14f, 0.55f), 0.03f, new Vector3(0, 0, 0.004f));
+            _dockHiddenForPanel = false;
+            const float w = 0.084f, round = 0.046f, h = 0.046f, gap = 0.004f;
+            bool Compact(string id) => id is "pause" or "recenter";
+            var total = 0f;
+            foreach (var it in items) total += (Compact(it.id) ? round : w) + gap;
+            total -= gap;
+            // one dark-green bar, a pill like the references' dock
+            Ui.Panel(_dock, "DockBg", new Vector2(total + 0.018f, h + 0.014f), Theme.GreenDark, (h + 0.014f) / 2f, new Vector3(0, 0, 0.004f),
+                border: new Color(1, 1, 1, 0.18f), order: Ui.OrderBackground);
+            var x = -total / 2f;
             for (var i = 0; i < items.Length; i++)
             {
                 var it = items[i];
-                var p = Pressable.Create(_dock, "dock:" + it.id, it.label, new Vector2(w, h), it.action, PressStyle.Secondary,
-                    new Vector3(-total / 2 + w / 2 + i * (w + gap), 0, 0));
-                p.Label.fontSize *= 0.82f;
+                var bw = Compact(it.id) ? round : w;
+                var icon = DockIcons.TryGetValue(it.id, out var ic) ? ic : null;
+                var text = Compact(it.id) ? icon ?? it.label : icon != null ? Icons.With(icon, it.label) : it.label;
+                var p = Pressable.Create(_dock, "dock:" + it.id, text, new Vector2(bw, h), it.action, PressStyle.DockItem,
+                    new Vector3(x + bw / 2f, 0, 0));
+                p.Label.fontSize *= Compact(it.id) ? 1.15f : 0.78f;
+                p.Label.enableAutoSizing = !Compact(it.id);   // long labels (Keepsakes) shrink rather than wrap
+                p.Label.fontSizeMax = p.Label.fontSize;
+                p.Label.fontSizeMin = p.Label.fontSize * 0.75f;
                 _dockButtons[it.id] = p;
+                if (i < items.Length - 1)   // a thin divider between items
+                    Ui.Panel(_dock, "Divider", new Vector2(0.0012f, h * 0.45f), new Color(1, 1, 1, 0.22f), 0.0006f, new Vector3(x + bw + gap / 2f, 0, 0.001f), new Color(1, 1, 1, 0), 0);
+                x += bw + gap;
             }
             _dock.gameObject.SetActive(items.Length > 0);
         }

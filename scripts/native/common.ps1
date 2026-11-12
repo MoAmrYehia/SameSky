@@ -40,6 +40,18 @@ $DevEnv = @{
 }
 $ApiPort = 8000
 $ApiUrl = "http://127.0.0.1:$ApiPort"
+
+# This PC's address on the local network, for a headset on the same Wi-Fi: the adapter with a default gateway
+# (not a WSL or Hyper-V virtual one), else the first ordinary IPv4 address.
+function Get-LanAddress {
+  try {
+    $cfg = Get-NetIPConfiguration -ErrorAction Stop | Where-Object { $_.IPv4DefaultGateway -and $_.NetAdapter.Status -eq 'Up' } | Select-Object -First 1
+    if ($cfg) { return [string](($cfg.IPv4Address | Select-Object -First 1).IPAddress) }
+  } catch { }
+  $a = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) | Where-Object { $_.AddressFamily -eq 'InterNetwork' -and -not $_.ToString().StartsWith('127.') -and -not $_.ToString().StartsWith('169.254') } | Select-Object -First 1
+  if ($a) { return $a.ToString() }
+  return $null
+}
 $PidFile = Join-Path $DevRoot 'services.json'
 
 function Set-DevEnv { foreach ($k in $DevEnv.Keys) { [Environment]::SetEnvironmentVariable($k, $DevEnv[$k], 'Process') } }

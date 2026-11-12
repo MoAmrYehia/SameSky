@@ -61,10 +61,33 @@ namespace SameSky.App
                 }
                 if (shared != null)
                 {
-                    d.Body(shared.Plan?.Title ?? $"The story of {shared.RoomDate}");
+                    // the day side by side (visual reference 05): whose room it belongs to, one picture per chapter with
+                    // whose it is and what it says, how long it runs, and what it was made from
+                    var chapters = shared.Plan?.Chapters ?? new List<RecapChapter>();
+                    d.Chip(CurrentRoom.IsDirect ? $"Just the two of you · {CurrentRoom.Name}" : $"Shared in {CurrentRoom.Name}");
+                    var shown = chapters.Take(2).ToList();
+                    if (shown.Count > 0)
+                    {
+                        const float th = 0.105f, gap = 0.012f;
+                        var strip = d.Block(th + 0.034f);
+                        var w = (d.InnerWidth - gap * (shown.Count - 1)) / shown.Count;
+                        for (var i = 0; i < shown.Count; i++)
+                        {
+                            var ch = shown[i];
+                            var x = -d.InnerWidth / 2 + w / 2 + i * (w + gap);
+                            var moments = ch.PlaybackMomentIds.Select(id => shared.Playback.FirstOrDefault(m => m.Id == id)).Where(m => m != null).ToList();
+                            var visual = moments.FirstOrDefault(m => m.Media != null && m.Media.Kind != "audio") ?? moments.FirstOrDefault();
+                            Thumb(strip, new Vector3(x, 0.017f, 0), new Vector2(w, th), visual);
+                            var label = Ui.Text(strip, "Label", $"<b>{NameOf(ch.ContributorId)}</b> · {Trim(ch.Segments.FirstOrDefault()?.Text, 60)}", Theme.Small, Theme.Ink, w,
+                                TextAlignmentOptions.TopLeft, new Vector3(x, -0.0535f, 0), height: 0.03f);
+                            label.overflowMode = TextOverflowModes.Ellipsis;
+                        }
+                    }
+                    var seconds = chapters.Sum(c => c.DurationSeconds);
+                    d.Body($"<b>{shared.Plan?.Title ?? $"The story of {shared.RoomDate}"}</b>");
+                    d.Muted($"{chapters.Count} chapters · {Clock(seconds)} · from {Names(shared.Contributors.Select(c => c.DisplayName).ToList())} · made from {SourceCounts(shared.Playback)}");
                     d.Tag(shared.GeneratorLabel);
-                    d.Muted($"{shared.Plan?.Chapters.Count ?? 0} chapters · from {string.Join(", ", shared.Contributors.Select(c => c.DisplayName))}");
-                    d.Button("day:play", "Play our day", () => PlayStory(shared), mine == null ? PressStyle.Primary : PressStyle.Secondary);
+                    d.Button("day:play", Icons.With(Icons.Play, $"Play our day · {Clock(seconds)}"), () => PlayStory(shared), mine == null ? PressStyle.Primary : PressStyle.Secondary);
                 }
                 if (mine == null && shared == null)
                 {
@@ -77,9 +100,25 @@ namespace SameSky.App
                             ShowOurDay();
                         }, "Couldn't draft the story"), PressStyle.Secondary);
                 }
-                d.Row(("day:back", "Back to the room", EnterRoom, PressStyle.Quiet));
-                FinishPanel(d);
+                FinishPanel(d, ("day:back", "Back", EnterRoom, PressStyle.Dark));
             }, "Couldn't load Our day", ShowOurDay);
+        }
+
+        /// <summary>"2 photos, a clip and a voice note": what a story was made from.</summary>
+        static string SourceCounts(IEnumerable<Moment> moments)
+        {
+            var parts = new List<string>();
+            void Add(string kind, string one, string many)
+            {
+                var n = moments.Count(m => m.Kind == kind);
+                if (n == 1) parts.Add(one);
+                else if (n > 1) parts.Add($"{n} {many}");
+            }
+            Add("photo", "a photo", "photos");
+            Add("clip", "a clip", "clips");
+            Add("voice", "a voice note", "voice notes");
+            Add("text", "a note", "notes");
+            return parts.Count == 0 ? "what you both shared" : Names(parts);
         }
 
         /// <summary>Private preview for a contributor: the draft's lines with their sources, then approve.</summary>
@@ -113,10 +152,13 @@ namespace SameSky.App
             _screenRoot.SetParent(_world, false);
             _screenRoot.position = anchor != null ? anchor.position : new Vector3(-0.55f, 1.25f, 1.05f);
             _screenRoot.rotation = anchor != null ? anchor.rotation : Quaternion.LookRotation(new Vector3(0.45f, 0, 1f));
-            Ui.Panel(_screenRoot, "Bezel", new Vector2(0.68f, 0.44f), new Color(0.07f, 0.07f, 0.08f, 1f), 0.02f, new Vector3(0, 0, 0.004f), new Color(0, 0, 0, 1));
+            Ui.Panel(_screenRoot, "Bezel", new Vector2(0.68f, 0.44f), new Color(0.07f, 0.07f, 0.08f, 1f), 0.02f, new Vector3(0, 0, 0.004f), new Color(0, 0, 0, 1), order: Ui.OrderBackground);
             _screenImage = Ui.Image(_screenRoot, "Picture", new Vector2(0.64f, 0.36f), null, 0.008f, new Vector3(0, 0.02f, 0.001f));
-            _screenMeta = Ui.Text(_screenRoot, "Meta", "", Theme.Small, Theme.Label, 0.62f, TextAlignmentOptions.TopLeft, new Vector3(0, -0.175f, 0));
-            _screenCaption = Ui.Text(_screenRoot, "Caption", "", Theme.Body, Theme.OnDark, 0.6f, TextAlignmentOptions.Bottom, new Vector3(0, -0.12f, -0.002f), height: 0.06f);
+            // read from the seat, about 1.4 m away: larger type than a panel at arm's length
+            _screenMeta = Ui.Text(_screenRoot, "Meta", "", Theme.Small * 1.55f, Theme.Label, 0.62f, TextAlignmentOptions.TopLeft, new Vector3(0, -0.172f, 0));
+            _screenMeta.textWrappingMode = TextWrappingModes.NoWrap;
+            _screenMeta.overflowMode = TextOverflowModes.Ellipsis;
+            _screenCaption = Ui.Text(_screenRoot, "Caption", "", Theme.Body * 1.5f, Theme.OnDark, 0.6f, TextAlignmentOptions.Bottom, new Vector3(0, -0.11f, -0.002f), height: 0.08f);
             _video = _screenRoot.gameObject.AddComponent<VideoPlayer>();
             _video.playOnAwake = false;
             _video.renderMode = VideoRenderMode.RenderTexture;
@@ -304,6 +346,24 @@ namespace SameSky.App
             if (!string.IsNullOrEmpty(closing)) l.Body(closing);
             l.Row(("storydone:replay", "Watch again", ShowOurDay, PressStyle.Secondary), ("storydone:room", "Back to the room", EnterRoom, PressStyle.Primary));
             FinishPanel(l);
+        }
+
+        string _screenRoomId;
+
+        /// <summary>The screen belongs to one room: leaving for another (or for the launch screen) takes it down with
+        /// whatever it last showed, so nothing from one room is on view in the next.</summary>
+        void ClearScreenFor(string roomId)
+        {
+            if (_screenRoomId == roomId) return;
+            _screenRoomId = roomId;
+            StopStory();
+            if (_screenRoot != null) Destroy(_screenRoot.gameObject);
+            _screenRoot = null;
+            _screenImage = null;
+            _screenMeta = null;
+            _screenCaption = null;
+            _video = null;
+            _storyAudio = null;
         }
 
         void StopStory()

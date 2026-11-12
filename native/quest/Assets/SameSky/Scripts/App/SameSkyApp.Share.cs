@@ -40,12 +40,7 @@ namespace SameSky.App
         {
             if (Data.IsSample)
             {
-                var s = NewPanel("share");
-                s.Title("Share a moment");
-                s.Body("In the sample nothing is sent anywhere: create an account to share with real people.");
-                s.Muted("In your own room you can say something, record a voice note here, or share photos and clips from your phone or camera (import them in the companion app first).");
-                s.Row(("share:back", "Back", EnterRoom, PressStyle.Quiet), ("share:account", "Create an account", ShowSignUp, PressStyle.Primary));
-                FinishPanel(s);
+                SampleShare();
                 return;
             }
             var others = CurrentRoom.Members.Where(m => m.Id != Data.Me.Id).ToList();
@@ -190,48 +185,123 @@ namespace SameSky.App
 
         void ChooseRecipients()
         {
-            var others = CurrentRoom.Members.Where(m => m.Id != Data.Me.Id).ToList();
-            var l = NewPanel("share:audience");
-            l.Title("Who sees it?");
-            l.Muted("Only the people you pick. Nobody else in the room, and nobody who joins later.");
-            foreach (var o in others)
+            var what = _draft.Kind switch
             {
-                var b = l.Button("audience:" + o.Id, o.DisplayName + (string.IsNullOrEmpty(o.Label) ? "" : $" ({o.Label})"), null, PressStyle.Chip);
-                b.SetToggled(_draft.Recipients.Contains(o.Id));
-                b.Pressed += () =>
-                {
-                    if (!_draft.Recipients.Remove(o.Id)) _draft.Recipients.Add(o.Id);
-                    b.SetToggled(_draft.Recipients.Contains(o.Id));
-                };
-            }
-            l.Gap(0.004f);
-            var ai = l.Button("share:ai", "Let the daily story's AI use this", null, PressStyle.Chip);
-            ai.SetToggled(_draft.AiAllowed);
-            ai.Pressed += () => { _draft.AiAllowed = !_draft.AiAllowed; ai.SetToggled(_draft.AiAllowed); };
-            l.Muted("Separate from sharing: off means the story only uses it in a plain chronological recap.");
-            l.Row(("audience:back", "Back", ShowShare, PressStyle.Quiet), ("audience:next", "Preview", () =>
-            {
-                if (_draft.Recipients.Count == 0) { Toast("Choose at least one person."); return; }
-                Preview();
-            }, PressStyle.Primary));
-            FinishPanel(l);
+                "voice" => $"<b>Voice note</b> · {_draft.Seconds:F0} s{(_draft.Transcript != null ? $"\n“{Trim(_draft.Transcript, 70)}”" : "")}",
+                "existing" => $"<b>{(_draft.Existing.Kind == "clip" ? "Clip" : "Photo")}</b> from your {SourceLabel(_draft.Existing.Media).ToLowerInvariant()}\n{Trim(_draft.Caption, 70)}",
+                _ => $"“{Trim(_draft.Caption, 110)}”",
+            };
+            AudienceScreen("share:audience", _draft.Existing, _draft.Kind == "voice" ? Icons.Mic : Icons.TextSize, what, CurrentRoom, new[] { CurrentRoom },
+                _draft.Recipients, _draft.AiAllowed, null, on => _draft.AiAllowed = on, ShowShare,
+                () => Run(Publish, "Sharing didn't finish", () => Run(Publish, "Sharing didn't finish")));
         }
 
-        void Preview()
+        /// <summary>The audience screen (visual reference 06), four things kept apart: what is being shared; who
+        /// receives it (one person or a circle, each recipient named); separately, whether the daily story's AI may
+        /// use it; and one final button that repeats who will receive it.</summary>
+        void AudienceScreen(string screen, Moment preview, string previewIcon, string previewText, Room room, IReadOnlyList<Room> selectable,
+            HashSet<string> recipients, bool ai, Action<Room> pickRoom, Action<bool> setAi, Action back, Action confirm, string tag = null)
         {
-            var names = CurrentRoom.Members.Where(m => _draft.Recipients.Contains(m.Id)).Select(m => m.DisplayName).ToList();
-            var l = NewPanel("share:preview");
-            l.Title("Ready to share");
-            l.Body(_draft.Kind switch
+            var l = NewPanel(screen, 0.5f);
+            l.Title("Who sees it?");
+            if (tag != null) l.Tag(tag);
+
+            var strip = l.Block(0.075f);
+            Thumb(strip, new Vector3(-l.InnerWidth / 2 + 0.06f, 0, 0), new Vector2(0.12f, 0.075f), preview, previewIcon);
+            var whatText = Ui.Text(strip, "What", previewText, Theme.Body * 0.95f, Theme.Ink, l.InnerWidth - 0.135f, TMPro.TextAlignmentOptions.Left,
+                new Vector3(0.0675f, 0, 0), height: 0.072f);
+            whatText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+
+            // one person or a circle
+            if (selectable.Count > 1 && pickRoom != null)
             {
-                "voice" => $"Voice note · {_draft.Seconds:F0} s{(_draft.Transcript != null ? $"\n“{_draft.Transcript}”" : "")}",
-                "existing" => $"{(_draft.Existing.Kind == "clip" ? "Clip" : "Photo")} from your {SourceLabel(_draft.Existing.Media).ToLowerInvariant()}: {Trim(_draft.Caption, 80)}",
-                _ => $"“{_draft.Caption}”",
-            });
-            l.Muted($"Only {string.Join(" and ", names)} will see it · AI use: {(_draft.AiAllowed ? "allowed" : "not allowed")}");
-            l.Row(("preview:back", "Change", ChooseRecipients, PressStyle.Quiet), ("preview:share", "Share", () => Run(Publish, "Sharing didn't finish", () => Run(Publish, "Sharing didn't finish")), PressStyle.Primary));
-            FinishPanel(l);
+                var kinds = l.Row(selectable.Select(r => ("audience:room:" + r.Id, Icons.With(r.IsDirect ? Icons.Heart : Icons.Users, r.IsDirect ? "One person" : r.Name),
+                    (Action)(() => pickRoom(r)), PressStyle.Chip)).ToArray());
+                for (var i = 0; i < kinds.Count; i++) kinds[i].SetToggled(selectable[i].Id == room.Id);
+            }
+            else l.Chip(room.IsDirect ? $"Just the two of you · {room.Name}" : $"Sharing in {room.Name}");
+
+            // each recipient, named
+            var others = room.Members.Where(m => m.Id != Data.Me.Id).Take(4).ToList();
+            Pressable final = null;
+            string FinalLabel() => recipients.Count == 0 ? "Choose who sees it"
+                : Icons.With(Icons.Send, "Share with " + Names(others.Where(o => recipients.Contains(o.Id)).Select(o => o.DisplayName).ToList()));
+            var people = l.Row(others.Select(o => ("audience:" + o.Id, o.DisplayName + (string.IsNullOrEmpty(o.Label) ? "" : $" · {o.Label}"), (Action)null, PressStyle.Chip)).ToArray());
+            for (var i = 0; i < people.Count; i++)
+            {
+                var o = others[i];
+                var chip = people[i];
+                chip.SetToggled(recipients.Contains(o.Id));
+                chip.Pressed += () =>
+                {
+                    if (room.IsDirect) return;   // a one-to-one room has one possible recipient
+                    if (!recipients.Remove(o.Id)) recipients.Add(o.Id);
+                    chip.SetToggled(recipients.Contains(o.Id));
+                    final.SetText(FinalLabel());
+                    final.Interactable = recipients.Count > 0;
+                };
+            }
+
+            // separately: the daily story's AI
+            static string AiLabel(bool on) => Icons.With(Icons.Sparkles, on ? "The daily story's AI may use this: on" : "The daily story's AI may use this: off");
+            var aiChip = l.Button("share:ai", AiLabel(ai), null, PressStyle.Chip);
+            aiChip.SetToggled(ai);
+            aiChip.Pressed += () =>
+            {
+                ai = !ai;
+                setAi?.Invoke(ai);
+                aiChip.SetToggled(ai);
+                aiChip.SetText(AiLabel(ai));
+            };
+            l.Muted("A separate choice from who sees it. Off: a story can still show it in a plain, in-order recap. Nobody who joins later sees it.");
+
+            final = l.Button("audience:share", FinalLabel(), confirm, PressStyle.Primary);
+            final.Interactable = recipients.Count > 0;
+            FinishPanel(l, ("audience:back", "Back", back, PressStyle.Dark));
         }
+
+        // ------------------------------------------------------------ the sample's share (nothing is created or sent)
+
+        Room _sampleShareRoom;
+        readonly HashSet<string> _sampleRecipients = new();
+        bool _sampleAi;
+
+        void SampleShare() => Run(async ct =>
+        {
+            var rooms = Data.Rooms.OrderBy(r => r.IsDirect ? 0 : 1).ToList();
+            void Everyone()
+            {
+                _sampleRecipients.Clear();
+                foreach (var m in _sampleShareRoom.Members) if (m.Id != Data.Me.Id) _sampleRecipients.Add(m.Id);
+            }
+            if (_sampleShareRoom == null || rooms.All(r => r.Id != _sampleShareRoom.Id))
+            {
+                _sampleShareRoom = rooms.FirstOrDefault(r => r.Id == CurrentRoom.Id) ?? rooms[0];
+                Everyone();
+            }
+            // one of the sample's own photos stands in for what you'd bring from your phone
+            var all = new List<Moment>();
+            foreach (var r in rooms) all.AddRange(await Data.Moments(r.Id, ct));
+            var photo = all.FirstOrDefault(m => m.IsMine && m.RoomId == _sampleShareRoom.Id && m.Media?.Kind == "image")
+                        ?? all.FirstOrDefault(m => m.IsMine && m.Media?.Kind == "image") ?? all.FirstOrDefault(m => m.Media?.Kind == "image");
+            var what = photo == null ? "<b>A photo from your phone</b>"
+                : $"<b>{Trim(photo.Caption, 60)}</b>\n{SourceLabel(photo.Media)} photo{(OriginLabel(photo.Media) is { } origin ? " · " + origin : "")}";
+            var room = _sampleShareRoom;
+            AudienceScreen("share", photo, Icons.Image, what, room, rooms, _sampleRecipients, _sampleAi,
+                picked => { _sampleShareRoom = picked; Everyone(); SampleShare(); },
+                on => _sampleAi = on, EnterRoom,
+                () =>
+                {
+                    var names = Names(room.Members.Where(m => _sampleRecipients.Contains(m.Id)).Select(m => m.DisplayName).ToList());
+                    TestProbe.Event("share", "sample-demo");
+                    var done = NewPanel("share:done");
+                    done.Title("That's how sharing works");
+                    done.Tag("Sample: nothing was sent");
+                    done.Body($"In your own room this would now reach {names} and nobody else. The daily story's AI {(_sampleAi ? "could" : "would not")} use it. You could withdraw it at any time.");
+                    done.Row(("share:account", "Create an account", ShowSignUp, PressStyle.Secondary), ("share:room", "Back to the room", EnterRoom, PressStyle.Primary));
+                    FinishPanel(done);
+                }, "Sample: nothing is sent anywhere");
+        }, "Couldn't open sharing", EnterRoom);
 
         async Task Publish(CancellationToken ct)
         {

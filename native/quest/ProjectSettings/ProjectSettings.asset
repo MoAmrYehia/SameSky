@@ -398,6 +398,9 @@ PlayerSettings:
   - m_BuildTarget: Standalone
     m_StaticBatching: 1
     m_DynamicBatching: 0
+  - m_BuildTarget: Android
+    m_StaticBatching: 1
+    m_DynamicBatching: 0
   m_BuildTargetShaderSettings: []
   m_BuildTargetGraphicsJobs: []
   m_BuildTargetGraphicsJobMode: []
@@ -691,7 +694,9 @@ PlayerSettings:
   webGLCloseOnQuit: 0
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    Android: GLTFAST_FORCE_DEFAULT_IMPORTER_ON
+    Standalone: GLTFAST_FORCE_DEFAULT_IMPORTER_ON
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

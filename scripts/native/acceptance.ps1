@@ -6,6 +6,10 @@
 #   -Target WindowsBuild     run native/quest/Builds/Windows/SameSky.exe instead of Unity Play mode
 #   -SkipRecording           no MP4s (check 8 is then skipped)
 #   -FingertipOffset "x,y,z" metres from the right-hand anchor to the index fingertip in the poke pose (world axes)
+#   -Only 5,7                run only these checks (check 1 always runs: it calibrates the hand controls)
+#   -Renders                 also save fixed seated views of the other screens (Our day, Share, Together, Keepsakes,
+#                            Settings, the story, the family circle), opened through the development probe rather
+#                            than by hand: pictures for comparing with the visual references, not checks
 #
 # Checks (results: docs/native/evidence/<date>/acceptance-<time>.json and .md; files in acceptance-<time>/):
 #   1 XR session: metavr sets the simulated Meta Quest 3 and hand input; the probe shows an active OpenXR session,
@@ -16,15 +20,19 @@
 #   5 a reply left on the table is still there after an app restart and after an API restart (stop.ps1, start.ps1)
 #   6 recenter, pause (and resume) and exit
 #   7 right-hand tracking lost mid-press and found again, with no ghost press
-#   8 an MP4 of the simulator view (metavr xrsim record start/stop) for every app session that runs checks
+#   8 an MP4 of the simulator for every app session that runs checks: metavr xrsim record start/stop, or, when the
+#     runtime has no recorder (207.1 hasn't), FFmpeg capturing the simulator window
 # The first minute is timed on a fresh profile with nothing in between, so checks 3 and 4 run before check 2. The
 # report lists the checks in the order above.
 #
-# Driving: only the simulator's own keyboard controls for simulated hands (from its SIMULATOR.dll; see $SimKeys).
+# Driving: only the simulator's own keyboard controls (its Input bindings panel; see $SimKeys). In Meta XR Simulator
+# 207 the movement keys move the simulated headset and the hands follow it, so the script moves the right hand by
+# moving the whole simulated person, and shapes it with the hand-action keys (poke, pinch, grab). Keys reach the
+# simulator only while a mouse button (here a side button) is held in its 3D view (sim.ps1, Invoke-SimKeys).
 # Input reaches the app as OpenXR hand tracking -> Meta Interaction SDK, as on a headset. Aiming uses the probe
-# (probe/state.json: targets with id, position and normal; head, headForward, handsAt), and every step is confirmed
-# in probe/events.jsonl. A check passes only with probe evidence; what can't be automated is listed as a manual step.
-# Keys go to the focused window: don't use the keyboard or mouse while it runs.
+# (probe/state.json: targets with id, position and normal; head, headForward, handsAt, pokeAt), and every step is
+# confirmed in probe/events.jsonl. A check passes only with probe evidence; what can't be automated is listed as a
+# manual step. The script drives the simulator window with the keyboard and mouse: don't use either while it runs.
 # Live mode (check 5) signs in Nora, a development account from dev-seed.json: the script gets her token from the
 # public API and writes it to the acceptance profile's session.json before the app starts.
 [CmdletBinding()]
@@ -35,6 +43,8 @@ param(
   [switch]$NonInteractive,
   [switch]$SkipRecording,
   [string]$FingertipOffset = '',
+  [string]$Only = '',   # e.g. 5 or 2,3,4 (a string: powershell -File passes it as one)
+  [switch]$Renders,
   [int]$UnityStartTimeoutSec = 600,
   [int]$FirstMinuteSec = 60
 )
@@ -43,19 +53,21 @@ param(
 # Windows PowerShell 5.1 would otherwise write arrays as {"value": [...], "Count": n}
 if ($PSVersionTable.PSVersion.Major -lt 6) { Remove-TypeData System.Array -ErrorAction SilentlyContinue }
 
-# Meta XR Simulator keyboard controls for simulated hands (from its SIMULATOR.dll), as System.Windows.Forms.Keys names.
+# Meta XR Simulator 207 keys (its Input bindings panel, keyboard and mouse), as System.Windows.Forms.Keys names.
 $SimKeys = [ordered]@{
-  Forward = 'W'; Back = 'S'; Left = 'A'; Right = 'D'; Up = 'R'; Down = 'F'      # move the active input device
-  YawLeft = 'Left'; YawRight = 'Right'; PitchUp = 'Up'; PitchDown = 'Down'      # arrow keys rotate it
+  Forward = 'W'; Back = 'S'; Left = 'A'; Right = 'D'; Up = 'R'; Down = 'F'      # move the headset (head-relative); the hands follow it
+  YawLeft = 'Left'; YawRight = 'Right'; PitchUp = 'Up'; PitchDown = 'Down'      # arrow keys turn the headset
   TiltLeft = 'Q'; TiltRight = 'E'                                               # tilt
-  PrevDevice = 'OemOpenBrackets'; NextDevice = 'OemCloseBrackets'               # [ and ] cycle the active input device
-  PoseDefault = 'D1'; PosePoke = 'D2'; PosePinch = 'D3'; PoseGrab = 'D4'        # 1 2 3 4: default, poke, pinch, grab
+  PoseDefault = 'D1'; PosePoke = 'D2'; PosePinch = 'D3'; PoseGrab = 'D4'        # hand actions 1 2 3 4: open, poke, pinch, grab (each stays until the next)
   ResetPoses = 'Space'                                                          # reset controller poses
 }
 $Moves = @('Forward', 'Back', 'Right', 'Left', 'Up', 'Down')
 $MinHoldMs = 15
 $MaxHoldMs = 1500
+$SimSpeed = 0.3          # movement speed multiplier (metavr xrsim input speed): 0.3 m/s, about 5 mm for the shortest hold
+$TurnDegPerSec = 80.0    # the arrow keys' turn rate (measured: 81 deg/s); loops below correct for the difference
 
+$OnlyIds = @($Only -split '[,\s]+' | Where-Object { $_ } | ForEach-Object { [int]$_ })
 $ProbeDirectory = Get-ProbeDir $AppProfile
 $ProfileRoot = if ($AppProfile) { Join-Path $PlayerData "profile-$AppProfile" } else { $PlayerData }
 $RunStamp = Get-Date
@@ -85,9 +97,12 @@ $script:NoraToken = $null
 $script:NoraId = $null
 $script:NoraEmail = $null
 $script:Calib = [ordered]@{
-  ok = $false; device = ''; deviceCycle = @(); keyVelocity = $null; axes = $null; speedsMetresPerSec = $null; resolution = 0.008
-  fingertip = $null; fingertipSource = ''; fingertipLog = (New-Object System.Collections.ArrayList); note = ''
+  ok = $false; device = ''; keyVelocity = $null; axes = $null; speedsMetresPerSec = $null; resolution = 0.008
+  fingertip = $null; fingertipSource = ''; fingertipLog = (New-Object System.Collections.ArrayList); headReset = $null; note = ''
 }
+$script:Seat = $null            # the head position after the app's start-up recenter: where the simulated person sits
+$script:RecorderMode = 'metavr' # 'window' once the runtime turns out to have no MP4 recorder
+$script:Ffmpeg = $null
 
 # ---------------------------------------------------------------- vectors (probe positions are Unity world metres)
 function V3($a) { if ($null -eq $a -or @($a).Count -lt 3) { return $null }; return ,([double[]]@([double]$a[0], [double]$a[1], [double]$a[2])) }
@@ -177,10 +192,19 @@ function Complete-Native($Run, [int]$TimeoutSec = 60) {
   return [ordered]@{ command = $Run.command; exit = $exit; timedOut = (-not $done); output = $text }
 }
 
+# The FFmpeg the API already uses (imageio-ffmpeg in api/.venv).
+function Get-FfmpegExe {
+  if (-not $script:Ffmpeg) {
+    try { $script:Ffmpeg = (Invoke-Native $Python @('-c', 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())') 60 -Raw).output.Trim() } catch { }
+  }
+  if ($script:Ffmpeg -and (Test-Path $script:Ffmpeg)) { return $script:Ffmpeg }
+  return $null
+}
+
 function Get-MediaDuration([string]$File) {
   try {
-    $ff = (Invoke-Native $Python @('-c', 'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())') 60 -Raw).output.Trim()
-    if (-not $ff -or -not (Test-Path $ff)) { return $null }
+    $ff = Get-FfmpegExe
+    if (-not $ff) { return $null }
     $info = (Invoke-Native $ff @('-hide_banner', '-i', $File) 60 -Raw).output
     $m = [regex]::Match($info, 'Duration:\s*(\d+):(\d+):([\d.]+)')
     if (-not $m.Success) { return $null }
@@ -209,7 +233,7 @@ function Read-ProbeState {
   return $null
 }
 
-# The next snapshot written after now (the probe writes twice a second).
+# The next snapshot written after now (the probe writes five times a second).
 function Wait-NextProbe([int]$TimeoutSec = 4) {
   $after = [DateTime]::UtcNow
   $deadline = $after.AddSeconds($TimeoutSec)
@@ -380,6 +404,68 @@ function Save-Shot([string]$Name) {
   } catch { [void]$script:Notes.Add("Screenshot '$Name' failed: $(Protect-Text $_.Exception.Message)"); return $null }
 }
 
+# A fixed render from the seated eye (the app's probe draws it with its own camera, whatever the simulated headset is
+# doing): the same framing every run, to compare with the visual references. Yaw and pitch in degrees from the
+# seat's forward; negative pitch looks down.
+function Save-SeatView([string]$Name, [double]$Yaw = 0, [double]$Pitch = -12, [string]$What = '', [string]$Open = '', [double]$Wait = 1.4, [double]$Fov = 60) {
+  try {
+    $png = Join-Path $ProbeDirectory "snap-$Name.png"
+    Remove-Item -Force -ErrorAction SilentlyContinue $png
+    $req = [ordered]@{ name = $Name; yaw = $Yaw; pitch = $Pitch; fov = $Fov; width = 1600; height = 900 }
+    # -Open: the probe opens that screen itself first (development shortcut, SameSkyApp.DevOpen), then waits, then draws
+    if ($Open) { $req.open = $Open; $req.wait = $Wait }
+    Write-Utf8 (Join-Path $ProbeDirectory 'snap-request.json') ($req | ConvertTo-Json -Compress)
+    # in the Editor the first render of a view can wait a while for its shaders to compile (TestProbe.Snap)
+    $deadline = (Get-Date).AddSeconds(50 + $(if ($Open) { $Wait } else { 0 }))
+    while (-not (Test-Path $png) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 250 }
+    if (-not (Test-Path $png)) { [void]$script:Notes.Add("Seated view '$Name' wasn't rendered (no snap-$Name.png from the probe)."); return $null }
+    Start-Sleep -Milliseconds 300   # let the app finish writing it
+    $dest = Join-Path $RunDir "seat-$Name.png"
+    Copy-Item -Force $png $dest
+    $label = if ($What) { "seated view (fixed camera): $What" } else { "seated view (fixed camera): $Name" }
+    return (Add-Artifact $dest $label)
+  } catch { [void]$script:Notes.Add("Seated view '$Name' failed: $(Protect-Text $_.Exception.Message)"); return $null }
+}
+
+# -Renders: fixed seated views of the screens the checks don't visit, for comparing with the visual references. The
+# probe opens each screen directly (no hands), so these are pictures of what the app draws, not interaction checks.
+function Invoke-RenderTour {
+  Write-Step 'Render tour - fixed seated views of the other screens (opened through the development probe)'
+  $inSample = $false
+  try { $st = Wait-NextProbe; $inSample = (Test-AppRunning) -and "$($st.mode)" -eq 'sample' -and "$($st.screen)" -ne 'launch' } catch { }
+  if (-not $inSample) {
+    [void](Start-App -Record 'renders')
+    if (-not (Wait-Target 'launch:sample' 30)) { [void]$script:Notes.Add('Render tour: the launch screen never appeared.'); return }
+    [void](Save-SeatView 'tour-launch' 0 -9 'the launch screen')
+    [void](Save-SeatView 'tour-room' 0 -14 'the sample room' 'sample' 4)
+  }
+  $views = @(
+    # in the room, panels lie low at the table edge, so these look further down than the room views do
+    @{ n = 'day';       open = 'day';       yaw = 0;   pitch = -24; wait = 2.5; what = 'Our day (reference 05)' },
+    @{ n = 'share';     open = 'share';     yaw = 0;   pitch = -24; wait = 2.5; what = 'Share: who receives it, and the AI permission (reference 06)' },
+    @{ n = 'together';  open = 'together';  yaw = 0;   pitch = -24; wait = 2.5; what = 'Together: places, times and the next overlap (reference 08)' },
+    @{ n = 'keepsakes'; open = 'keepsakes'; yaw = 0;   pitch = -24; wait = 2.5; what = 'Keepsakes (reference 09)' },
+    @{ n = 'shelf';     open = 'room';      yaw = -72; pitch = -3;  wait = 2.5; what = 'the keepsake shelf in the alcove (reference 09)' },
+    @{ n = 'avatar';    open = 'avatar';    yaw = 0;   pitch = -24; wait = 2.5; what = 'the avatar preview, front, three-quarter and side (references 01 and 13)' },
+    @{ n = 'settings';  open = 'settings';  yaw = 0;   pitch = -24; wait = 2;   what = 'Settings: captions, text size, sound, recenter (reference 12)' },
+    @{ n = 'pause';     open = 'pause';     yaw = 0;   pitch = -24; wait = 2;   what = 'Paused (reference 12)' },
+    @{ n = 'story';     open = 'story';     yaw = -14; pitch = -12; wait = 6;   what = 'the story on the screen beside the partner (references 04 and 05)' },
+    @{ n = 'rooms';     open = 'rooms';     yaw = 0;   pitch = -24; wait = 2;   what = 'the room selector (reference 07)' },
+    @{ n = 'circle';    open = 'circle';    yaw = 0;   pitch = -10; wait = 4;   what = 'the family circle room (reference 07)' },
+    @{ n = 'direct';    open = 'direct';    yaw = 0;   pitch = -10; wait = 4;   what = 'back in the direct room (reference 02)' },
+    @{ n = 'partner';   open = '';          yaw = 0;   pitch = -1;  wait = 0;   fov = 22; what = "the partner's face, close (natural proportions, eyes, expression: reference 01)" },
+    @{ n = 'left';      open = '';          yaw = -48; pitch = -8;  wait = 0;   what = 'the room to the left: window light and shadows on the wall and floor' },
+    @{ n = 'right';     open = '';          yaw = 46;  pitch = -8;  wait = 0;   what = 'the room to the right: the lamp and side table' },
+    @{ n = 'reply';     open = 'reply';     yaw = 0;   pitch = -26; wait = 2;   what = 'replying on the keyboard at the table edge (reference 03)' }
+  )
+  $saved = 0
+  foreach ($v in $views) {
+    $fov = if ($v.ContainsKey('fov')) { $v.fov } else { 60 }
+    if (Save-SeatView ('tour-' + $v.n) $v.yaw $v.pitch $v.what $v.open $v.wait $fov) { $saved++ }
+  }
+  Write-Host "    render tour: $saved of $($views.Count) views saved (seat-tour-*.png)"
+}
+
 function Save-SessionFiles {
   if ($script:Session -lt 1) { return }
   Update-Events
@@ -403,6 +489,7 @@ function Get-UnityEditor {
 }
 
 function Start-UnityEditor {
+  Clear-UnitySceneBackups
   $env:XR_RUNTIME_JSON = $XrsimRuntimeJson   # the simulator for this editor process only
   $unityArgs = @('-projectPath', "`"$Project`"", '-executeMethod', 'SameSky.EditorTools.SimRun.Play', '-logFile', "`"$UnityLog`"", "-sameskyApi=$ApiUrl")
   if ($AppProfile) { $unityArgs += "-sameskyProfile=$AppProfile" }
@@ -466,6 +553,17 @@ function Start-App([switch]$FreshProfile, [string]$Record = '') {
   }
   $script:SessionStartEvent = $start
   [void](Wait-ProbeState { param($st) $st.screen -eq 'launch' } 40)
+  Set-SimWindowSize   # the simulator shrinks its window a little at every new session
+  [void](Focus-Sim)   # in front of the editor: the keys and the window recording need it
+  # The app's start-up recenter has just put the head on the seat (and turned the room to face it).
+  $st = Wait-NextProbe
+  if (-not $script:Seat) { $script:Seat = V3 $st.head }
+  # The editor had the foreground: give the simulator's 3D view the keyboard again (sim.ps1, Enable-SimKeys). The
+  # simulator also keeps its headset pose between sessions, so level the head and put it on the seat before aiming.
+  if (-not $Assist) {
+    Enable-SimKeys
+    $script:LastHeadReset = Reset-SimHead $script:Seat
+  }
   Write-Host ('    app session {0} started' -f $script:Session)
   if ($Record) { Start-Recording ('session{0}-{1}' -f $script:Session, $Record) }
   return $start
@@ -491,17 +589,62 @@ function Get-UnityRuntimeLine {
   return (Protect-Text $m[$m.Count - 1].Value)
 }
 
-# ---------------------------------------------------------------- MP4 of the simulator view (check 8)
+# ---------------------------------------------------------------- MP4 of the simulator (check 8)
+# metavr xrsim record captures the runtime's compositor. A runtime built without the recording service (207.1 is)
+# makes metavr say so and suggest a screen recorder: from then on FFmpeg records the simulator window instead
+# (gdigrab of its screen area; the script keeps that window in front while it drives it).
+function Start-WindowRecorder([string]$File) {
+  $ff = Get-FfmpegExe
+  $w = Get-SimWindow
+  if (-not $ff -or -not $w) { return $null }
+  $r = [SimInput]::Frame($w.MainWindowHandle)
+  $width = $r.Width - ($r.Width % 2); $height = $r.Height - ($r.Height % 2)   # even sizes for yuv420p
+  $psi = New-Object System.Diagnostics.ProcessStartInfo $ff
+  $psi.Arguments = "-hide_banner -loglevel error -nostats -f gdigrab -framerate 15 -draw_mouse 0 -offset_x $($r.Left) -offset_y $($r.Top) -video_size ${width}x$height -i desktop -c:v libx264 -preset veryfast -crf 28 -pix_fmt yuv420p -movflags +faststart -y `"$File`""
+  $psi.UseShellExecute = $false
+  $psi.CreateNoWindow = $true
+  $psi.RedirectStandardInput = $true
+  $psi.RedirectStandardError = $true
+  $p = [System.Diagnostics.Process]::Start($psi)
+  return [pscustomobject]@{ process = $p; errors = $p.StandardError.ReadToEndAsync(); command = "ffmpeg -f gdigrab (simulator window, ${width}x$height at 15 fps) -c:v libx264 $(Split-Path $File -Leaf)" }
+}
+
+function Stop-WindowRecorder($Rec) {
+  $p = $Rec.process
+  if (-not $p.HasExited) {
+    try { $p.StandardInput.Write('q'); $p.StandardInput.Flush() } catch { }   # q: finish the file properly
+    if (-not $p.WaitForExit(20000)) { try { $p.Kill() } catch { }; [void]$p.WaitForExit(5000) }
+  }
+  $err = ''
+  try { $err = Protect-Text ([string]$Rec.errors.Result).Trim() } catch { }
+  return [ordered]@{ command = $Rec.command; exit = $(if ($p.HasExited) { $p.ExitCode } else { -1 }); timedOut = $false; output = $err }
+}
+
 function Start-Recording([string]$Label) {
-  if ($SkipRecording -or -not $MetavrCmd -or $script:Recording) { return }
+  if ($SkipRecording -or $script:Recording) { return }
   $file = Join-Path $RunDir "$Label.mp4"
   $s = Read-ProbeState
-  $run = Invoke-Native $MetavrCmd @('xrsim', 'record', 'start', '-o', $file) -NoWait   # may keep running until stop
-  $script:Recording = [ordered]@{
-    label = $Label; file = $file; run = $run; startedAt = (Get-Date).ToString('o')
+  $rec = [ordered]@{
+    label = $Label; file = $file; method = ''; run = $null; window = $null; metavrRefused = $null; startedAt = (Get-Date).ToString('o')
     probeAtStart = (Select-State $s @('xrDeviceActive', 'openxrRuntime', 'screen', 'mode', 'activeInput', 'hands', 'time'))
   }
-  Start-Sleep -Milliseconds 1500
+  if ($script:RecorderMode -eq 'metavr' -and $MetavrCmd) {
+    $run = Invoke-Native $MetavrCmd @('xrsim', 'record', 'start', '-o', $file) -NoWait   # may keep running until stop
+    [void]$run.process.WaitForExit(8000)   # a runtime without a recorder says so within a few seconds
+    if ($run.process.HasExited -and $run.process.ExitCode -ne 0) {
+      $r0 = Complete-Native $run 5
+      if ($r0.output -match 'does not support native MP4 recording|recording service') {
+        $script:RecorderMode = 'window'
+        $rec.metavrRefused = $r0
+        [void]$script:Notes.Add("metavr xrsim record: $($r0.output) The recordings are FFmpeg captures of the simulator window instead.")
+      } else { $rec.method = 'metavr'; $rec.run = [pscustomobject]@{ done = $r0 } }
+    } else { $rec.method = 'metavr'; $rec.run = $run }
+  }
+  if (-not $rec.method) {
+    $rec.window = Start-WindowRecorder $file
+    if ($rec.window) { $rec.method = 'window' } else { $rec.method = 'none' }
+  }
+  $script:Recording = $rec
 }
 
 function Stop-Recording {
@@ -509,8 +652,15 @@ function Stop-Recording {
   if (-not $r) { return }
   $script:Recording = $null
   $s = Read-ProbeState
-  $stop = Invoke-Native $MetavrCmd @('xrsim', 'record', 'stop') 90
-  $start = Complete-Native $r.run 30
+  $start = $null; $stop = $null
+  switch ($r.method) {
+    'metavr' {
+      $stop = Invoke-Native $MetavrCmd @('xrsim', 'record', 'stop') 90
+      if ($r.run.done) { $start = $r.run.done } else { $start = Complete-Native $r.run 30 }
+    }
+    'window' { $start = [ordered]@{ command = $r.window.command; exit = 0; timedOut = $false; output = '' }; $stop = Stop-WindowRecorder $r.window }
+    default { $start = $r.metavrRefused; $stop = [ordered]@{ command = 'none'; exit = -1; timedOut = $false; output = 'no recorder: metavr has no recording service and FFmpeg or the simulator window was not found' } }
+  }
   $size = -1
   for ($i = 0; $i -lt 40; $i++) {   # until the file stops growing
     if (Test-Path $r.file) { $n = (Get-Item $r.file).Length; if ($n -gt 0 -and $n -eq $size) { break }; $size = $n }
@@ -518,13 +668,18 @@ function Stop-Recording {
   }
   $bytes = 0
   if (Test-Path $r.file) { $bytes = (Get-Item $r.file).Length }
+  $duration = $null
+  if ($bytes -gt 0) { $duration = Get-MediaDuration $r.file }
   $seg = [ordered]@{
-    label = $r.label; file = (Get-RelPath $r.file); bytes = $bytes; durationSec = $null
-    ok = ($bytes -gt 100KB -and $stop.exit -eq 0); startCommand = $start; stopCommand = $stop
+    label = $r.label; file = (Get-RelPath $r.file); method = $r.method; bytes = $bytes; durationSec = $duration
+    # a playable file: the recorder finished cleanly and the video has a length (short sessions make small files)
+    ok = ($bytes -gt 10KB -and $stop.exit -eq 0 -and $null -ne $duration -and $duration -ge 1); startCommand = $start; stopCommand = $stop; metavrRefused = $r.metavrRefused
     startedAt = $r.startedAt; stoppedAt = (Get-Date).ToString('o'); probeAtStart = $r.probeAtStart
     probeAtStop = (Select-State $s @('xrDeviceActive', 'screen', 'mode', 'activeInput', 'time'))
   }
-  if ($bytes -gt 0) { [void](Add-Artifact $r.file "simulator recording: $($r.label)"); $seg.durationSec = Get-MediaDuration $r.file }
+  $what = 'simulator recording (metavr xrsim record)'
+  if ($r.method -eq 'window') { $what = 'simulator window recording (FFmpeg)' }
+  if ($bytes -gt 0) { [void](Add-Artifact $r.file "$($what): $($r.label)") }
   [void]$script:Segments.Add($seg)
 }
 
@@ -561,20 +716,56 @@ function Get-MoveKind($m) {
   return 'none'
 }
 
-# Cycles the simulator's active input device ([ and ]) until a movement key moves what we want.
-function Select-SimDevice([string[]]$Want, [int]$MaxCycle = 6) {
-  $seen = @()
-  for ($i = 0; $i -lt $MaxCycle; $i++) {
-    $m = Measure-Move 'Right' 250
-    [void](Measure-Move 'Left' 250)
-    $kind = Get-MoveKind $m
-    $seen += $kind
-    if ($Want -contains $kind) { $script:Calib.device = $kind; $script:Calib.deviceCycle = $seen; return $kind }
-    Send-SimKey $SimKeys.NextDevice 80
-    Start-Sleep -Milliseconds 300
+# What a movement key moves: in simulator 207 the headset, with the hands following it ('body').
+function Get-SimMoveKind {
+  $m = Measure-Move 'Right' 250
+  [void](Measure-Move 'Left' 250)
+  $kind = Get-MoveKind $m
+  $script:Calib.device = $kind
+  return $kind
+}
+
+function PitchDeg([double[]]$f) { return ([math]::Asin([math]::Max(-1.0, [math]::Min(1.0, $f[1]))) * 180.0 / [math]::PI) }
+
+function Get-TurnHold([double]$Degrees) { return [int][math]::Max([double]$MinHoldMs, [math]::Min([double]$MaxHoldMs, [math]::Abs($Degrees) / $TurnDegPerSec * 850.0)) }
+
+# Levels the simulated head, turns it to face the table and puts it back on the seat (the head position the app's
+# start-up recenter gave it): arrow and movement keys in a closed loop on the probe.
+function Reset-SimHead([double[]]$Seat) {
+  for ($i = 0; $i -lt 8; $i++) {
+    $p = PitchDeg (V3 (Wait-NextProbe).headForward)
+    if ([math]::Abs($p) -lt 1.0) { break }
+    $key = $SimKeys.PitchDown
+    if ($p -lt 0) { $key = $SimKeys.PitchUp }
+    Send-SimKey $key (Get-TurnHold $p)
   }
-  $script:Calib.deviceCycle = $seen
-  return $null
+  for ($i = 0; $i -lt 8; $i++) {
+    $y = YawDeg (V3 (Wait-NextProbe).headForward)
+    if ([math]::Abs($y) -lt 1.0) { break }
+    $key = $SimKeys.YawRight
+    if ($y -gt 0) { $key = $SimKeys.YawLeft }
+    Send-SimKey $key (Get-TurnHold $y)
+  }
+  if ($Seat) {
+    for ($i = 0; $i -lt 12; $i++) {   # facing the table: Right is +x, Up +y, Forward +z
+      $e = VSub $Seat (V3 (Wait-NextProbe).head)
+      if ((VLen $e) -lt 0.01) { break }
+      $holds = [ordered]@{}
+      foreach ($ax in @(@(0, 'Right', 'Left'), @(1, 'Up', 'Down'), @(2, 'Forward', 'Back'))) {
+        $d = $e[$ax[0]]
+        if ([math]::Abs($d) -lt 0.004) { continue }
+        $move = $ax[2]
+        if ($d -gt 0) { $move = $ax[1] }
+        $holds[$move] = [int][math]::Max([double]$MinHoldMs, [math]::Min([double]$MaxHoldMs, [math]::Abs($d) / $SimSpeed * 900.0))
+      }
+      Send-Moves $holds
+    }
+  }
+  $s = Wait-NextProbe
+  $f = V3 $s.headForward
+  $err = $null
+  if ($Seat) { $err = [math]::Round((VLen (VSub $Seat (V3 $s.head))), 3) }
+  return [ordered]@{ yaw = [math]::Round((YawDeg $f), 1); pitch = [math]::Round((PitchDeg $f), 1); seatError = $err }
 }
 
 # World velocity of the right hand for each movement key (metres per millisecond of hold).
@@ -668,6 +859,23 @@ function Get-PlaneBasis([double[]]$Normal) {
   return [pscustomobject]@{ u = $u; v = (VNorm (VCross $Normal $u)) }
 }
 
+# The right index fingertip relative to the right-hand anchor, from the app's poke interactor (probe pokeAt.right).
+function Get-ProbeFingertip($State) {
+  if ($null -eq $State -or $null -eq $State.pokeAt) { return $null }
+  $poke = V3 $State.pokeAt.right
+  $hand = V3 $State.handsAt.right
+  if ($null -eq $poke -or $null -eq $hand) { return $null }
+  $off = VSub $poke $hand
+  if ((VLen $off) -gt 0.3) { return $null }   # not this hand's
+  return $off
+}
+
+# The offset a press uses: measured now when the probe has it (it turns with the head), else the calibrated one.
+function Get-Fingertip($State) {
+  if (-not $FingertipOffset) { $live = Get-ProbeFingertip $State; if ($live) { return $live } }
+  return $script:Calib.fingertip
+}
+
 function Initialize-Fingertip($State) {
   if ($FingertipOffset) {
     $p = $FingertipOffset -split ','
@@ -675,6 +883,8 @@ function Initialize-Fingertip($State) {
     $script:Calib.fingertipSource = 'parameter'
     return
   }
+  $live = Get-ProbeFingertip $State
+  if ($live) { $script:Calib.fingertip = $live; $script:Calib.fingertipSource = "the app's right poke interactor (probe pokeAt), in the poke pose"; return }
   # first guess: 15 cm ahead of the hand anchor and 3 cm below it; presses refine it
   $f = V3 $State.headForward
   $flat = VNorm ([double[]]@($f[0], 0, $f[2]))
@@ -693,27 +903,29 @@ function Initialize-HandControl {
   if ($Assist) { $script:Calib.note = 'assisted run: the operator makes every gesture'; return }
   Write-Step 'Calibrating the simulated hand controls'
   try {
-    Send-SimKey $SimKeys.ResetPoses 80
+    $speed = Invoke-Native $MetavrCmd @('xrsim', 'input', 'speed', '--value', ([string]::Format([Globalization.CultureInfo]::InvariantCulture, '{0}', $SimSpeed))) 60
+    Add-SetupStep "Simulator movement speed $SimSpeed (metavr xrsim input speed)" ($speed.exit -eq 0) $speed
+    Send-SimKey $SimKeys.ResetPoses 80   # hands back to their default place in front of the head
     Start-Sleep -Milliseconds 500
-    $mode = Select-SimDevice @('right')
-    if (-not $mode) { $mode = Select-SimDevice @('hands', 'body') }
-    if (-not $mode) { $script:Calib.note = 'no simulator device moved the right hand with W/A/S/D/R/F'; return }
+    $script:Calib.headReset = Reset-SimHead $script:Seat
+    $mode = Get-SimMoveKind
+    if (@('right', 'hands', 'body') -notcontains $mode) { $script:Calib.note = "the movement keys moved '$mode', not the right hand"; return }
     if (-not (Measure-KeyVectors)) { $script:Calib.note = 'the movement keys do not move the right hand in three directions'; return }
-    Initialize-Fingertip (Wait-NextProbe)
     Set-HandPose 'PosePoke'
+    Initialize-Fingertip (Wait-NextProbe)
+    $script:Calib.headReset = Reset-SimHead $script:Seat   # measuring moved the head about
     $script:Calib.ok = $true
     if ($script:Calib.resolution -gt 0.02) { $script:Calib.note = 'the simulator moves the hand more than 2 cm in the shortest key hold, so pokes may miss' }
-    Write-Host ("    device: {0}; speeds (m/s): {1}" -f $mode, (($script:Calib.speedsMetresPerSec.GetEnumerator() | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '))
+    Write-Host ("    keys move: {0}; speeds (m/s): {1}; fingertip offset {2} ({3})" -f $mode, (($script:Calib.speedsMetresPerSec.GetEnumerator() | ForEach-Object { "$($_.Key) $($_.Value)" }) -join ', '), ((Round3 $script:Calib.fingertip) -join ', '), $script:Calib.fingertipSource)
   } catch { $script:Calib.note = "calibration failed: $(Protect-Text $_.Exception.Message)" }
+  if (-not $script:Calib.ok) { Write-Host "    hand control not calibrated: $($script:Calib.note)" -ForegroundColor Yellow }
 }
 
-# Re-checks the hand controls after the head turned (keys may move the hands in head space).
+# Re-measures the keys after the head turned (they move the person relative to where the head faces).
 function Update-HandControl {
   if (-not $script:Calib.ok) { return }
   try {
-    $mode = Select-SimDevice @('right')
-    if (-not $mode) { $mode = Select-SimDevice @('hands', 'body') }
-    if (-not $mode -or -not (Measure-KeyVectors)) { $script:Calib.ok = $false; $script:Calib.note = 'lost hand control after turning the head' }
+    if (-not (Measure-KeyVectors)) { $script:Calib.ok = $false; $script:Calib.note = 'lost hand control after turning the head' }
     Set-HandPose 'PosePoke'
   } catch { $script:Calib.ok = $false; $script:Calib.note = "re-calibration failed: $(Protect-Text $_.Exception.Message)" }
 }
@@ -738,12 +950,34 @@ function Invoke-AutoPress([string]$Id, [string]$Accept, [switch]$KeepIn) {
     $offV = $pattern[$a][1] * [double]$t.size[1] / 2
     $shift = VAdd (VScale $b.u $offU) (VScale $b.v $offV)
     $aim = VAdd $c $shift
-    $f = $script:Calib.fingertip
+    $f = Get-Fingertip $s
     $mark = New-Mark
     [void](Move-HandTo (VSub (VAdd $aim (VScale $n 0.12)) $f) 0.02 6)    # well in front of the button
     $pre = Move-HandTo (VSub (VAdd $aim (VScale $n 0.04)) $f) 0.008 8     # fingertip 4 cm in front
+    # Close the loop on the fingertip itself before pushing. The app reports it (probe pokeAt) only while the hand's
+    # poke interactor is the active one; pointing across the dock can leave the ray active until the finger is this
+    # close, and the stored offset alone was several centimetres out after a recenter (it pressed the next button).
+    if (-not $FingertipOffset) {
+      for ($k = 0; $k -lt 3; $k++) {
+        $live = Get-ProbeFingertip (Wait-NextProbe)
+        if ($live) {
+          if ((VLen (VSub $live $f)) -gt 0.004) { $f = $live; $pre = Move-HandTo (VSub (VAdd $aim (VScale $n 0.04)) $f) 0.006 6 }
+          break
+        }
+      }
+    }
     Move-HandBy (VScale $n (-0.065))                                      # through the face to 2.5 cm behind it
-    if ($KeepIn) { return [pscustomobject]@{ ok = $true; held = $true; normal = $n; mark = $mark; tries = $tries } }
+    if ($KeepIn) {
+      # The press has to be really held when the caller drops tracking: the probe says whether the button is down.
+      # If it isn't yet, go a little deeper.
+      $down = $false
+      for ($k = 0; $k -lt 4 -and -not $down; $k++) {
+        $held = Find-Target (Wait-NextProbe) $Id
+        $down = [bool]($held -and $held.down)
+        if (-not $down) { Move-HandBy (VScale $n (-0.01)) }
+      }
+      return [pscustomobject]@{ ok = $true; held = $true; down = $down; normal = $n; mark = $mark; tries = $tries }
+    }
     Move-HandBy (VScale $n 0.09)                                          # back out: the press counts on release
     $hit = Wait-EventSince $mark 'press' $Accept 1.5
     $others = @(Get-EventsSince $mark | Where-Object { $_.kind -eq 'press' -and "$($_.detail)" -notmatch $Accept })
@@ -809,6 +1043,13 @@ function Invoke-Gesture([string]$Instruction, [string]$AutoCommand, [hashtable]$
   }
   $why = ''
   if ($auto -and $auto.note) { $why = $auto.note }
+  if (-not $Assist -and $auto) {
+    # what the automation tried, for the report: each try's aim offset, approach error and what got pressed instead
+    $tries = @($auto.tries | ForEach-Object { "offset $(($_.offset) -join ',') error $([math]::Round([double]$_.approachError, 3)) pressed '$((@($_.pressed)) -join ',')'" })
+    $line = "Couldn't $($Instruction.TrimEnd('.')) automatically: $why$(if ($tries.Count) { ' Tries: ' + ($tries -join '; ') + '.' })"
+    Write-Host "    $line" -ForegroundColor DarkYellow
+    [void]$script:Notes.Add($line)
+  }
   if ($NonInteractive) { return [pscustomobject]@{ ok = $false; driver = 'script'; event = $null; auto = $auto; mark = $mark; note = "the script couldn't do it: $why" } }
   $mark2 = New-Mark
   Write-Host ''
@@ -957,7 +1198,24 @@ function Invoke-Check1 {
   Add-Evidence $c 'command' $dev 'simulated device'
   $sync = Invoke-Native $MetavrCmd @('xrsim', 'input', 'sync', '--source', 'hand') 60
   Add-Evidence $c 'command' $sync 'hand input'
-  Initialize-HandControl   # before the timed session that follows
+  # Does this runtime record MP4s? Asked now, so the timed session that follows doesn't wait to find out.
+  if (-not $SkipRecording) {
+    $rec = Invoke-Native $MetavrCmd @('xrsim', 'record', 'status') 60
+    Add-Evidence $c 'command' $rec 'MP4 recorder in this runtime'
+    if ($rec.output -match 'does not support native MP4 recording|recording service') {
+      $script:RecorderMode = 'window'
+      [void]$script:Notes.Add("metavr xrsim record: $($rec.output) The recordings are FFmpeg captures of the simulator window instead.")
+    }
+  }
+  # before the timed session that follows; the hands can take a moment to come back after the input sync
+  [void](Wait-ProbeState { param($st) $st.hands.right -and $null -ne $st.pokeAt -and $null -ne $st.pokeAt.right } 10)
+  Initialize-HandControl
+  if (-not $Assist -and -not $script:Calib.ok) {
+    [void]$script:Notes.Add("First hand-control calibration failed ($($script:Calib.note)); tried once more.")
+    Start-Sleep -Seconds 2
+    $script:Calib.note = ''
+    Initialize-HandControl
+  }
   Stop-App
   [void](Start-App -FreshProfile -Record 'sample')
   $sync2 = Invoke-Native $MetavrCmd @('xrsim', 'input', 'sync', '--source', 'hand') 60
@@ -967,6 +1225,7 @@ function Invoke-Check1 {
   $runtimeLine = Get-UnityRuntimeLine
   if ($runtimeLine) { Add-Evidence $c 'log' $runtimeLine 'Unity log: OpenXR runtime used by Play mode' }
   [void](Save-Shot 'check1-session')
+  [void](Save-SeatView 'launch' 0 -9 'the launch screen in the room (reference 10)')
   $s = $w.state
   $simRuntime = ("$($s.openxrRuntime)" -match 'simulator') -or ("$runtimeLine" -match 'meta_openxr_simulator\.json')
   $ok = $w.ok -and $simRuntime -and $dev.exit -eq 0 -and $sync.exit -eq 0 -and $sync2.exit -eq 0
@@ -998,6 +1257,8 @@ function Invoke-FirstMinute {
     Complete-Check $c3 'fail' 'not reached'
     return
   }
+  [void](Wait-EventSince $script:SessionMark 'cue' '' 4)
+  [void](Save-SeatView 'room-cue' 0 -14 'the sample room with the pick-up cue (references 02 and 10)')
   $g = Invoke-Gesture -Instruction 'pick up the cup on the table with a simulated hand (grab or pinch it).' -AutoCommand 'Invoke-AutoGrab' -AutoArgs @{ Id = 'object:cup' } -Kind 'grab' -Pattern '^object:cup$'
   Add-DriverOf $c3 $g
   Add-DriverOf $c4 $g
@@ -1026,9 +1287,16 @@ function Invoke-FirstMinute {
   }
   $cap = Wait-ProbeState { param($st) $st.voicePlaying -and "$($st.captions)".Length -gt 0 } 8
   Add-StateEvidence $c4 $cap.state 'check4-captions' @('voicePlaying', 'audio', 'captionsOn', 'captions', 'presence', 'paused')
-  if ($cap.ok) { [void](Save-Shot 'check4-captions') }
+  if ($cap.ok) {
+    [void](Save-Shot 'check4-captions')
+    [void](Save-SeatView 'message' 0 -20 'the cup lifted, its message card playing with captions (reference 03)')
+  }
   $fin = Wait-EventSince $script:SessionMark 'voice' '^finished$' 40
   Add-EventEvidence $c4 $fin 'voice note finished'
+  if ($fin) {
+    Start-Sleep -Milliseconds 1500   # the sample's simulated presence sits down and turns toward the person
+    [void](Save-SeatView 'room-partner' 0 -9 "after the message: the sample's partner as labelled simulated presence (reference 02)")
+  }
   $rel = $null
   if ($g.ok) {
     $markRelease = New-Mark
@@ -1048,7 +1316,7 @@ function Invoke-FirstMinute {
   if ($voice -and $start) { $elapsed = [math]::Round([double]$voice.t - [double]$start.t, 1) }
   if ($elapsed -ne $null) { Add-Evidence $c4 'probe-timing' ([ordered]@{ secondsFromStartToVoice = $elapsed; limit = $FirstMinuteSec }) 'start -> voice play (probe clock)' }
   $paused = $cap.state -and $cap.state.paused
-  if ($paused) { Add-Note $c4 'The app reported paused while the voice note played: with the simulator window focused, Unity may report lost focus (SameSkyApp.OnApplicationFocus).' }
+  if ($paused) { Add-Note $c4 "The app reported paused while the voice note played (see the 'pause' events in the session's events.jsonl)." }
   if (-not $fin -and $voice) { Add-Note $c4 "Playback didn't finish within 40 s." }
   Add-Manual $c4 'Hear it' 'The probe shows playback state and caption text, not sound: listen in the simulator (or the MP4) for the voice note coming from the cup.'
   $ok4 = $voice -and $elapsed -ne $null -and $elapsed -le $FirstMinuteSec -and $cap.ok -and [bool]$fin
@@ -1089,7 +1357,7 @@ function Invoke-Check2 {
   if ($ok) { Complete-Check $c 'pass' $summary } else { if ($p.note) { Add-Note $c $p.note }; Complete-Check $c 'fail' $summary }
 }
 
-function Invoke-TypeReply($Check) {
+function Invoke-TypeReply($Check, [string]$Letter = 'g') {
   for ($attempt = 1; $attempt -le 3; $attempt++) {
     if (-not (Find-Target (Wait-NextProbe) 'key:done')) {
       $open = Invoke-HandPress 'cup:reply' 'Reply (under the cup label)'
@@ -1098,10 +1366,10 @@ function Invoke-TypeReply($Check) {
       if (-not $open.ok -or -not (Wait-Target 'key:done' 8)) { continue }
     }
     $mark = New-Mark
-    $letter = Invoke-HandPress 'key:g' 'one letter key on the keyboard' '^key:([a-z0-9]|comma|period)$'
-    Add-DriverOf $Check $letter
-    Add-EventEvidence $Check $letter.event 'a character typed'
-    if (-not $letter.ok) { continue }
+    $typed = Invoke-HandPress "key:$Letter" "the '$Letter' key on the keyboard" '^key:([a-z0-9]|comma|period)$'
+    Add-DriverOf $Check $typed
+    Add-EventEvidence $Check $typed.event 'a character typed'
+    if (-not $typed.ok) { continue }
     $done = Invoke-HandPress 'key:done' 'Done on the keyboard'
     Add-DriverOf $Check $done
     Add-EventEvidence $Check $done.event 'Done pressed'
@@ -1122,13 +1390,21 @@ function Invoke-Check5 {
   if (-not (Enter-LiveRoom $c 'first visit')) { Complete-Check $c 'fail' "couldn't open Nora's room"; return }
   Add-EventEvidence $c (Wait-EventSince $script:SessionMark 'reply' '^restored:' 15) 'notes on the table before replying'
   if (-not (Wait-Target 'cup:reply' 15)) { Complete-Check $c 'fail' "no reply button by the cup (is Sam's voice note waiting?)"; return }
-  $placed = Invoke-TypeReply $c
+  # The app keys a reply by its moment and text (a resend returns the same reply), so type a letter Nora hasn't
+  # replied with yet: the reply this run places is then a new one.
+  $earlier = @(Get-ApiList "/v1/moments/$($script:Seed.voiceNote.momentId)/replies" | Where-Object { $_.authorId -eq $script:NoraId })
+  $letter = @('g', 'h', 'j', 'k', 'f', 'd', 's', 'a', 'l', 't', 'r', 'e', 'w', 'q', 'y', 'u', 'i', 'o', 'p', 'z', 'x', 'c', 'v', 'b', 'n', 'm' | Where-Object { @($earlier | ForEach-Object { "$($_.text)".Trim() }) -notcontains $_ })[0]
+  if (-not $letter) { $letter = 'g'; Add-Note $c 'Nora has already replied with every letter, so this reply repeats an earlier one.' }
+  $placed = Invoke-TypeReply $c $letter
   Add-EventEvidence $c $placed 'reply placed on the table'
   if (-not $placed) { Complete-Check $c 'fail' "the reply wasn't placed"; return }
   $replyId = ("$($placed.detail)" -split ':', 2)[1]
+  $isNew = @($earlier | ForEach-Object { $_.id }) -notcontains $replyId
+  Add-Evidence $c 'reply' ([ordered]@{ replyId = $replyId; typed = $letter; newThisRun = $isNew; noraRepliesBefore = $earlier.Count }) 'the reply placed in this run'
   $api1 = Test-ReplyOnServer $replyId
   Add-Evidence $c 'api' $api1 'server after placing'
   [void](Save-Shot 'check5-placed')
+  [void](Save-SeatView 'live-room' 0 -16 'the live room: the reply standing on the table as a folded card (reference 03)')
   # 1. app restart
   Stop-App
   [void](Start-App -Record 'live-restarted')
@@ -1150,13 +1426,11 @@ function Invoke-Check5 {
   $afterApi = (Get-RestoredIds $r2) -contains $replyId
   [void](Save-Shot 'check5-after-api-restart')
   $ok = $api1.replyStored -and $api1.placementStored -and $afterApp -and $svc.apiDownAfterStop -and $svc.apiUpAfterStart -and $api2.replyStored -and $api2.placementStored -and $afterApi
-  $summary = "reply $replyId placed; server has it $($api1.replyStored) (placed $($api1.placementStored)); back on the table after app restart $afterApp; API went down $($svc.apiDownAfterStop) and up $($svc.apiUpAfterStart); server still has it $($api2.replyStored); back after API restart $afterApi"
+  $summary = "reply $replyId placed ($(if ($isNew) { "new, typed '$letter'" } else { 'an earlier reply sent again' })); server has it $($api1.replyStored) (placed $($api1.placementStored)); back on the table after app restart $afterApp; API went down $($svc.apiDownAfterStop) and up $($svc.apiUpAfterStart); server still has it $($api2.replyStored); back after API restart $afterApi"
   if ($ok) { Complete-Check $c 'pass' $summary } else { Complete-Check $c 'fail' $summary }
 }
 
 function Rotate-HeadYaw([double]$Degrees) {
-  $mode = Select-SimDevice @('head', 'body')
-  if (-not $mode) { return [pscustomobject]@{ ok = $false; note = 'no simulator device turned the head' } }
   $s0 = Wait-NextProbe
   $y0 = YawDeg (V3 $s0.headForward)
   $key = $SimKeys.YawLeft
@@ -1206,7 +1480,7 @@ function Invoke-Check6 {
   # pause and resume
   $mark = New-Mark
   $pausedBefore = [bool](Wait-NextProbe).paused
-  if ($pausedBefore) { Add-Note $c 'The app was already paused (probably lost focus to the simulator window) before the pause button was pressed.' }
+  if ($pausedBefore) { Add-Note $c "The app was already paused before the pause button was pressed (see the 'pause' events in the session's events.jsonl)." }
   $pp = Invoke-HandPress 'dock:pause' 'Pause (dock)'
   Add-DriverOf $c $pp
   Add-EventEvidence $c $pp.event 'dock:pause pressed'
@@ -1265,6 +1539,7 @@ function Invoke-Check7 {
   $s0 = Wait-NextProbe
   $presses0 = [int]$s0.presses
   Add-StateEvidence $c $s0 'check7-before' @('hands', 'activeInput', 'presses', 'lastPress', 'handsAt')
+  if ($hold -and $hold.held) { Add-Evidence $c 'probe-target' ([ordered]@{ target = 'launch:recenter'; downBeforeTrackingLoss = [bool]$hold.down }) 'was the button held down when tracking was dropped' }
   $mark = New-Mark
   $lost = Invoke-Native $MetavrCmd @('xrsim', 'input', 'source', '--hand', 'right', '--source', 'none') 60
   Add-Evidence $c 'command' $lost 'right-hand tracking off'
@@ -1295,14 +1570,16 @@ function Invoke-Check7 {
 }
 
 function Complete-Check8 {
-  $c = New-Check 8 'MP4 of the simulator view (metavr xrsim record)'
-  $c.driver = 'script (metavr)'
+  $c = New-Check 8 'MP4 of the simulator for every app session'
+  $methods = @($script:Segments | ForEach-Object { $_.method } | Where-Object { $_ } | Sort-Object -Unique)
+  $c.driver = 'script (' + $(if ($methods.Count) { ($methods | ForEach-Object { @{ metavr = 'metavr xrsim record'; window = 'FFmpeg window capture'; none = 'no recorder' }[$_] }) -join ', ' } else { 'metavr' }) + ')'
   if ($SkipRecording) { Complete-Check $c 'skipped' 'recording was turned off (-SkipRecording)'; return }
   if ($script:Segments.Count -eq 0) { Complete-Check $c 'blocked' 'no app session was recorded (the run stopped before one started)'; return }
   foreach ($seg in $script:Segments) {
     Add-Evidence $c 'recording' $seg $seg.label
     if ($seg.probeAtStart -and $seg.probeAtStart.Count -gt 0) { Add-Evidence $c 'probe-state' ([ordered]@{ fields = $seg.probeAtStart }) "app state when $($seg.label) started" }
   }
+  if ($methods -contains 'window') { Add-Note $c "The simulator runtime has no MP4 recorder (metavr xrsim record says its build doesn't include the recording service), so FFmpeg recorded the simulator window: the 3D view as the simulator showed it, plus its side panel." }
   $good = @($script:Segments | Where-Object { $_.ok })
   Add-Manual $c 'Watch the recordings' 'Check each MP4 shows the steps above (the script only checks the files exist and have a length).'
   $summary = "$($good.Count) of $($script:Segments.Count) recordings saved"
@@ -1426,7 +1703,18 @@ try {
   Initialize-Run
   Initialize-Services
   Initialize-Simulator
-  foreach ($step in @('Invoke-Check1', 'Invoke-FirstMinute', 'Invoke-Check2', 'Invoke-Check5', 'Invoke-Check6', 'Invoke-Check7')) {
+  $steps = @('Invoke-Check1', 'Invoke-FirstMinute', 'Invoke-Check2', 'Invoke-Check5', 'Invoke-Check6', 'Invoke-Check7')
+  if ($OnlyIds.Count) {
+    $covers = @{ 'Invoke-FirstMinute' = @(3, 4); 'Invoke-Check2' = @(2); 'Invoke-Check5' = @(5); 'Invoke-Check6' = @(6); 'Invoke-Check7' = @(7) }
+    $steps = @('Invoke-Check1') + @($steps | Where-Object { $covers.ContainsKey($_) -and @($covers[$_] | Where-Object { $OnlyIds -contains $_ }).Count -gt 0 })
+  }
+  if ($Renders) {
+    # in the sample room that check 2 leaves open when it ran, else in a session of its own after the checks
+    $at = [array]::IndexOf($steps, 'Invoke-Check2')
+    if ($at -ge 0) { $steps = @($steps[0..$at]) + @('Invoke-RenderTour') + @($steps | Select-Object -Skip ($at + 1)) }
+    else { $steps = @($steps) + @('Invoke-RenderTour') }
+  }
+  foreach ($step in $steps) {
     if ($script:AppStartFailures -ge 2) { [void]$script:Notes.Add('The app failed to start twice, so the remaining checks were not run.'); break }
     [void]$script:Order.Add($step)
     try { & $step }
@@ -1444,11 +1732,12 @@ try {
   try { Stop-Recording } catch { }
   try { if (Test-AppRunning) { Stop-App } } catch { }
   try { Complete-Check8 } catch { }
-  $names = @{ 1 = 'XR session active: simulated Meta Quest 3 with hand input'; 2 = 'Dock button pressed by a simulated hand'; 3 = 'Cup grabbed by a simulated hand'; 4 = 'Voice note heard within the first minute of a fresh start (sample day)'; 5 = 'Reply on the table survives an app restart and an API restart'; 6 = 'Recenter, pause and exit'; 7 = 'Hand tracking lost mid-press and found again: no ghost press' }
+  $names = @{ 1 = 'XR session active: simulated Meta Quest 3 with hand input'; 2 = 'Dock button pressed by a simulated hand'; 3 = 'Cup grabbed by a simulated hand'; 4 = 'Voice note heard within the first minute of a fresh start (sample day)'; 5 = 'Reply on the table survives an app restart and an API restart'; 6 = 'Recenter, pause and exit'; 7 = 'Hand tracking lost mid-press and found again: no ghost press'; 8 = 'MP4 of the simulator for every app session' }
   foreach ($id in 1..7) {
     if (-not $script:Checks.Contains("$id")) {
       $c = New-Check $id $names[$id]
-      Complete-Check $c 'blocked' 'not run: the run stopped before this check'
+      if ($OnlyIds.Count -and $OnlyIds -notcontains $id -and $id -ne 1) { Complete-Check $c 'skipped' 'not selected (-Only)' }
+      else { Complete-Check $c 'blocked' 'not run: the run stopped before this check' }
     }
   }
   Save-Results

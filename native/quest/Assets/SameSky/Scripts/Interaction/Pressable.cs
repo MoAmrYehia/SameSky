@@ -2,8 +2,10 @@
 //   * PokeInteractable  - press it with an index fingertip (near, within seated reach)
 //   * RayInteractable   - point at it and pinch (far)
 // Both share one clipped plane surface sized to the button. A press counts when the finger or pinch releases
-// while still on the button (the same rule as a UI click), so a press that slides off, or a hand that loses
-// tracking mid-press (the SDK cancels it), never fires. Controllers drive the same interactables.
+// while still on the button (the same rule as a UI click), so a press that slides off never fires. Nor does a hand
+// that loses tracking mid-press: the SDK then disables its interactors, which unselects and unhovers in the same
+// frame (no Cancel event), so a release is only confirmed a frame later, if no unhover came with it. Controllers
+// drive the same interactables.
 
 using System;
 using System.Collections.Generic;
@@ -15,7 +17,8 @@ using UnityEngine;
 
 namespace SameSky.Interaction
 {
-    public enum PressStyle { Primary, Secondary, Quiet, Key, Danger, Chip }
+    /// <summary>Surface: an invisible press area over a physical thing (a photo, a folded card); a faint wash on hover.</summary>
+    public enum PressStyle { Primary, Secondary, Quiet, Key, Danger, Chip, Dark, DockItem, Surface }
 
     public sealed class Pressable : MonoBehaviour
     {
@@ -28,6 +31,10 @@ namespace SameSky.Interaction
         public TextMeshPro Label { get; private set; }
         public Vector2 Size { get; private set; }
         public bool Toggled { get; private set; }
+        /// <summary>A fingertip or ray is on the button now (for the test probe).</summary>
+        public bool Hovered => _interactable && _hovering.Count > 0;
+        /// <summary>A fingertip is pushed in, or a pinch is held, on the button now.</summary>
+        public bool Selected => _interactable && _selecting.Count > 0;
 
         Renderer _bg;
         PressStyle _style;
@@ -35,6 +42,7 @@ namespace SameSky.Interaction
         RayInteractable _ray;
         readonly HashSet<int> _hovering = new();
         readonly HashSet<int> _selecting = new();
+        readonly Dictionary<int, int> _releasedAt = new(); // pointer id -> frame of a release still on the button
         float _lastPress = -10f;
         bool _interactable = true;
         Transform _face;
@@ -48,7 +56,7 @@ namespace SameSky.Interaction
                 _interactable = value;
                 if (_poke) _poke.enabled = value;
                 if (_ray) _ray.enabled = value;
-                if (!value) { _hovering.Clear(); _selecting.Clear(); }
+                if (!value) { _hovering.Clear(); _selecting.Clear(); _releasedAt.Clear(); }
                 Redraw();
             }
         }
@@ -74,11 +82,13 @@ namespace SameSky.Interaction
         void Build(string text)
         {
             _face = Ui.Node(transform, "Face").transform;
-            var radius = _style == PressStyle.Key ? 0.008f : Mathf.Min(Size.y * 0.5f, 0.02f);
-            _bg = Ui.Panel(_face, "Background", Size, Fill(false, false), radius);
+            // pills, as in the references; keyboard keys stay rounded squares
+            var radius = _style switch { PressStyle.Key => 0.008f, PressStyle.Surface => 0.01f, _ => Size.y * 0.5f };
+            _bg = Ui.Panel(_face, "Background", Size, Fill(false, false), radius,
+                border: _style is PressStyle.DockItem or PressStyle.Dark or PressStyle.Surface ? new Color(1, 1, 1, 0f) : null);
             Label = Ui.Text(_face, "Label", text, _style == PressStyle.Key ? Theme.Button * 1.1f : Theme.Button,
                 TextColor(), Size.x - 0.012f, TextAlignmentOptions.Center, height: Size.y);
-            Label.fontStyle = _style is PressStyle.Primary or PressStyle.Danger ? FontStyles.Bold : FontStyles.Normal;
+            Label.fontStyle = _style is PressStyle.Primary or PressStyle.Danger or PressStyle.Dark ? FontStyles.Bold : FontStyles.Normal;
             Label.textWrappingMode = TextWrappingModes.Normal;
             Label.overflowMode = TextOverflowModes.Ellipsis;
 
@@ -121,20 +131,40 @@ namespace SameSky.Interaction
                     break;
                 case PointerEventType.Unhover:
                     _hovering.Remove(e.Identifier);
+                    // unselected and unhovered in one frame: the interactor was disabled (tracking lost), not released
+                    if (_releasedAt.TryGetValue(e.Identifier, out var frame) && frame == Time.frameCount)
+                    {
+                        _releasedAt.Remove(e.Identifier);
+                        AnyEvent?.Invoke(this, "cancel");
+                    }
                     break;
                 case PointerEventType.Select:
                     _selecting.Add(e.Identifier);
+                    _releasedAt.Remove(e.Identifier);
                     AnyEvent?.Invoke(this, "select");
                     break;
                 case PointerEventType.Unselect:
-                    if (_selecting.Remove(e.Identifier) && _hovering.Contains(e.Identifier)) Press();
+                    if (_selecting.Remove(e.Identifier) && _hovering.Contains(e.Identifier)) _releasedAt[e.Identifier] = Time.frameCount;
                     break;
                 case PointerEventType.Cancel:
                     if (_selecting.Remove(e.Identifier)) AnyEvent?.Invoke(this, "cancel");
+                    _releasedAt.Remove(e.Identifier);
                     _hovering.Remove(e.Identifier);
                     break;
             }
             Redraw();
+        }
+
+        void LateUpdate()
+        {
+            if (_releasedAt.Count == 0) return;
+            // a release from an earlier frame with no unhover beside it: a real press
+            List<int> due = null;
+            foreach (var kv in _releasedAt)
+                if (kv.Value < Time.frameCount) (due ??= new List<int>()).Add(kv.Key);
+            if (due == null) return;
+            foreach (var id in due) _releasedAt.Remove(id);
+            Press();
         }
 
         /// <summary>Fires the press (also used by the desktop fallback). Debounced against double triggers.</summary>
@@ -184,8 +214,13 @@ namespace SameSky.Interaction
                 PressStyle.Quiet => new Color(1, 1, 1, 0.22f),
                 PressStyle.Chip => Toggled ? Theme.Green : new Color(1, 1, 1, 0.7f),
                 PressStyle.Key => new Color(0.98f, 0.97f, 0.95f, 0.95f),
-                _ => Toggled ? Theme.GreenSoft : new Color(0.99f, 0.98f, 0.96f, 0.95f),
+                PressStyle.Dark => Theme.GreenDark,
+                PressStyle.DockItem => new Color(1, 1, 1, 0f),   // the dock's bar is the background
+                PressStyle.Surface => new Color(1, 1, 1, 0f),    // the photo or card is the button
+                _ => Toggled ? Theme.GreenSoft : Theme.Neutral,
             };
+            if (_style is PressStyle.DockItem or PressStyle.Surface)
+                return down ? new Color(1, 1, 1, 0.22f) : hover ? new Color(1, 1, 1, 0.12f) : c;
             if (!_interactable) c.a *= 0.45f;
             if (down) c = Color.Lerp(c, Color.black, 0.15f);
             else if (hover) c = Color.Lerp(c, Color.white, 0.12f);
@@ -194,7 +229,7 @@ namespace SameSky.Interaction
 
         Color TextColor() => _style switch
         {
-            PressStyle.Primary or PressStyle.Danger => Theme.OnDark,
+            PressStyle.Primary or PressStyle.Danger or PressStyle.Dark or PressStyle.DockItem => Theme.OnDark,
             PressStyle.Chip => Toggled ? Theme.OnDark : Theme.Ink,
             _ => Theme.Ink,
         };

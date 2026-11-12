@@ -23,8 +23,11 @@ namespace SameSky.Interaction
 
         Grabbable _grabbable;
         bool _held;
+        readonly System.Collections.Generic.HashSet<int> _hovering = new();   // pointers (hands, rays) near enough to take it
 
         public bool IsHeld => _held;
+        /// <summary>A hand or pointer is close enough to take it (for a restrained "you can pick this up" highlight).</summary>
+        public bool IsHovered => _hovering.Count > 0;
 
         /// <summary>Makes <paramref name="target"/> grabbable. It must have a collider sized to the object.</summary>
         public static GrabbableObject Make(GameObject target, string id)
@@ -32,7 +35,9 @@ namespace SameSky.Interaction
             var wasActive = target.activeSelf;
             target.SetActive(false); // inject before the SDK components wake up
 
-            var rb = target.GetComponent<Rigidbody>() ?? target.AddComponent<Rigidbody>();
+            // not GetComponent() ?? AddComponent(): in the Editor a missing component comes back as Unity's "fake null",
+            // which C#'s ?? treats as a real object
+            var rb = target.TryGetComponent<Rigidbody>(out var existing) ? existing : target.AddComponent<Rigidbody>();
             rb.isKinematic = true;
             rb.useGravity = false;
 
@@ -73,6 +78,7 @@ namespace SameSky.Interaction
         void OnDisable()
         {
             if (_grabbable) _grabbable.WhenPointerEventRaised -= OnPointer;
+            _hovering.Clear();
             if (_held) { _held = false; Released?.Invoke(); }
         }
 
@@ -85,6 +91,9 @@ namespace SameSky.Interaction
 
         void OnPointer(PointerEvent e)
         {
+            if (e.Type == PointerEventType.Hover) _hovering.Add(e.Identifier);
+            else if (e.Type is PointerEventType.Unhover or PointerEventType.Cancel) _hovering.Remove(e.Identifier);
+
             if (e.Type == PointerEventType.Select && !_held)
             {
                 _held = true;
@@ -97,6 +106,15 @@ namespace SameSky.Interaction
                 AnyEvent?.Invoke(this, "release");
                 Released?.Invoke();
             }
+        }
+
+        /// <summary>Lets go on the person's behalf (a "Place cup" button): disabling the object makes the Interaction
+        /// SDK unselect it from whatever hand holds it, which raises Released as a normal release would.</summary>
+        public void ForceRelease()
+        {
+            if (!_held) return;
+            gameObject.SetActive(false);
+            gameObject.SetActive(true);
         }
 
         /// <summary>Gently returns the object to a resting pose (e.g. the cup back on its saucer).</summary>

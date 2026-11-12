@@ -14,12 +14,15 @@ Shader "SameSky/RoundedPanel"
         _Border ("Border width (m)", Float) = 0.0015
         _Glow ("Hover glow", Range(0, 1)) = 0
         _GlowColor ("Glow color", Color) = (1, 0.86, 0.6, 1)
+        // 1 for a nearly solid background (a panel, a card): it then hides the labels of things standing behind it,
+        // which draw later than it does. See-through elements keep 0.
+        [Toggle] _ZWrite ("Write depth (solid backgrounds)", Float) = 0
     }
     SubShader
     {
         Tags { "Queue" = "Transparent" "RenderType" = "Transparent" "IgnoreProjector" = "True" }
         Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite Off
+        ZWrite [_ZWrite]
         Cull Off
 
         Pass

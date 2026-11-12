@@ -37,14 +37,17 @@ namespace SameSky.App
                 FinishPanel(l);
                 return;
             }
-            l.Body($"Your time: {DateTime.Now:HH:mm} ({Data.Me.TimeZone.Replace('_', ' ')})");
-            foreach (var o in others) l.Body($"{o.DisplayName}: {LocalTimeFor(o.TimeZone)} ({o.TimeZone.Replace('_', ' ')})");
+            // who is where, and what time it is for each of you (visual reference 08)
+            var me = MeAsMember();
+            var first = others[0];
+            var strip = l.Block(0.094f);
+            var tile = new Vector2((l.InnerWidth - 0.012f) / 2f, 0.094f);
+            PersonTile(strip, new Vector3(-tile.x / 2 - 0.006f, 0, 0), tile, me, $"You · {CityOf(me)}", LocalTimeFor(me.TimeZone), DayFor(me.TimeZone));
+            PersonTile(strip, new Vector3(tile.x / 2 + 0.006f, 0, 0), tile, first, $"{first.DisplayName} · {CityOf(first)}", LocalTimeFor(first.TimeZone), DayFor(first.TimeZone));
+            foreach (var o in others.Skip(1)) l.Muted($"{o.DisplayName}: {LocalTimeFor(o.TimeZone)} in {CityOf(o)}");
             if (Data.IsSample)
             {
-                l.Tag("Sample: Maya's presence here is simulated");
-                l.Muted("In your own room this shows when your usual times overlap, lets you say you're free now, and opens a live session when you're both here.");
-                l.Row(("together:back", "Back", EnterRoom, PressStyle.Quiet));
-                FinishPanel(l);
+                SampleTogether(l, me, first);
                 return;
             }
             var overlapLine = l.Muted("Finding times that overlap…");
@@ -63,8 +66,8 @@ namespace SameSky.App
                 l.Button("together:leave", "Leave the live session", () => _ = LeaveLiveAndRefresh(), PressStyle.Danger);
                 l.Muted($"Link: {_live.State} · round trip {(_live.LastRoundTripMs < 0 ? "—" : $"{_live.LastRoundTripMs:F0} ms")} · reconnects {_live.Reconnects}");
             }
-            l.Row(("together:times", "My usual times", () => TimesPanel("availability", ShowTogether, null), PressStyle.Quiet), ("together:back", "Back", EnterRoom, PressStyle.Quiet));
-            FinishPanel(l);
+            l.Row(("together:times", "My usual times", () => TimesPanel("availability", ShowTogether, null), PressStyle.Quiet));
+            FinishPanel(l, ("together:back", "Back", EnterRoom, PressStyle.Dark));
 
             Run(async ct =>
             {
@@ -103,6 +106,127 @@ namespace SameSky.App
                 }
                 else live.text = $"You're in a live session ({_live.State}).";
             }, "Couldn't load Together", ShowTogether);
+        }
+
+        static string DayFor(string zone)
+        {
+            try { return TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, FindZone(zone)).ToString("dddd"); }
+            catch (Exception) { return ""; }
+        }
+
+        // ------------------------------------------------------------ the sample's Together (fictional, on this device)
+
+        DateTimeOffset _sampleFreeUntil;
+        bool _sampleTogether;   // the person chose "Sit with ...": the sample's simulated presence stays for this visit
+
+        sealed class Overlap
+        {
+            public bool Now;
+            public int Minutes;
+            public string MyDay, MyStart, MyEnd, TheirDay, TheirStart, TheirEnd;
+        }
+
+        void SampleTogether(Layout l, Member me, Member other)
+        {
+            l.Tag($"Sample: {other.DisplayName} is fictional and their presence is simulated");
+            // the next time you both usually have a moment, worked out from each person's own usual times
+            var o = SampleOverlap(me, other);
+            var card = l.Block(0.07f);
+            Ui.Panel(card, "Card", new Vector2(l.InnerWidth, 0.07f), new Color(0.271f, 0.4f, 0.302f, 0.1f), 0.016f, new Vector3(0, 0, 0.0006f), new Color(0.271f, 0.4f, 0.302f, 0.4f), 0.0008f);
+            Ui.Text(card, "Icon", Icons.Clock, Theme.Title, Theme.Green, 0.04f, TMPro.TextAlignmentOptions.Center, new Vector3(-l.InnerWidth / 2 + 0.03f, 0, 0), height: 0.05f);
+            var width = l.InnerWidth - 0.07f;
+            var head = o == null ? "No shared free time in the next week"
+                : o.Now ? $"You're both free now · {o.Minutes} min left"
+                : $"{o.MyDay} {o.MyStart}–{o.MyEnd} · {o.Minutes} min you both have";
+            var sub = o == null ? "Each of you sets your usual times; when they overlap it shows here."
+                : $"{o.TheirDay} {o.TheirStart}–{o.TheirEnd} for {other.DisplayName} · from your usual times";
+            var headText = Ui.Text(card, "Head", head, Theme.Body, Theme.Ink, width, TMPro.TextAlignmentOptions.Left, new Vector3(0.025f, 0.012f, 0), TMPro.FontStyles.Bold, 0.024f);
+            headText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+            headText.enableAutoSizing = true;
+            headText.fontSizeMax = headText.fontSize;
+            headText.fontSizeMin = headText.fontSize * 0.7f;
+            var subText = Ui.Text(card, "Sub", sub, Theme.Small, Theme.Muted, width, TMPro.TextAlignmentOptions.Left, new Vector3(0.025f, -0.014f, 0), height: 0.02f);
+            subText.textWrappingMode = TMPro.TextWrappingModes.NoWrap;
+            subText.overflowMode = TMPro.TextOverflowModes.Ellipsis;
+
+            Pressable freeChip = null;
+            bool Free() => _sampleFreeUntil > DateTimeOffset.Now;
+            string FreeLabel() => Free() ? $"Free now · until {_sampleFreeUntil.ToLocalTime():HH:mm}" : "I'm free now (1 hour)";
+            var row = l.Row(
+                ("together:free", FreeLabel(), () =>
+                {
+                    _sampleFreeUntil = Free() ? default : DateTimeOffset.Now.AddHours(1);
+                    freeChip.SetToggled(Free());
+                    freeChip.SetText(FreeLabel());
+                    TestProbe.Event("together", Free() ? "free-now" : "not-free");
+                }, PressStyle.Chip),
+                ("together:connect", Icons.With(Icons.Users, $"Sit with {other.DisplayName}"), () =>
+                {
+                    _sampleTogether = true;
+                    TestProbe.Event("together", "sample-connect");
+                    EnterRoom();
+                    Toast($"Sample: {other.DisplayName}'s presence is simulated. No call is made and no microphone opens.", 5f);
+                }, PressStyle.Primary));
+            freeChip = row[0];
+            freeChip.SetToggled(Free());
+            l.Muted("In your own room this comes from the times you each set and respects quiet hours. Connecting is always your choice: nothing starts a call or a microphone by itself.");
+            FinishPanel(l, ("together:back", "Back", EnterRoom, PressStyle.Dark));
+        }
+
+        /// <summary>The next stretch (10 minutes or more) inside both people's usual times, from the sample's weekly
+        /// rules and each person's own time zone. Null when there is none in the coming week.</summary>
+        Overlap SampleOverlap(Member me, Member other)
+        {
+            if (Data is not SampleData s) return null;
+            var mine = s.Raw["schedules"]?[me.Id]?["rules"]?.ToObject<System.Collections.Generic.List<WeeklyRule>>();
+            var theirs = s.Raw["schedules"]?[other.Id]?["rules"]?.ToObject<System.Collections.Generic.List<WeeklyRule>>();
+            if (mine == null || theirs == null) return null;
+            TimeZoneInfo za, zb;
+            try { za = FindZone(me.TimeZone); zb = FindZone(other.TimeZone); }
+            catch (Exception) { return null; }
+            var now = DateTimeOffset.UtcNow;
+
+            System.Collections.Generic.IEnumerable<(DateTimeOffset start, DateTimeOffset end)> Windows(System.Collections.Generic.List<WeeklyRule> rules, TimeZoneInfo zone)
+            {
+                var today = TimeZoneInfo.ConvertTime(now, zone).Date;
+                for (var d = -1; d <= 8; d++)
+                {
+                    var date = today.AddDays(d);
+                    var weekday = ((int)date.DayOfWeek + 6) % 7;   // the rules count from Monday = 0
+                    foreach (var r in rules)
+                    {
+                        if (r.Weekday != weekday || !TimeSpan.TryParse(r.Start, out var a) || !TimeSpan.TryParse(r.End, out var b)) continue;
+                        DateTime from = date + a, to = date + b;
+                        yield return (new DateTimeOffset(from, zone.GetUtcOffset(from)), new DateTimeOffset(to, zone.GetUtcOffset(to)));
+                    }
+                }
+            }
+
+            (DateTimeOffset start, DateTimeOffset end)? best = null;
+            foreach (var x in Windows(mine, za))
+                foreach (var y in Windows(theirs, zb))
+                {
+                    var start = x.start > y.start ? x.start : y.start;
+                    var end = x.end < y.end ? x.end : y.end;
+                    if (end <= now || (end - start).TotalMinutes < 10) continue;
+                    if (best == null || start < best.Value.start) best = (start, end);
+                }
+            if (best == null) return null;
+            var (st, en) = best.Value;
+            var isNow = st <= now;
+            string Hm(DateTimeOffset t, TimeZoneInfo z) => TimeZoneInfo.ConvertTime(t, z).ToString("HH:mm");
+            string DayName(DateTimeOffset t, TimeZoneInfo z)
+            {
+                var local = TimeZoneInfo.ConvertTime(t, z).Date;
+                var today = TimeZoneInfo.ConvertTime(now, z).Date;
+                return local == today ? "Today" : local == today.AddDays(1) ? "Tomorrow" : local.ToString("dddd");
+            }
+            return new Overlap
+            {
+                Now = isNow, Minutes = (int)Math.Round((en - (isNow ? now : st)).TotalMinutes),
+                MyDay = DayName(st, za), MyStart = Hm(st, za), MyEnd = Hm(en, za),
+                TheirDay = DayName(st, zb), TheirStart = Hm(st, zb), TheirEnd = Hm(en, zb),
+            };
         }
 
         async Task JoinLive(LiveSessionInfo info, CancellationToken ct)

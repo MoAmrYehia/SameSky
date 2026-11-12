@@ -11,7 +11,9 @@ const arg = (name, fallback) => {
 };
 const base = arg('--base', 'http://localhost:5173');
 const out = resolve(arg('--out', '../native/quest/Assets/SameSky/Resources/Characters'));
-const people = { 'sample-maya': 'maya', 'sample-adam': 'adam', 'sample-lina': 'lina' };
+// Maya and Adam are stock Rocketbox adults in the native app (native/quest/Assets/SameSky/Editor/CharacterSetup.cs
+// makes their prefabs); only Lina still comes from this kit.
+const people = { 'sample-lina': 'lina' };
 
 const browser = await chromium.launch({ channel: 'chrome', headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage();

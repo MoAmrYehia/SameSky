@@ -34,7 +34,7 @@ $workerPid = Start-Detached 'worker' (Join-Path $Repo 'api') "`"$Python`" -m sam
 @{ api = $apiPid; worker = $workerPid; started = (Get-Date).ToString('o') } | ConvertTo-Json | Out-File -Encoding utf8 $PidFile
 for ($i = 0; $i -lt 60 -and -not (Test-Api); $i++) { Start-Sleep -Milliseconds 500 }
 if (-not (Test-Api)) { throw "API did not come up; see $DevLogs\api.log" }
-$lan = [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName()) | Where-Object { $_.AddressFamily -eq 'InterNetwork' -and -not $_.ToString().StartsWith('127.') -and -not $_.ToString().StartsWith('169.254') } | Select-Object -First 1
+$lan = Get-LanAddress
 Write-Host "API ready: $ApiUrl (Editor and Meta XR Simulator)"
 if ($lan) { Write-Host "Headset on this Wi-Fi: http://${lan}:$ApiPort (development builds only; allow it through Windows Firewall)" }
 Write-Host "Logs: $DevLogs"

@@ -10,15 +10,18 @@ namespace SameSky.UI
 {
     public static class Theme
     {
-        // the companion's palette: warm cream cards, deep green actions, ink text
-        public static readonly Color Card = new(0.965f, 0.945f, 0.915f, 0.94f);
-        public static readonly Color CardDark = new(0.12f, 0.15f, 0.14f, 0.88f);
+        // the visual references' tokens (warm ivory review panels, charcoal media cards, muted forest-green actions),
+        // which match the companion's palette
+        public static readonly Color Card = new(0.961f, 0.941f, 0.902f, 0.97f);       // ivory #F5F0E6
+        public static readonly Color CardDark = new(0.145f, 0.188f, 0.173f, 0.94f);   // charcoal #25302C
         public static readonly Color Glass = new(0.93f, 0.93f, 0.92f, 0.55f);
-        public static readonly Color Ink = new(0.12f, 0.16f, 0.14f, 1f);
-        public static readonly Color Muted = new(0.36f, 0.38f, 0.36f, 1f);
-        public static readonly Color OnDark = new(0.96f, 0.95f, 0.92f, 1f);
-        public static readonly Color Green = new(0.18f, 0.37f, 0.29f, 1f);
-        public static readonly Color GreenSoft = new(0.86f, 0.91f, 0.87f, 1f);
+        public static readonly Color Ink = new(0.118f, 0.141f, 0.125f, 1f);
+        public static readonly Color Muted = new(0.37f, 0.4f, 0.38f, 1f);
+        public static readonly Color OnDark = new(0.97f, 0.96f, 0.93f, 1f);
+        public static readonly Color Green = new(0.271f, 0.4f, 0.302f, 1f);          // primary #45664D
+        public static readonly Color GreenSoft = new(0.655f, 0.71f, 0.584f, 1f);      // muted #A7B595
+        public static readonly Color GreenDark = new(0.17f, 0.26f, 0.2f, 0.9f);       // dock, cues, compact controls
+        public static readonly Color Neutral = new(0.91f, 0.89f, 0.85f, 1f);          // secondary buttons
         public static readonly Color Warm = new(0.95f, 0.82f, 0.62f, 1f);
         public static readonly Color Danger = new(0.62f, 0.2f, 0.16f, 1f);
         public static readonly Color Border = new(1f, 1f, 1f, 0.45f);
@@ -71,6 +74,27 @@ namespace SameSky.UI
             }
         }
 
+        static Material _solidMat;
+
+        /// <summary>The same panel, writing depth: for nearly solid backgrounds, so the text of things behind a panel
+        /// (which draws after it) can't show through.</summary>
+        static Material SolidPanelMaterial
+        {
+            get
+            {
+                if (_solidMat == null)
+                {
+                    _solidMat = Resources.Load<Material>("Materials/PanelSolid");
+                    if (_solidMat == null)
+                    {
+                        _solidMat = new Material(PanelMaterial) { name = "SameSky Panel (solid)" };
+                        _solidMat.SetFloat("_ZWrite", 1f);
+                    }
+                }
+                return _solidMat;
+            }
+        }
+
         static Mesh Quad
         {
             get
@@ -95,15 +119,20 @@ namespace SameSky.UI
         }
 
         /// <summary>A rounded rectangle, centered on its transform, facing -Z (toward the person).</summary>
+        /// <summary>Draw order for see-through UI (transparent objects are otherwise sorted by distance, which lets a
+        /// large background draw over its own buttons and text): 0 backgrounds, 1 buttons/tags/images, 2 fills, 3 text.</summary>
+        public const int OrderBackground = 0, OrderElement = 1, OrderFill = 2, OrderText = 3;
+
         public static MeshRenderer Panel(Transform parent, string name, Vector2 size, Color fill, float radius = 0.018f,
-            Vector3 localPos = default, Color? border = null, float borderWidth = 0.0012f)
+            Vector3 localPos = default, Color? border = null, float borderWidth = 0.0012f, int order = OrderElement)
         {
             var go = Node(parent, name, localPos);
             go.AddComponent<MeshFilter>().sharedMesh = Quad;
             var r = go.AddComponent<MeshRenderer>();
-            r.sharedMaterial = PanelMaterial;
+            r.sharedMaterial = order == OrderBackground && fill.a >= 0.85f ? SolidPanelMaterial : PanelMaterial;
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             r.receiveShadows = false;
+            r.sortingOrder = order;
             go.transform.localScale = new Vector3(size.x, size.y, 1f);
             SetPanel(r, size, fill, radius, border ?? Theme.Border, borderWidth);
             return r;
@@ -166,6 +195,7 @@ namespace SameSky.UI
             t.overflowMode = TextOverflowModes.Overflow;
             t.rectTransform.sizeDelta = new Vector2(width, height > 0 ? height : lineHeight * 2f);
             t.renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            t.renderer.sortingOrder = OrderText;
             // sit a hair in front of whatever panel it is on
             go.transform.localPosition += new Vector3(0, 0, -0.0015f);
             return t;

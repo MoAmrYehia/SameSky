@@ -141,7 +141,7 @@ namespace SameSky.EditorTools
             var rig = UnityEngine.Object.FindAnyObjectByType<OVRCameraRig>();
             if (rig == null) throw new InvalidOperationException("The interaction rig did not create an OVRCameraRig");
             rig.transform.SetParent(parent, true);
-            var mgr = rig.GetComponent<OVRManager>() ?? rig.gameObject.AddComponent<OVRManager>();
+            var mgr = rig.TryGetComponent<OVRManager>(out var existing) ? existing : rig.gameObject.AddComponent<OVRManager>();
             mgr.trackingOriginType = OVRManager.TrackingOrigin.FloorLevel;
             Debug.Log("[SameSky:setup] interaction rig added");
         }

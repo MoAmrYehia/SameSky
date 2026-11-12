@@ -6,6 +6,7 @@ if (-not $XrsimRuntimeJson) { throw 'Meta XR Simulator not found (see preflight.
 if (-not (Test-Path $Unity)) { throw "Unity not found at $Unity" }
 if (-not (Test-Api)) { & "$PSScriptRoot/start.ps1" }
 Start-Sim
+Clear-UnitySceneBackups
 $env:XR_RUNTIME_JSON = $XrsimRuntimeJson
 $log = Join-Path $DevLogs 'unity-play.log'
 Start-Process -FilePath $Unity -ArgumentList '-projectPath', "`"$Project`"", '-executeMethod', 'SameSky.EditorTools.SimRun.Play', '-logFile', "`"$log`""

@@ -39,6 +39,9 @@ namespace SameSky.EditorTools
             var output = Arg("sameskyOut", release ? "Builds/Android/SameSky-release.apk" : "Builds/Android/SameSky-dev.apk");
             WriteConfig(api, Arg("sameskyEnv", release ? "hosted" : "lan-dev"), release ? "release" : "dev");
             EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+            // OpenXR's build-time Meta Quest checks read the *selected* group, which batch mode leaves on Standalone
+            // (a null-reference exception in MetaQuestFeature's validation otherwise)
+            EditorUserBuildSettings.selectedBuildTargetGroup = BuildTargetGroup.Android;
             EditorUserBuildSettings.buildAppBundle = false;
             if (release) ConfigureSigning();
             else PlayerSettings.Android.useCustomKeystore = false;
@@ -88,7 +91,9 @@ namespace SameSky.EditorTools
                 target = target.ToString(),
                 result = s.result.ToString(),
                 output = Path.GetFullPath(output),
-                sizeBytes = s.totalSize,
+                // the file itself: on Android the report's totalSize counts every built file, not the APK
+                sizeBytes = File.Exists(output) ? new FileInfo(output).Length : (long)s.totalSize,
+                reportTotalSize = s.totalSize,
                 seconds = Math.Round(s.totalTime.TotalSeconds, 1),
                 errors = s.totalErrors,
                 warnings = s.totalWarnings,

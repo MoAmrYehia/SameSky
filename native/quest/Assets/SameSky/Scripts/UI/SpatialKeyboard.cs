@@ -53,15 +53,15 @@ namespace SameSky.UI
         {
             var width = 11 * (Key + Gap) + 0.04f;
             // field above the keys
-            var fieldGo = Ui.Node(transform, "Field", new Vector3(0, 0.215f, 0.02f)).transform;
-            Ui.Panel(fieldGo, "FieldBg", new Vector2(width, 0.085f), Theme.Card, 0.016f);
+            var fieldGo = Ui.Node(transform, "Field", new Vector3(0, 0.178f, 0.01f)).transform;   // just above the top row
+            Ui.Panel(fieldGo, "FieldBg", new Vector2(width, 0.085f), Theme.Card, 0.016f, order: Ui.OrderBackground);
             Ui.Text(fieldGo, "FieldLabel", _label, Theme.Small, Theme.Muted, width - 0.04f, TextAlignmentOptions.TopLeft, new Vector3(0, 0.03f, 0));
             _field = Ui.Text(fieldGo, "FieldValue", "", Theme.Title * 0.85f, Theme.Ink, width - 0.04f, TextAlignmentOptions.Left, new Vector3(0, -0.008f, 0), height: 0.04f);
             _field.overflowMode = TextOverflowModes.Ellipsis;
             _field.textWrappingMode = TextWrappingModes.NoWrap;
             _hint = Ui.Text(fieldGo, "Hint", hint ?? "", Theme.Small, Theme.Muted, width - 0.04f, TextAlignmentOptions.TopLeft, new Vector3(0, -0.032f, 0));
 
-            Ui.Panel(transform, "KeysBg", new Vector2(width, 5 * (Key + Gap) + 0.03f), new Color(0.13f, 0.16f, 0.15f, 0.82f), 0.02f, new Vector3(0, -0.005f, 0.004f));
+            Ui.Panel(transform, "KeysBg", new Vector2(width, 5 * (Key + Gap) + 0.03f), new Color(0.145f, 0.188f, 0.173f, 0.95f), 0.02f, new Vector3(0, -0.005f, 0.004f), order: Ui.OrderBackground);   // solid: nothing on the table shows through
             _keys = Ui.Node(transform, "Keys").transform;
             Rebuild();
             Refresh();

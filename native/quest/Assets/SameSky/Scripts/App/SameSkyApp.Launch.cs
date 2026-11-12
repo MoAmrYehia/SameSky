@@ -15,37 +15,46 @@ namespace SameSky.App
         {
             SetDock();
             ClearRoom();
-            var l = NewPanel("launch", 0.5f);
-            l.Title("SameSky");
-            l.Body("A shared place for the people you're apart from. Sit back, the table is in front of you.");
-            l.Muted("Seated experience · hands work everywhere: press with a fingertip, or point and pinch.");
-            l.Gap(0.004f);
-            var toggles = l.Row(
-                ("launch:captions", Prefs.Current.captionsOn ? "Captions: on" : "Captions: off", null, PressStyle.Chip),
-                ("launch:sound", Prefs.Current.soundOn ? "Sound: on" : "Sound: off", null, PressStyle.Chip),
-                ("launch:recenter", "Recenter", () => Recenter(), PressStyle.Chip));
-            toggles[0].SetToggled(Prefs.Current.captionsOn);
-            toggles[1].SetToggled(Prefs.Current.soundOn);
-            toggles[0].Pressed += () =>
-            {
-                Prefs.Current.captionsOn = !Prefs.Current.captionsOn; Prefs.Save();
-                toggles[0].SetText(Prefs.Current.captionsOn ? "Captions: on" : "Captions: off"); toggles[0].SetToggled(Prefs.Current.captionsOn);
-            };
-            toggles[1].Pressed += () =>
-            {
-                Prefs.Current.soundOn = !Prefs.Current.soundOn; Prefs.Save();
-                AudioListener.volume = Prefs.Current.soundOn ? Prefs.Current.volume : 0f;
-                toggles[1].SetText(Prefs.Current.soundOn ? "Sound: on" : "Sound: off"); toggles[1].SetToggled(Prefs.Current.soundOn);
-            };
-            l.Gap(0.006f);
-            l.Button("launch:sample", "Try the sample day", () => _ = EnterSample(), PressStyle.Primary);
+            ClearScreenFor(null);
+            // visual reference 10: a small, calm welcome with one clear first step, and the room visible around it
+            var l = NewPanel("launch", 0.37f);
+            l.Muted("<b>SameSky</b>");
+            l.Title("A little closer, wherever you are");
+            l.Underline();
+            l.Button("launch:sample", Icons.With(Icons.Play, "Try a sample day"), () => _ = EnterSample(), PressStyle.Primary);
             l.Muted("Works offline. Fictional people, a synthesized voice and a simulated clip, all labelled.");
             var stored = StoredSession.Load();
             if (!string.IsNullOrEmpty(stored.token) && stored.apiUrl == AppConfig.ApiUrl)
-                l.Button("launch:continue", $"Continue as {stored.email}", () => _ = ResumeLive(stored), PressStyle.Secondary);
+                l.Button("launch:continue", Icons.With(Icons.SignIn, $"Continue as {stored.email}"), () => _ = ResumeLive(stored), PressStyle.Secondary);
             l.Row(("launch:signin", "Sign in", ShowSignIn, PressStyle.Secondary), ("launch:signup", "Create account", ShowSignUp, PressStyle.Secondary));
-            l.Row(("launch:exit", "Exit", ConfirmExit, PressStyle.Quiet));
-            FinishPanel(l);
+            // captions and sound: two chips that say their state (green when on)
+            Pressable captions = null, sound = null;
+            static string CaptionsLabel() => Icons.With(Icons.Captions, Prefs.Current.captionsOn ? "Captions on" : "Captions off");
+            static string SoundLabel() => Icons.With(Icons.Sound, Prefs.Current.soundOn ? "Sound on" : "Sound off");
+            var toggles = l.Row(
+                ("launch:captions", CaptionsLabel(), () =>
+                {
+                    Prefs.Current.captionsOn = !Prefs.Current.captionsOn;
+                    Prefs.Save();
+                    captions.SetToggled(Prefs.Current.captionsOn);
+                    captions.SetText(CaptionsLabel());
+                }, PressStyle.Chip),
+                ("launch:sound", SoundLabel(), () =>
+                {
+                    Prefs.Current.soundOn = !Prefs.Current.soundOn;
+                    Prefs.Save();
+                    AudioListener.volume = Prefs.Current.soundOn ? Prefs.Current.volume : 0f;
+                    sound.SetToggled(Prefs.Current.soundOn);
+                    sound.SetText(SoundLabel());
+                }, PressStyle.Chip));
+            captions = toggles[0];
+            sound = toggles[1];
+            captions.SetToggled(Prefs.Current.captionsOn);
+            sound.SetToggled(Prefs.Current.soundOn);
+            foreach (var t in toggles) t.Label.fontSize *= 0.88f;
+            FinishPanel(l,
+                ("launch:recenter", Icons.With(Icons.Recenter, "Recenter"), () => Recenter(), PressStyle.Dark),
+                ("launch:exit", Icons.With(Icons.Leave, "Leave"), ConfirmExit, PressStyle.Dark));
         }
 
         // ------------------------------------------------------------ sample

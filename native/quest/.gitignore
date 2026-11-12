@@ -8,6 +8,7 @@
 /[Uu]ser[Ss]ettings/
 /[Mm]emoryCaptures/
 /[Rr]ecordings/
+/.utmp/
 *.csproj
 *.sln
 *.suo
@@ -21,6 +22,9 @@ sysinfo.txt
 crashlytics-buildid.txt
 # Meta XR SDK tarballs fetched by scripts/native/bootstrap (pinned + checksummed in packages.lock.txt)
 /.packages/
+# Written by the Meta XR SDK's Immersive Debugger with this PC's network address; the SDK recreates it
+/Assets/Resources/DevAgentSettings.asset
+/Assets/Resources/DevAgentSettings.asset.meta
 # Local signing material for release builds: never commit
 /Signing/
 *.keystore
