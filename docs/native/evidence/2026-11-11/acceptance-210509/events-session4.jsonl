@@ -1,0 +1,11 @@
+{"t":9.223,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":9.609,"kind":"pause","detail":"input","input":"None"}
+{"t":10.819,"kind":"pause","detail":"resume","input":"None"}
+{"t":11.106,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":11.109,"kind":"screen","detail":"launch","input":"hands"}
+{"t":22.781,"kind":"press","detail":"launch:continue","input":"hands"}
+{"t":22.782,"kind":"screen","detail":"loading","input":"hands"}
+{"t":22.845,"kind":"mode","detail":"live","input":"hands"}
+{"t":22.847,"kind":"screen","detail":"room","input":"hands"}
+{"t":22.954,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283","input":"hands"}
+{"t":22.989,"kind":"presence","detail":"away","input":"hands"}

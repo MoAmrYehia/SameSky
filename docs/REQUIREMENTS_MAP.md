@@ -120,25 +120,27 @@ A native Unity client for Quest in `native/quest/`, tested in Meta XR Simulator,
 [NATIVE_STATUS.md](NATIVE_STATUS.md), which keeps the kinds of evidence apart. The legend above doesn't apply: a
 desktop or IWER result says nothing about the native client.
 
-`scripts/native/acceptance.ps1` runs the acceptance checks (marked *check n* below) in the simulator. None has
-run yet: Unity, the simulator and the Android SDK are on one Windows machine. The rows follow the acceptance
-checks in these instructions; the brief itself isn't in this repository.
+`scripts/native/acceptance.ps1` runs the acceptance checks (marked *check n* below) in Meta XR Simulator 207.1 with a
+simulated Meta Quest 3 and simulated hands, through the simulator's own controls. Latest full run:
+[`acceptance-065004`](native/evidence/2026-11-12/acceptance-065004.md), 12 November 2026, **8 of 8 passed**
+(**simulator-tested**; check 5 is also **real-service-tested**). The rows follow the acceptance checks in these
+instructions; the brief itself isn't in this repository.
 
 | Acceptance row | Where | Status |
 |---|---|---|
-| Native app on the same API and authorization as the companion (no special endpoints) | `native/quest/Assets/SameSky/Scripts` (`Api/ApiClient.cs`, `Api/RealtimeClient.cs`, `App/`) | Implemented. Compiled at `cf2a5a3` (0 errors); the C# edits since are not compiled. Not simulator-tested |
-| XR session in the simulator: simulated Meta Quest 3, hand input | `scripts/native/play_in_sim.ps1`, `sim.ps1`, the probe (`App/TestProbe.cs`); check 1 | Not run yet |
-| A dock button pressed by hand | `SameSkyApp.SetDock`, `Interaction/Pressable.cs` (poke, or point and pinch; a press counts on release); check 2 | Implemented and compiled; not simulator-tested |
-| The cup grabbed by hand | `SameSkyApp.Room.cs` (`BuildCup`), `Interaction/GrabbableObject.cs` (hand grab, distance grab); check 3 | Implemented and compiled; not simulator-tested |
-| The waiting voice note heard within the first minute | Offline sample day (`App/RoomData.cs`, `Resources/Sample/`), `PlayWaiting` with timed captions; check 4 | Implemented and compiled; not simulator-tested |
-| A reply on the table survives an app restart and an API restart | `StartReply` and `RestoreNotes` (`SameSkyApp.Room.cs`); `test_replies_and_placements_survive_restart`; check 5 (`stop.ps1`, `start.ps1`) | API ✅ automated. App not simulator-tested; the probe events check 5 relies on are not compiled yet |
-| Recenter, pause and exit | `SameSkyApp.Recenter`, `SetPaused`, `ShowPause`, `ConfirmExit`; check 6 | Implemented and compiled; not simulator-tested. The system pause (Meta button, headset off) needs a headset |
-| Tracking loss without ghost presses | `Pressable.cs` (a cancelled select never becomes a press), `GrabbableObject.cs` (clean release); check 7 (`metavr xrsim input source --hand right --source none`) | Implemented and compiled; not simulator-tested |
-| MP4 of the simulator run | Check 8 (`metavr xrsim record start` and `stop`, one file per app session) | Not recorded yet |
+| Native app on the same API and authorization as the companion (no special endpoints) | `native/quest/Assets/SameSky/Scripts` (`Api/ApiClient.cs`, `Api/RealtimeClient.cs`, `App/`) | Compiled (Unity 6000.3.28f1, 0 errors). Live mode simulator-tested against the real local API (check 5) |
+| XR session in the simulator: simulated Meta Quest 3, hand input | `scripts/native/play_in_sim.ps1`, `sim.ps1`, the probe (`App/TestProbe.cs`); check 1 | ✅ simulator-tested (OpenXR runtime "Meta XR Simulator 207.1.0", both hands tracked) |
+| A dock button pressed by hand | `SameSkyApp.SetDock`, `Interaction/Pressable.cs` (poke, or point and pinch; a press counts on release); check 2 | ✅ simulator-tested: a simulated fingertip pressed *Our day* |
+| The cup grabbed by hand | `SameSkyApp.Room.cs` (`BuildCup`), `Interaction/GrabbableObject.cs` (hand grab, distance grab); check 3 | ✅ simulator-tested: a palm grab lifted the cup, which moved with the hand |
+| The waiting voice note heard within the first minute | Offline sample day (`App/RoomData.cs`, `Resources/Sample/`), `PlayWaiting` with timed captions; check 4 | ✅ simulator-tested: playing 25.9 s after a fresh start, captions shown, played to the end. Hearing it is a manual step |
+| A reply on the table survives an app restart and an API restart | `StartReply` and `RestoreNotes` (`SameSkyApp.Room.cs`); `test_replies_and_placements_survive_restart`; check 5 (`stop.ps1`, `start.ps1`) | ✅ simulator-tested and real-service-tested: a new reply typed on the spatial keyboard came back after both restarts; the server kept it and its placement |
+| Recenter, pause and exit | `SameSkyApp.Recenter`, `SetPaused`, `ShowPause`, `ConfirmExit`; check 6 | ✅ simulator-tested (recenter from 35° off to 0°). The system pause (Meta button, headset off) needs a headset |
+| Tracking loss without ghost presses | `Pressable.cs` (a release is confirmed a frame later; tracking loss unselects and unhovers at once and counts as a cancel), `GrabbableObject.cs` (clean release); check 7 (`metavr xrsim input source --hand right --source none`) | ✅ simulator-tested: a cancel, no press. The first runs found a real ghost press here; fixed |
+| MP4 of the simulator run | Check 8: one file per app session. Simulator 207.1's runtime has no MP4 recorder, so FFmpeg records the simulator window | ✅ 5 of 5 sessions recorded |
 | Invite codes typed by hand (headset keypad) | `POST /v1/invites/redeem-code`, `test_invite_codes.py` (6 tests); companion join step; `UI/SpatialKeyboard.cs` code keypad | API ✅ automated, and real-service-tested (`seed.ps1` redeems codes); keypad not simulator-tested |
-| Voice notes playable in the native app | Ogg copy (`services/media.py`, `oggUrl`); `RoomData` `Audio()` | API ✅ `test_headset_voice_note_gets_an_ogg_twin_for_native_playback`; app playback not simulator-tested |
-| Repeatable local setup: preflight, bootstrap, start/stop/seed, per-user installs | `scripts/native/*.ps1` (and `.sh` for macOS/Linux) | start, stop and seed real-service-tested on the Windows machine |
-| APK for Quest 3/3S | `scripts/native/build.ps1 -Target Android`, `Editor/BuildScript.cs` | Not built: the Android SDK and NDK aren't unpacked yet (`install_unity_user.ps1`) |
+| Voice notes playable in the native app | Ogg copy (`services/media.py`, `oggUrl`); `RoomData` `Audio()` | API ✅ `test_headset_voice_note_gets_an_ogg_twin_for_native_playback`; the sample note's playback is simulator-tested (check 4) |
+| Repeatable local setup: preflight, bootstrap, start/stop/seed, per-user installs | `scripts/native/*.ps1` (and `.sh` for macOS/Linux) | start, stop and seed real-service-tested on the Windows machine (check 5 restarts the API with them) |
+| APK for Quest 3/3S | `scripts/native/build.ps1 -Target Android`, `Editor/BuildScript.cs` | ✅ APK-built: 116 MB, ARM64, `com.samesky.quest` 0.9.0, SHA-256 in [NATIVE_STATUS.md](NATIVE_STATUS.md). Not installed on a headset |
 | Installed on a headset and measured there | `docs/NATIVE_QUICKSTART.md` (section 5) | Not done: no Quest |
 
 ## P1 (not implemented)

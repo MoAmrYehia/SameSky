@@ -1,0 +1,6 @@
+{"t":9.189,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":9.581,"kind":"pause","detail":"input","input":"None"}
+{"t":10.774,"kind":"pause","detail":"resume","input":"None"}
+{"t":11.061,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":11.065,"kind":"screen","detail":"launch","input":"hands"}
+{"t":23.098,"kind":"cancel","detail":"launch:recenter","input":"hands"}

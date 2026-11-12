@@ -1,0 +1,218 @@
+{
+  "time": 38.04,
+  "xrDeviceActive": true,
+  "xrDevice": "OpenXR Display",
+  "openxrRuntime": "Meta XR Simulator 207.1.0",
+  "hands": {
+    "left": true,
+    "right": true
+  },
+  "activeInput": "hands",
+  "fps": 63.0,
+  "screen": "launch",
+  "mode": "none",
+  "room": "",
+  "paused": false,
+  "presses": 0,
+  "lastPress": "",
+  "grabs": 0,
+  "lastGrab": "",
+  "hovers": 7,
+  "audio": "",
+  "captionsOn": true,
+  "captions": "",
+  "head": [
+    -0.317,
+    1.213,
+    -0.35
+  ],
+  "headForward": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "handsAt": {
+    "left": [
+      -0.617,
+      0.913,
+      0.15
+    ],
+    "right": [
+      -0.017,
+      0.913,
+      0.15
+    ]
+  },
+  "pokeAt": {
+    "left": [
+      -0.557,
+      0.909,
+      0.311
+    ],
+    "right": [
+      -0.07,
+      0.922,
+      0.317
+    ]
+  },
+  "presence": "away",
+  "cupHeld": false,
+  "voicePlaying": false,
+  "story": "none",
+  "live": "none",
+  "driftMs": 0.0,
+  "targets": [
+    {
+      "id": "launch:sound",
+      "at": [
+        0.082,
+        1.001,
+        0.421
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.157,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:sample",
+      "at": [
+        0.001,
+        1.217,
+        0.471
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.326,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:captions",
+      "at": [
+        -0.086,
+        1.0,
+        0.436
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.157,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:recenter",
+      "at": [
+        -0.085,
+        0.902,
+        0.416
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.15,
+        0.046
+      ],
+      "hover": true,
+      "down": false
+    },
+    {
+      "id": "launch:signup",
+      "at": [
+        0.083,
+        1.062,
+        0.433
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.157,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:continue",
+      "at": [
+        0.0,
+        1.122,
+        0.452
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.326,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:signin",
+      "at": [
+        -0.085,
+        1.06,
+        0.448
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.157,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:exit",
+      "at": [
+        0.079,
+        0.903,
+        0.401
+      ],
+      "normal": [
+        -0.089,
+        0.195,
+        -0.977
+      ],
+      "size": [
+        0.15,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    }
+  ]
+}

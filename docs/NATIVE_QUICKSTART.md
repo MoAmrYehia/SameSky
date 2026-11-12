@@ -26,9 +26,15 @@ Results so far, kept separate by kind of evidence: [NATIVE_STATUS.md](NATIVE_STA
 1. **Unity Hub and editor.** Install Unity Hub. Then install editor **6000.3.28f1** with **Android Build
    Support**, **OpenJDK** and **Android SDK & NDK Tools**. Hub asks you to accept Google's Android SDK licence.
    Sign in to Hub and activate a licence; Personal is fine if you're eligible.
+   - *No admin approval available?* `scripts/native/install_unity_user.ps1` installs the same editor and Android
+     tools for your Windows user only, from Unity's and Google's checksummed downloads. Hub can then *Locate* the
+     editor.
 2. **Meta XR Simulator.** Install the standalone simulator. Either download it from Meta's developer downloads
    (Meta XR Simulator for Windows), or run `metavr tools install xrsim --elevate`. The MSI needs administrator
    approval. Don't add the deprecated `com.meta.xr.simulator` Unity package.
+   - *No admin approval available?* `scripts/native/install_xrsim_user.ps1 -Msi <msi>` unpacks Meta's signed MSI
+     into a folder you own. It registers the Windows App Runtime for your user only. It doesn't change the
+     system's OpenXR runtime: the scripts select the simulator per process.
 3. **Bootstrap the project.** This downloads and verifies the pinned Meta packages, builds the bundled art and
    offline sample, and runs Unity in batch mode to configure XR, URP and player settings and build the scene:
 
@@ -85,32 +91,89 @@ powershell -ExecutionPolicy Bypass -File scripts/native/seed.ps1
 
 5. Recentering, seat height, captions and sound are all in the app: use the dock at the table edge, or Pause.
 
-Record a clip of the simulator's view (MP4):
+One command does steps 1–3 without Meta's activation menu: it starts the local services if needed, opens the
+simulator, and opens Unity with the simulator selected for that editor process only (`XR_RUNTIME_JSON`). The
+system's OpenXR runtime stays as it is.
 
 ```bash
-metavr xrsim record start -o docs/native/evidence/run.mp4
+powershell -ExecutionPolicy Bypass -File scripts/native/play_in_sim.ps1
 ```
 
-```bash
-metavr xrsim record stop
-```
+### Driving the simulated hands (simulator 207)
+
+The simulator's **Input bindings** panel lists the keys. Two things it doesn't say:
+
+- **Keys only count while a mouse button is held in the 3D view.** Click the 3D view once with the right mouse
+  button, then hold a mouse button while you press keys. Holding the right button and moving the mouse looks
+  around.
+- **The keys move the headset, and the hands follow it** (Inputs follow: Head). To put a fingertip on a button,
+  move your whole simulated self.
+
+| Key | Does |
+|---|---|
+| W A S D | move forward, left, back, right (relative to where the headset faces) |
+| R F | move up, down |
+| arrow keys | turn |
+| Q E | tilt |
+| 1 2 3 4 | hand pose: open, poke (index out), pinch, grab (fist). The pose stays until you press another. |
+| Space | put the hands back in front of you |
+| left mouse button | pinch with the right hand (the *Action input*) |
+
+**Press a button:** press 2, then move until the index fingertip goes through the button's face, then back out. A
+press counts when the finger comes back out while still over the button. **Pick up the cup:** move the open hand
+around it, then press 4 (fist).
+
+**Recording:** simulator 207.1's runtime has no MP4 recorder. `metavr xrsim record start` says its build doesn't
+include the recording service. The acceptance run records the simulator window with FFmpeg instead. For a clip of
+your own, use a screen recorder, for example the Snipping Tool's video mode.
 
 ### Acceptance run
 
-`scripts/native/acceptance.ps1` runs the eight acceptance checks in the simulator. It opens Unity itself (close
-it first), uses its own `acceptance` profile, and starts and seeds the local services. It drives the app only
-through the simulator's own hand controls, and keeps a check as passed only when the app's probe recorded it.
-Leave the keyboard and mouse alone while it runs. If it can't make a gesture, it asks you to make it in the
-simulator and watches the probe for it.
+`scripts/native/acceptance.ps1` runs the eight acceptance checks in the simulator:
+
+- **Unity:** it opens Unity itself, with its own `acceptance` profile. Close any editor you opened yourself first.
+  It reuses an editor that an earlier run opened.
+- **Services:** it starts and seeds the local services.
+- **Driving:** it uses only the simulator's own keys (above). It steers the right index fingertip with the probe's
+  positions, in a closed loop.
+- **Passing:** a check passes only when the app's probe recorded it.
+
+The script uses the keyboard and mouse, so leave both alone while it runs. If it can't make a gesture, it asks you
+to make it in the simulator and watches the probe for it.
 
 ```bash
 powershell -ExecutionPolicy Bypass -File scripts/native/acceptance.ps1
 ```
 
 - **Results:** `docs/native/evidence/<date>/acceptance-<time>.md` and `.json`. Probe events, state snapshots,
-  screenshots and MP4s go in the `acceptance-<time>/` folder next to them.
-- **Options:** `-Assist` makes every gesture yours; `-NonInteractive` never asks; `-SkipRecording` skips the MP4s.
+  screenshots and MP4s go in the `acceptance-<time>/` folder next to them. For a 207.1 runtime the MP4s are FFmpeg
+  captures of the simulator window, so keep that window visible and unobstructed during the run.
+- **Options:** `-Assist` makes every gesture yours; `-NonInteractive` never asks; `-SkipRecording` skips the MP4s;
+  `-Only 2,3,4` runs just those checks (check 1 always runs: it calibrates the hands).
 - **Before committing:** the MP4s can be large. Check the files before you commit the folder.
+
+#### Fixed seated views (for comparing with the visual references)
+
+The simulator's own screenshots are taken from wherever a check left the simulated head, so they make poor
+comparisons. The app's development probe can instead draw the room from the seated eye with its own camera, the
+same framing every run:
+
+- Every acceptance run saves a few of these as `seat-*.png` (launch, the pick-up cue, the message card, the partner).
+- `-Renders` adds a tour of the other screens: Our day, Share, Together, Keepsakes and the shelf, the avatar preview,
+  Settings, Pause, the story screen, the room selector, the family circle, the person opposite in close-up, the room
+  to the left and right, and the reply keyboard (`seat-tour-*.png`). Check 5 also saves the live room
+  (`seat-live-room.png`).
+- In the Editor a shader draws as a cyan stand-in while it compiles in the background; these renders wait for the
+  compiler first, so the first one after a lighting change can take a while.
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/native/acceptance.ps1 -NonInteractive -Only 2,3,4 -Renders
+```
+
+The tour opens each screen through the probe (`SameSkyApp.DevOpen`), not with hands: its pictures show what the app
+draws, and say nothing about interaction. The checks above are the interaction evidence. To take one view by hand
+while the app runs, write `snap-request.json` into the probe folder, for example
+`{"name":"room","yaw":0,"pitch":-12,"open":"day"}`; `snap-room.png` appears beside it. Development builds only.
 
 ## 4. Build for the headset
 

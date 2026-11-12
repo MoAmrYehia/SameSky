@@ -1,0 +1,11 @@
+{"t":9.981,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":10.365,"kind":"pause","detail":"input","input":"None"}
+{"t":11.505,"kind":"pause","detail":"resume","input":"None"}
+{"t":11.802,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":11.806,"kind":"screen","detail":"launch","input":"hands"}
+{"t":23.149,"kind":"press","detail":"launch:continue","input":"hands"}
+{"t":23.152,"kind":"screen","detail":"loading","input":"hands"}
+{"t":23.22,"kind":"mode","detail":"live","input":"hands"}
+{"t":23.222,"kind":"screen","detail":"room","input":"hands"}
+{"t":23.354,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7","input":"hands"}
+{"t":23.381,"kind":"presence","detail":"away","input":"hands"}
