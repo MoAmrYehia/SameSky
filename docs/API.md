@@ -30,10 +30,34 @@ Concurrent object moves use optimistic versioning (`expected_version` → `409 v
 | Social | `GET/POST /moments/{id}/replies`, `POST /moments/{id}/reactions`, `GET/POST /rooms/{id}/objects`, `PATCH /objects/{id}` |
 | Recaps | `POST /rooms/{id}/recaps` (`room_date`, optional `recipient_ids`), `GET /rooms/{id}/recaps` (archive), `GET /rooms/{id}/recaps/pending`, `GET /recaps/{id}`, `POST /recaps/{id}/approve` |
 | Awards | `GET /rooms/{id}/awards` |
+| Furniture marketplace | `GET /furniture/catalog` (slots, pieces, finishes and ready-made looks; every piece is included, nothing is priced), `GET /rooms/{id}/decor`, `PUT /rooms/{id}/decor` (`choices`: slot → `{item, finish}`, optional `expected_version`). See [Furniture](#furniture) |
 | Availability | `GET /rooms/{id}/availability`, `PUT /rooms/{id}/availability/rules`, `POST /availability/exceptions`, `DELETE /availability/exceptions/{id}`, `POST/DELETE /rooms/{id}/free-now`, `POST /rooms/{id}/opportunities` (selected `participant_ids`), `POST /rooms/{id}/opportunities/suggest`, `POST /opportunities/{id}/respond` (`connect`/`later`/`not_now`/`pause`) |
 | Notifications | `GET /notifications`, `POST /notifications/{id}/read`, `GET /push/vapid-public-key`, `POST /push/subscriptions`, `POST /push/subscriptions/delete` |
 | Live viewing | `POST /rooms/{id}/sessions` (two participants who can both see the moment), `GET /rooms/{id}/sessions`, `GET /sessions/{id}`, `POST /sessions/{id}/end`, `WS /realtime` |
 | Ops | `GET /health` |
+
+## Furniture
+
+The marketplace lets the people who share a room furnish it. The catalogue is one file
+(`api/samesky/furniture_catalog.json`, bundled unchanged with the headset app): seven slots (table, chairs, rug,
+lamp, plant, walls, floor), the pieces that can fill each one, the finishes a piece comes in, and three
+ready-made looks. Nothing is priced, sold or owned: there are no purchases, balances or entitlements.
+
+- `GET /rooms/{id}/decor` (members only) returns the room's choice for every slot, with the defaults filled in:
+
+  ```json
+  { "roomId": "…", "version": 3, "choices": { "table": { "item": "tripod", "finish": "oak" }, "rug": { "item": "none", "finish": null }, "…": {} },
+    "updatedBy": "…", "updatedAt": "…" }
+  ```
+
+  A room nobody has furnished is at `version` 0 with the catalogue's defaults.
+- `PUT /rooms/{id}/decor` (any active member) changes the slots it names and leaves the others. A finish left out
+  means the piece's first finish. Unknown slots, pieces or finishes are refused with 422 (`unknown_slot`,
+  `unknown_item`, `unknown_finish`) and nothing changes. With `expected_version`, a stale version gets 409
+  `version_conflict`: load the room again and re-apply.
+- People in a live viewing session in that room receive `{ "type": "decor_changed", "roomId": "…" }` on the
+  WebSocket and ask for the decor again with their own authorization.
+- A piece or finish that is later removed from the catalogue falls back to the slot's default when read.
 
 ## Invitations
 

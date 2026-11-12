@@ -1,0 +1,19 @@
+{"t":9.755,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":10.148,"kind":"pause","detail":"input","input":"None"}
+{"t":11.35,"kind":"pause","detail":"resume","input":"None"}
+{"t":11.635,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":11.645,"kind":"screen","detail":"launch","input":"hands"}
+{"t":24.413,"kind":"press","detail":"launch:continue","input":"hands"}
+{"t":24.415,"kind":"screen","detail":"loading","input":"hands"}
+{"t":24.557,"kind":"mode","detail":"live","input":"hands"}
+{"t":24.56,"kind":"screen","detail":"room","input":"hands"}
+{"t":24.608,"kind":"decor","detail":"shown v5","input":"hands"}
+{"t":24.819,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8","input":"hands"}
+{"t":24.874,"kind":"presence","detail":"away","input":"hands"}
+{"t":34.912,"kind":"press","detail":"cup:reply","input":"hands"}
+{"t":34.925,"kind":"keyboard","detail":"Reply to Sam","input":"hands"}
+{"t":49.234,"kind":"press","detail":"key:r","input":"hands"}
+{"t":72.345,"kind":"press","detail":"key:done","input":"hands"}
+{"t":72.526,"kind":"reply","detail":"placed:3cf37832-0491-4af0-abd4-d6af79952544","input":"hands"}
+{"t":72.528,"kind":"toast","detail":"Sent. Your reply waits on the table for Sam.","input":"hands"}
+{"t":87.216,"kind":"snap","detail":"live-room","input":"hands"}

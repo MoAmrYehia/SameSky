@@ -1,4 +1,12 @@
-# Demo video (target 2:45, actual application footage only)
+# Demo video: the earlier plan (headsets, two accounts)
+
+> **The demo video that exists is a different cut.** "I Saved You a Seat" (2:11) was made from footage of the native
+> app in Meta XR Simulator, in the offline sample, with an insert of the companion: see
+> [docs/demo/README.md](demo/README.md) for the film, its script and its shot list. The plan below was written before
+> that, for a recording on Quest headsets with two real accounts and a live session. It has not been recorded, and is
+> kept as the outline for one if headsets become available.
+
+Target 2:45, actual application footage only.
 
 | Time | Shot | Voice-over / on-screen text |
 |---|---|---|

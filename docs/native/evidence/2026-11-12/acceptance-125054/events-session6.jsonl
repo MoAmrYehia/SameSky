@@ -1,0 +1,33 @@
+{"t":9.556,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":9.962,"kind":"pause","detail":"input","input":"None"}
+{"t":11.116,"kind":"pause","detail":"resume","input":"None"}
+{"t":11.426,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":11.438,"kind":"screen","detail":"launch","input":"hands"}
+{"t":23.21,"kind":"press","detail":"launch:continue","input":"hands"}
+{"t":23.213,"kind":"screen","detail":"loading","input":"hands"}
+{"t":23.27,"kind":"mode","detail":"live","input":"hands"}
+{"t":23.272,"kind":"screen","detail":"room","input":"hands"}
+{"t":23.305,"kind":"decor","detail":"shown v5","input":"hands"}
+{"t":23.491,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8","input":"hands"}
+{"t":23.524,"kind":"presence","detail":"away","input":"hands"}
+{"t":43.682,"kind":"press","detail":"dock:recenter","input":"hands"}
+{"t":43.683,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":43.683,"kind":"toast","detail":"Recentered. The table is in front of you.","input":"hands"}
+{"t":43.696,"kind":"cancel","detail":"dock:recenter","input":"hands"}
+{"t":43.697,"kind":"cancel","detail":"dock:share","input":"hands"}
+{"t":74.126,"kind":"press","detail":"dock:pause","input":"hands"}
+{"t":74.127,"kind":"pause","detail":"menu","input":"hands"}
+{"t":74.128,"kind":"screen","detail":"pause","input":"hands"}
+{"t":99.196,"kind":"press","detail":"pause:resume","input":"hands"}
+{"t":99.197,"kind":"pause","detail":"resume","input":"hands"}
+{"t":99.198,"kind":"screen","detail":"room","input":"hands"}
+{"t":99.221,"kind":"decor","detail":"shown v5","input":"hands"}
+{"t":99.335,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8","input":"hands"}
+{"t":99.345,"kind":"presence","detail":"away","input":"hands"}
+{"t":125.89,"kind":"press","detail":"dock:pause","input":"hands"}
+{"t":125.891,"kind":"pause","detail":"menu","input":"hands"}
+{"t":125.891,"kind":"screen","detail":"pause","input":"hands"}
+{"t":155.863,"kind":"press","detail":"pause:exit","input":"hands"}
+{"t":155.864,"kind":"screen","detail":"exit","input":"hands"}
+{"t":178.741,"kind":"press","detail":"exit:quit","input":"hands"}
+{"t":178.742,"kind":"exit","detail":"quit","input":"hands"}

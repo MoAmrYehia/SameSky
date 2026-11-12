@@ -5,14 +5,24 @@ Legend: ✅ implemented and automatically tested · 🟢 implemented, exercised 
 
 ## Competition
 
-| Requirement | Where | Status |
+The official rules and FAQ were read again on Devpost on 13 November 2026 (entries close 18 November 2026 at
+12:00 PM Pacific time). What an entry must contain, and where each item stands. ❌ here means *not done yet*.
+
+| Requirement (rules, section 4; FAQ) | Where | Status |
 |---|---|---|
-| Runs on Quest 3/3S, not glasses-only | `web/room.html` (IWSDK/WebXR, immersive-vr, hand tracking) | 🟡 headset run pending |
-| Controller-free navigation throughout | Pinch select/grab, poke dock; no buttons, keyboard, gaze or voice needed | 🟢 desktop / 🟡 hands |
-| Seated, quick start, short rewarding session | Seated table layout; first meaningful moment = the glowing cup | 🟢 |
-| ≥ 60 fps on Quest | `?debug=1` HUD shows fps/draw calls/triangles; 95–101 draw calls and 123k–136k triangles incl. one bounded soft shadow light, canvas UI | 🟡 measure on device |
-| Launchable build URL + testing instructions | `docs/DEPLOYMENT.md`, `docs/JUDGE_GUIDE.md` | 🟡 hosting pending |
-| < 3 min video of actual app | `docs/DEMO_SCRIPT.md` | ⬜ to record |
+| A VR/MR application for Meta VR devices, playable on Quest 3/3S (not glasses only). Entertainment track; New Experience division: conceived and built after 24 September 2026, no earlier codebase | `native/quest/` (Unity 6, Meta XR Core and Interaction SDK 209) and `web/room.html` (IWSDK/WebXR); the repository's first commit is from 6 November 2026 | 🟡 native: simulator-tested and APK-built; web: emulator-tested. Neither has run on a headset |
+| Hands-first: fully usable with hands from start to finish; nobody ever needs to pair a controller | Native: poke, point and pinch, hand and distance grab, a spatial keyboard (`Scripts/Interaction`, `Scripts/UI/SpatialKeyboard.cs`). Web: pinch select and grab, poke dock. No buttons, keyboard, gaze or voice needed | 🟢 every native acceptance check is made with simulated hands, every web emulator check with emulated hands / 🟡 real hands |
+| Seated; quick to get into and out of; a complete moment in under ten minutes | Seated table layout; the first meaningful moment is the cup's voice note, 33 s after a cold start in the simulator (native check 4); pause, resume and leave (check 6) | 🟢 simulator / 🟡 headset |
+| Original, not a wrapper around another service | Own API, apps and content. Third-party parts are SDKs and licensed assets ([ASSET_MANIFEST.md](ASSET_MANIFEST.md)); the sample day runs with no service at all | ✅ |
+| Performant on Quest hardware: 60 fps minimum | Web room: `?debug=1` HUD shows fps, draw calls and triangles (95–101 draw calls and 123k–136k triangles on a desktop). Native: `metavr perf` or OVR Metrics Tool ([NATIVE_QUICKSTART.md](NATIVE_QUICKSTART.md), section 5) | ❌ not measured: no headset |
+| The build judges open: for a Unity app, an APK uploaded to a **new release channel named "Competition"** in the Meta developer dashboard, and the link to it on the Devpost form (a bare APK file is not accepted); for an IWSDK app, a hosted link | Native: `scripts/native/build.ps1 -Target Android -Release`, [NATIVE_QUICKSTART.md](NATIVE_QUICKSTART.md), section 6. Web: [DEPLOYMENT.md](DEPLOYMENT.md) | ❌ neither exists yet. The native route needs a signing keystore and the entrant's Meta developer account; only development builds have been made. Nothing is hosted |
+| Demonstration video under three minutes, showing the project on a Quest or in XR Simulator, public on YouTube or Vimeo | [demo/README.md](demo/README.md): "I Saved You a Seat", 2:11, the native app in Meta XR Simulator (offline sample) with a companion insert; built by `scripts/demo/demo.ps1` | 🟡 made from simulator footage (no headset footage, no live session); ❌ not uploaded yet |
+| Text description: inspiration, how it was built, plans for improvement, target launch date | — | ❌ to be written on the Devpost form |
+| Testing instructions | [JUDGE_GUIDE.md](JUDGE_GUIDE.md) | 🟢 written from the simulator and emulator runs |
+| Everything in English | Apps, the video's subtitles and the documents | ✅ |
+| No identifiable person other than the entrant; no brand names, logos or commercial artwork; third-party tools and assets properly licensed | The sample's people are fictional (stock 3D characters, MIT). Its photos and clip are stock, credited, and show no identifiable person; voices are synthesized ([ASSET_MANIFEST.md](ASSET_MANIFEST.md), [asset-provenance.json](asset-provenance.json)) | 🟢 looked through again on 13 November |
+| Free, available and unchanged from the deadline until the winners are announced (about 11 December 2026) | — | ❌ follows from the release channel |
+| The entrant is a Start programme member with Developer Access by the time of submission | — | the entrant's own step |
 
 ## Brief P0
 
@@ -93,7 +103,7 @@ See [VISUAL_QA.md](VISUAL_QA.md) for captures, comparisons and remaining differe
 | Authorized short-lived model delivery, GLB validation, cache clearing | signed viewer-bound URLs + re-authorization per request; `glb.inspect`; `purgeAvatarCaches`, ref-counted model cache | ✅ |
 | Rig: skinning/morphs preserved, per-participant skeleton, units/facing, seated fit, IK; blinks only where supported | `shared/avatarRig.ts` (`SkinnedAvatar`) | 🟢 desktop (test mannequin) / 🟡 real export / 🟡 headset |
 | Less amber, fewer glossy wood highlights, quieter dock and panels | `env.ts` (lights, `satin()`), `keepsakes3d.ts` (`WALNUT_TINT`), `ui3d.ts`/`main.ts` (glass) | 🟢 `docs/VISUAL_QA.md` |
-| No Dubai claim for the Düsseldorf plate; simulated clip labelled as such | `room.html` place note; `origin` on sample media → *Simulated camera pan*, *Synthesized voice note*, *Sample photo* | ✅ |
+| No Dubai claim for the Düsseldorf plate; sample media labelled as what it is | `room.html` place note; `origin` and `credit` on sample media → *Sample clip* and *Sample photo* (real stock footage and photographs, credited; before 12 November a *Simulated camera pan*), *Synthesized voice note* | ✅ |
 | Settings overflow at 1440 px | `styles.css` (`.settings-grid`, `.rule-row` container query); `web/scripts/overflow-check.mjs` | ✅ |
 | Captures 1672×941, 1440×900, 390×844 incl. avatar setup/approval | `web/scripts/capture.mjs`, `web/scripts/avatar-e2e.mjs` → `docs/visual-qa/after/` | ✅ |
 | Docs: provider setup, config example without secrets, provenance, results table | `docs/AVATARS.md`, `.env.example`, `docs/ASSET_MANIFEST.md`, `docs/asset-provenance.json`, `docs/STATUS.md` | ✅ |
@@ -121,10 +131,13 @@ A native Unity client for Quest in `native/quest/`, tested in Meta XR Simulator,
 desktop or IWER result says nothing about the native client.
 
 `scripts/native/acceptance.ps1` runs the acceptance checks (marked *check n* below) in Meta XR Simulator 207.1 with a
-simulated Meta Quest 3 and simulated hands, through the simulator's own controls. Latest full run:
-[`acceptance-065004`](native/evidence/2026-11-12/acceptance-065004.md), 12 November 2026, **8 of 8 passed**
-(**simulator-tested**; check 5 is also **real-service-tested**). The rows follow the acceptance checks in these
-instructions; the brief itself isn't in this repository.
+simulated Meta Quest 3 and simulated hands, through the simulator's own controls. Latest full run, on the code as
+it is committed: [`acceptance-022557`](native/evidence/2026-11-13/acceptance-022557.md), 13 November 2026,
+**9 of 9 passed** (**simulator-tested**; checks 5 and 9 are also **real-service-tested**). The run before it,
+[`acceptance-125054`](native/evidence/2026-11-12/acceptance-125054.md) (12 November, 9 of 9), is where the renders
+named below come from. The first rows follow the acceptance checks
+in these instructions (the brief itself isn't in this repository); the rows after them cover what was asked for on
+12 November: hands that look real, real photographs and footage in the demonstration, and a furniture marketplace.
 
 | Acceptance row | Where | Status |
 |---|---|---|
@@ -132,16 +145,20 @@ instructions; the brief itself isn't in this repository.
 | XR session in the simulator: simulated Meta Quest 3, hand input | `scripts/native/play_in_sim.ps1`, `sim.ps1`, the probe (`App/TestProbe.cs`); check 1 | ✅ simulator-tested (OpenXR runtime "Meta XR Simulator 207.1.0", both hands tracked) |
 | A dock button pressed by hand | `SameSkyApp.SetDock`, `Interaction/Pressable.cs` (poke, or point and pinch; a press counts on release); check 2 | ✅ simulator-tested: a simulated fingertip pressed *Our day* |
 | The cup grabbed by hand | `SameSkyApp.Room.cs` (`BuildCup`), `Interaction/GrabbableObject.cs` (hand grab, distance grab); check 3 | ✅ simulator-tested: a palm grab lifted the cup, which moved with the hand |
-| The waiting voice note heard within the first minute | Offline sample day (`App/RoomData.cs`, `Resources/Sample/`), `PlayWaiting` with timed captions; check 4 | ✅ simulator-tested: playing 25.9 s after a fresh start, captions shown, played to the end. Hearing it is a manual step |
+| The waiting voice note heard within the first minute | Offline sample day (`App/RoomData.cs`, `Resources/Sample/`), `PlayWaiting` with timed captions; check 4 | ✅ simulator-tested: playing 33.1 s after a fresh start, captions shown, played to the end. Hearing it is a manual step |
 | A reply on the table survives an app restart and an API restart | `StartReply` and `RestoreNotes` (`SameSkyApp.Room.cs`); `test_replies_and_placements_survive_restart`; check 5 (`stop.ps1`, `start.ps1`) | ✅ simulator-tested and real-service-tested: a new reply typed on the spatial keyboard came back after both restarts; the server kept it and its placement |
 | Recenter, pause and exit | `SameSkyApp.Recenter`, `SetPaused`, `ShowPause`, `ConfirmExit`; check 6 | ✅ simulator-tested (recenter from 35° off to 0°). The system pause (Meta button, headset off) needs a headset |
 | Tracking loss without ghost presses | `Pressable.cs` (a release is confirmed a frame later; tracking loss unselects and unhovers at once and counts as a cancel), `GrabbableObject.cs` (clean release); check 7 (`metavr xrsim input source --hand right --source none`) | ✅ simulator-tested: a cancel, no press. The first runs found a real ghost press here; fixed |
-| MP4 of the simulator run | Check 8: one file per app session. Simulator 207.1's runtime has no MP4 recorder, so FFmpeg records the simulator window | ✅ 5 of 5 sessions recorded |
+| MP4 of the simulator run | Check 8: one file per app session. Simulator 207.1's runtime has no MP4 recorder, so FFmpeg records the simulator window | ✅ 6 of 6 sessions recorded |
 | Invite codes typed by hand (headset keypad) | `POST /v1/invites/redeem-code`, `test_invite_codes.py` (6 tests); companion join step; `UI/SpatialKeyboard.cs` code keypad | API ✅ automated, and real-service-tested (`seed.ps1` redeems codes); keypad not simulator-tested |
 | Voice notes playable in the native app | Ogg copy (`services/media.py`, `oggUrl`); `RoomData` `Audio()` | API ✅ `test_headset_voice_note_gets_an_ogg_twin_for_native_playback`; the sample note's playback is simulator-tested (check 4) |
 | Repeatable local setup: preflight, bootstrap, start/stop/seed, per-user installs | `scripts/native/*.ps1` (and `.sh` for macOS/Linux) | start, stop and seed real-service-tested on the Windows machine (check 5 restarts the API with them) |
-| APK for Quest 3/3S | `scripts/native/build.ps1 -Target Android`, `Editor/BuildScript.cs` | ✅ APK-built: 116 MB, ARM64, `com.samesky.quest` 0.9.0, SHA-256 in [NATIVE_STATUS.md](NATIVE_STATUS.md). Not installed on a headset |
+| APK for Quest 3/3S | `scripts/native/build.ps1 -Target Android`, `Editor/BuildScript.cs` | ✅ APK-built (development build): 136 MB, ARM64, target API level 34, Quest 3 and 3S, `com.samesky.quest` 0.9.0, SHA-256 in [NATIVE_STATUS.md](NATIVE_STATUS.md). Not installed or started on a headset. No release build yet |
 | Installed on a headset and measured there | `docs/NATIVE_QUICKSTART.md` (section 5) | Not done: no Quest |
+| Hands that look real | Skin on Meta's tracked hand mesh: `Interaction/HandSkin.cs`, `Shaders/HandSkin.shader`, maps computed by `Editor/HandSkinSetup.cs` (tone, lighter palm, nails, knuckle and palm creases, shadows); six tones or the avatar's in Settings → *Your hands* | Drawn in the simulator: check 1's close-ups (`seat-hands.png`, `seat-palms.png`, `seat-hands-pinch.png`); every check's presses and grabs were made with these hands; unit test for the bundle. Not seen or measured on a headset |
+| Actual photographs and video in the demonstration | Sample day: four photographs and one clip from Wikimedia Commons (CC0, public domain, CC BY), listed with hashes in `scripts/assets/sample_media.json`, fetched by `fetch_sample_media.py`, built by `build_real_sample_media.py`; `credit` and `origin: 'stock'` on each (`web/src/shared/sample.ts`), shown in the companion, the web room and the native app | ✅ built, credited and labelled *Sample photo* / *Sample clip*; web type check, unit tests and build pass; native unit tests check the labels and the credit; drawn in the native render tour. Web captures not re-taken |
+| A marketplace to customise the furniture | API: `routers/furniture.py`, `services/furniture.py`, `furniture_catalog.json`, `room_decor` (migration `5e7a1c9d2b46`), realtime `decor_changed`. Native: `App/SameSkyApp.Market.cs`, `Room/RoomDecor.cs`, `Room/Furniture.cs`, the pieces in `Editor/LoungeBuilder.cs`; check 9. Every piece is included: nothing is priced or sold | API ✅ `test_furniture.py` (9 tests). Native ✅ simulator-tested and real-service-tested (check 9: a chair fabric chosen and kept by a simulated hand, on the server and back after an app restart); the other tabs and looks are drawn by the render tour, not pressed. Not in the web room or the companion |
+| Unit tests for the native app | `native/quest/Assets/SameSky/Tests/EditMode`, `scripts/native/test.ps1` | ✅ 13 of 13 pass in Unity batch mode |
 
 ## P1 (not implemented)
 
