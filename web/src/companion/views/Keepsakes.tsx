@@ -4,7 +4,8 @@ import { formatDate } from '../../shared/tz';
 import { useApp } from '../App';
 import { MomentDetail } from '../MomentDetail';
 import { StoryPlayer } from '../StoryPlayer';
-import { Icon, KeepsakeRender, Notice } from '../ui';
+import { Icon, KeepsakeRender } from '../ui';
+import { NoRoom } from './Setup';
 
 export function Keepsakes() {
   const { ds, room } = useApp();
@@ -19,7 +20,7 @@ export function Keepsakes() {
     void Promise.all([ds.awards(room.id), ds.archive(room.id)]).then(([a, r]) => { setAwards(a); setArchive(r); });
   }, [ds, room]);
 
-  if (!room) return <Notice>Create or join a room first.</Notice>;
+  if (!room) return <NoRoom />;
   return (
     <>
       <h1 className="page-title on-backdrop">Keepsakes</h1>

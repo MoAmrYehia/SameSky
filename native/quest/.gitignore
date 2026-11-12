@@ -1,0 +1,33 @@
+# Unity-generated (never commit)
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+/.utmp/
+*.csproj
+*.sln
+*.suo
+*.user
+*.pidb
+*.booproj
+*.apk
+*.aab
+*.unitypackage
+sysinfo.txt
+crashlytics-buildid.txt
+# Meta XR SDK tarballs fetched by scripts/native/bootstrap (pinned + checksummed in packages.lock.txt)
+/.packages/
+# Written by the Meta XR SDK's Immersive Debugger with this PC's network address; the SDK recreates it
+/Assets/Resources/DevAgentSettings.asset
+/Assets/Resources/DevAgentSettings.asset.meta
+# Local signing material for release builds: never commit
+/Signing/
+*.keystore
+*.jks
+# Test and build evidence lands in docs/native/ instead
+/TestResults*.xml

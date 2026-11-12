@@ -16,22 +16,24 @@
 
 import '@fontsource-variable/figtree';
 import {
-  AudioSource, AudioUtils, createSystem, DistanceGrabbable, type Entity, Grabbed, Hovered, IBLTexture, MovementMode,
+  AudioSource, AudioUtils, createSystem, type Entity, Grabbed, Hovered, IBLTexture,
   OneHandGrabbable, ReferenceSpaceType, SessionMode, World,
 } from '@iwsdk/core';
 import {
-  AudioListener, CanvasTexture, Color, Euler, Group, LoadingManager, Mesh, MeshBasicMaterial, NeutralToneMapping, type Object3D,
+  AudioListener, Box3, BoxGeometry, CanvasTexture, Color, Euler, Group, LoadingManager, Matrix4, Mesh, MeshBasicMaterial, NeutralToneMapping, type Object3D,
   PCFSoftShadowMap, PlaneGeometry, Quaternion, SRGBColorSpace, type Texture, TextureLoader, Vector3, VideoTexture,
 } from 'three';
 import { cueAt, loadCaptions, type Cue } from '../shared/captions';
-import { type CharacterKit, loadCharacterKit } from '../shared/character';
-import type { AvatarDefinition, Award, Me, Moment, Recap, Reply, Room, RoomObject } from '../shared/contracts';
+import { acquireAvatarModel, SkinnedAvatar } from '../shared/avatarRig';
+import { type CharacterKit, CharacterModel, loadCharacterKit } from '../shared/character';
+import type { AvatarView, Award, Me, Moment, Recap, Reply, Room, RoomObject } from '../shared/contracts';
 import { currentMode, dataSource, SampleSource, storedToken } from '../shared/data';
 import { buildKeepsake, texturesReady } from '../shared/keepsakes3d';
-import { renderPortrait } from '../shared/portrait';
+import { renderAvatarPortrait, setPortraitViewer } from '../shared/portrait';
 import { SAMPLE_PEOPLE } from '../shared/sample';
 import { cityOf } from '../shared/tz';
 import { Avatar3D } from './avatar3d';
+import { emulatorActive, prepareEmulatedSession } from './emulator';
 import { buildEnvironment, contactShadow, type RoomEnvironment, TABLE } from './env';
 import { LiveSession, type PoseMessage } from './live';
 import { buildMemoryObject, infoCard, type MemoryObject } from './objects';
@@ -44,6 +46,14 @@ declare global {
   interface Window {
     __sameskyReady?: boolean;
     __sameskySafeArea?: () => SafeAreaReport;
+    /** Automated checks: who is across the table, and as what figure. */
+    __sameskyPresence?: () => { presence: string; figure: string | null; avatarKey: string };
+    /** Automated checks (e.g. the emulator test): named interactive targets with world positions. */
+    __sameskyTargets?: () => { label: string; position: [number, number, number]; size: [number, number, number]; normal: [number, number, number]; enabled: boolean; hovered: boolean }[];
+    /** Automated checks: the room's observable state. */
+    __sameskyState?: () => RoomState;
+    /** Emulator only: each input's measured target ray and index fingertip (world space). */
+    __sameskyInputs?: () => InputSnapshot[];
   }
 }
 
@@ -77,7 +87,7 @@ let room: Room;
 let moments: Moment[] = [];
 let recap: Recap | null = null;
 let awards: Award[] = [];
-const memory = new Map<string, MemoryObject & { entity: Entity }>();
+const memory = new Map<string, MemoryObject & { entity: Entity; far: Mesh }>();
 let tableEntity: Entity;
 let roomEntity: Entity;
 let captionsOn = true;
@@ -150,6 +160,7 @@ async function boot() {
     return;
   }
   room = picked;
+  setPortraitViewer(mode === 'live' ? me.id : null);
   const names = room.members.map((m) => m.displayName).join(' + ');
   $('overlay-tag').textContent = mode === 'sample' ? 'Sample day · fictional people' : room.name;
   $('welcome-title').textContent = room.kind === 'direct' ? names : room.name;
@@ -172,12 +183,12 @@ async function boot() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   // IWSDK sets the output colour space only; tone mapping and shadows are tuned for this room.
   renderer.toneMapping = NeutralToneMapping;
-  renderer.toneMappingExposure = 0.92;
+  renderer.toneMappingExposure = 0.95;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = PCFSoftShadowMap;
-  world.scene.background = new Color(0x2a211b);
+  world.scene.background = new Color(0x24221f);
   // Image-based light: a CC0 interior HDR, prefiltered through PMREM by IWSDK's EnvironmentSystem.
-  world.activeLevel.value.addComponent(IBLTexture, { src: '/assets/env/lounge_1k.hdr', intensity: 0.7 });
+  world.activeLevel.value.addComponent(IBLTexture, { src: '/assets/env/lounge_1k.hdr', intensity: 0.6 });
 
   try {
     [env, kit] = await assets;
@@ -197,7 +208,7 @@ async function boot() {
   buildDock();
   buildKeepsakes();
   await placeObjects(objects);
-  setupPartner();
+  await setupPartner();
   buildLabels();
   placeDesktopCamera();
   window.addEventListener('resize', () => requestAnimationFrame(placeDesktopCamera));
@@ -208,6 +219,10 @@ async function boot() {
     if (h !== hudH) { hudH = h; requestAnimationFrame(placeDesktopCamera); }
   }).observe($('hud'));
   window.__sameskySafeArea = safeArea;
+  window.__sameskyPresence = () => ({ presence: partnerKind, figure: partner?.character.kind ?? null, avatarKey: partnerAvatarKey.split('|')[0] });
+  window.__sameskyTargets = testTargets;
+  window.__sameskyState = roomState;
+  window.__sameskyInputs = () => inputSnapshot; // stays empty unless the emulator is active
   if (debug) (window as unknown as Record<string, unknown>).__samesky = { world, env, pressables, memory, activate, partner, safeArea, placeDesktopCamera, screen, dock };
 
   // XR availability + entry.
@@ -216,6 +231,7 @@ async function boot() {
   enterVr.onclick = () => {
     unlockAudio();
     $('overlay').hidden = true;
+    prepareEmulatedSession(); // dev only: lets Meta's emulator (IWER) run the session in desktop Chrome
     world.launchXR();
   };
   enter2d.onclick = () => {
@@ -340,7 +356,7 @@ function buildScreen() {
   group.name = 'shared-screen';
   const entity = world.createTransformEntity(group, { parent: tableEntity });
   const bg = new CanvasPanel(SCREEN_W, SCREEN_H, { pxPerM: 700, renderOrder: 1 });
-  bg.draw((ctx, W, H) => glass(ctx, 2, 2, W - 4, H - 4, H * 0.075, { tint: 'rgba(58, 50, 44, 0.52)', highlight: 0.22, border: 'rgba(255,255,255,0.55)' }));
+  bg.draw((ctx, W, H) => glass(ctx, 2, 2, W - 4, H - 4, H * 0.075, { tint: 'rgba(30, 31, 30, 0.34)', highlight: 0.07, border: 'rgba(255,255,255,0.26)' }));
   bg.mesh.position.z = -0.004;
   const media = new Mesh(new PlaneGeometry(MEDIA_W, MEDIA_H), new MeshBasicMaterial({ color: 0xffffff, toneMapped: false, alphaMap: roundedMask(), alphaTest: 0.5 }));
   const header = new CanvasPanel(MEDIA_W, 0.068, { renderOrder: 2 });
@@ -508,7 +524,11 @@ function showMoment(m: Moment, opts: { together?: boolean; segment?: string } = 
   screen.current = m;
   screen.together = !!opts.together || !!live;
   const owner = room.members.find((x) => x.id === m.ownerId);
-  const kind = m.kind === 'clip' ? 'clip' : m.kind === 'voice' ? 'voice note' : m.kind === 'text' ? 'note' : 'photo';
+  // sample media names how it was made (a simulated pan, a synthesized voice, a stock photo), never passing as a recording
+  const origin = m.media?.origin;
+  const kind = m.kind === 'clip' ? (origin === 'simulated' ? 'simulated camera pan' : 'clip')
+    : m.kind === 'voice' ? (origin === 'synthesized' ? 'synthesized voice note' : 'voice note')
+    : m.kind === 'text' ? 'note' : origin === 'stock' ? 'sample photo' : 'photo';
   if (screen.together) drawHeader(`${owner?.displayName ?? m.ownerName}'s ${kind}`, live ? 'Watching together' : 'Watching together · simulated', 'users', COLORS.greenBright);
   else drawHeader(`${owner?.displayName ?? m.ownerName}'s ${kind}`, `${m.captureLocal.time} in ${cityOf(m.captureLocal.zone)}`);
   if (m.kind === 'clip' && m.media?.url) {
@@ -538,9 +558,9 @@ function showMoment(m: Moment, opts: { together?: boolean; segment?: string } = 
 
 /** Voice notes and text moments show the person's own avatar portrait with their words, never a fake video. */
 async function portraitCard(m: Moment): Promise<Texture> {
-  const def = room.members.find((x) => x.id === m.ownerId)?.avatar?.definition ?? SAMPLE_PEOPLE['sample-maya'].avatar;
+  const owner = room.members.find((x) => x.id === m.ownerId)?.avatar;
   const img = new Image();
-  img.src = await renderPortrait(def, 384);
+  img.src = await renderAvatarPortrait(owner, SAMPLE_PEOPLE['sample-maya'].avatar, 384);
   await img.decode().catch(() => undefined);
   const c = document.createElement('canvas');
   c.width = 1280;
@@ -720,11 +740,44 @@ async function placeObjects(objects: RoomObject[]) {
 function addObject(record: RoomObject, moment?: Moment, reply?: Reply) {
   const obj = buildMemoryObject(record, moment, reply);
   const entity = world.createTransformEntity(obj.group, { parent: tableEntity });
+  const name = `${record.objectType}:${record.momentId ?? record.replyId ?? record.id}`;
+  // Near: reach out and pinch-grab it. Grabbing activates (RoomSystem.init); letting go persists the spot.
   entity.addComponent(OneHandGrabbable, { rotate: false, translate: true });
-  entity.addComponent(DistanceGrabbable, { rotate: false, translate: true, scale: false, movementMode: MovementMode.MoveFromTarget });
-  // Pinch from a distance or click (desktop) selects; grabbing selects too (see RoomSystem.init).
-  obj.group.userData.pressable = registerPressable(entity, obj.group, () => activate(obj));
-  memory.set(record.id, { ...obj, entity });
+  // Desktop: click (screen pointers) on the object itself; it can also be dragged there.
+  obj.group.userData.pressable = registerPressable(entity, obj.group, () => activate(obj), undefined, `object:${name}`);
+  // Far: point and pinch from the seat. IWSDK binds one grab handle per entity, and the one-hand handle
+  // denies ray events, so in a headset no ray could reach the object (found in Meta's emulator). Far
+  // selection lives on an invisible sibling copy of the object's hit proxy that only XR rays may target;
+  // screen pointers pass through it to the object, and near grabs never see it.
+  const source = obj.group.getObjectByName('hit-proxy') as Mesh | undefined;
+  const far = new Mesh(source?.geometry ?? new BoxGeometry(0.14, 0.1, 0.14), new MeshBasicMaterial({ visible: false }));
+  far.name = 'far-select';
+  (far as unknown as { pointerEventsType: unknown }).pointerEventsType = { allow: 'ray' };
+  far.userData.offset = source ? source.position.clone() : new Vector3(0, 0.05, 0);
+  const farEntity = world.createTransformEntity(far, { parent: tableEntity });
+  const entry = { ...obj, entity, far };
+  registerPressable(farEntity, far, () => activate(entry), (h) => {
+    obj.group.scale.setScalar(h ? 1.06 : 1);
+    if (h) showHoverLabel(obj.group);
+    else hoverLabel.mesh.visible = false;
+  }, `far:${name}`, { poke: false });
+  syncFarProxy(entry);
+  memory.set(record.id, entry);
+}
+
+/** Keep an object's far-select proxy on the object, in world terms: a grab can re-parent the object. */
+const _farWorld = new Matrix4();
+const _farOffset = new Matrix4();
+const _farParentInv = new Matrix4();
+function syncFarProxy(o: { group: Group; far: Mesh }) {
+  const parent = o.far.parent;
+  if (!parent) return;
+  const offset = o.far.userData.offset as Vector3;
+  o.group.updateWorldMatrix(true, false);
+  parent.updateWorldMatrix(true, false);
+  _farWorld.multiplyMatrices(o.group.matrixWorld, _farOffset.makeTranslation(offset.x, offset.y, offset.z));
+  _farWorld.premultiply(_farParentInv.copy(parent.matrixWorld).invert());
+  _farWorld.decompose(o.far.position, o.far.quaternion, o.far.scale);
 }
 
 let lastActivation = 0;
@@ -751,7 +804,7 @@ function activate(obj: MemoryObject) {
   }
 }
 
-function persistMove(entry: MemoryObject & { entity: Entity }) {
+function persistMove(entry: MemoryObject & { entity: Entity; far: Mesh }) {
   const group = entry.group;
   const table = tableEntity.object3D!;
   if (group.parent !== table) table.attach(group);
@@ -818,7 +871,7 @@ function buildKeepsakes() {
       k.rotation.y = -0.9;
       parent = side;
     }
-    makePressable(world, k, parent, () => showInfo(a.title, [a.trigger, a.earned ? 'Earned together.' : `${a.progress} of ${a.target} so far — missed days never count against you.`], a.earned ? '✓ Earned' : undefined));
+    makePressable(world, k, parent, () => showInfo(a.title, [a.trigger, a.earned ? 'Earned together.' : `${a.progress} of ${a.target} so far — missed days never count against you.`], a.earned ? '✓ Earned' : undefined), undefined, `keepsake:${a.keepsake}`);
   }
 }
 
@@ -872,7 +925,7 @@ function buildDock() {
       if (h) dock.hovered = i;
       else if (dock.hovered === i) dock.hovered = -1;
       drawDock();
-    });
+    }, `dock:${it.id}`);
     p.object.position.set(it.x + it.w / 2 - width / 2, 0, 0.004);
   });
   drawDock();
@@ -887,7 +940,7 @@ function drawDock() {
     dockKey = key;
     dock.panel.draw((ctx, W, H) => {
       const s = W / dock.width;
-      glass(ctx, 2, 2, W - 4, H - 4, H * 0.42, { tint: 'rgba(44, 37, 32, 0.62)', highlight: 0.18 });
+      glass(ctx, 2, 2, W - 4, H - 4, H * 0.42, { tint: 'rgba(26, 27, 26, 0.5)', highlight: 0.05, border: 'rgba(255,255,255,0.22)' });
       dock.items.forEach((it, i) => {
         const x = it.x * s;
         const w = it.w * s;
@@ -958,7 +1011,7 @@ function toggleMute() {
 // Labels: the cup's waiting message, onboarding hint, flash messages, hover label (all fitted to text)
 // ---------------------------------------------------------------------------
 
-let cupLabel: { card: FittedCard; entry: MemoryObject & { entity: Entity }; pressable: Pressable } | null = null;
+let cupLabel: { card: FittedCard; entry: MemoryObject & { entity: Entity; far: Mesh }; pressable: Pressable } | null = null;
 let hint: FittedPill;
 let flashPill: FittedPill;
 const hoverLabel = new FittedPill(0.62, 0.05, 9);
@@ -970,7 +1023,7 @@ function buildLabels() {
   const cup = [...memory.values()].find((o) => o.record.objectType === 'cup' && o.moment?.kind === 'voice');
   if (cup) {
     const card = new FittedCard(0.4, 0.072, 7);
-    const pressable = makePressable(world, card.mesh, tableEntity, () => activate(cup), () => drawCupLabel());
+    const pressable = makePressable(world, card.mesh, tableEntity, () => activate(cup), () => drawCupLabel(), 'cup-card');
     cupLabel = { card, entry: cup, pressable };
     drawCupLabel();
   }
@@ -989,7 +1042,7 @@ function drawCupLabel() {
   const playing = voice?.moment.id === m.id;
   const seconds = (m.media?.durationMs ?? 0) / 1000;
   // narrow screens carry the onboarding instruction inside the card instead of a separate hint
-  const sub = hintNarrow && onboarding === 'cup' ? `${verb()} to listen · ${m.ownerName} · ${fmt(seconds)}` : `${m.ownerName} · Voice note · ${fmt(seconds)}`;
+  const sub = hintNarrow && onboarding === 'cup' ? `${verb()} to listen · ${m.ownerName} · ${fmt(seconds)}` : `${m.ownerName} · ${m.media?.origin === 'synthesized' ? 'Synthesized voice' : 'Voice note'} · ${fmt(seconds)}`;
   cupLabel.card.set(m.caption.replace(/\.$/, ''), sub, { icon: 'wave', trailing: playing ? 'pause' : 'play', hovered: cupLabel.pressable.hovered });
 }
 
@@ -1012,14 +1065,19 @@ function setOnboarding(stage: string) {
   } else {
     hint.mesh.visible = false;
   }
+  if (flashPill?.mesh.visible) placeFlash(); // a flash already showing moves out of the hint's way
 }
 
 let flashTimer = 0;
+/** Above the dock; one row higher while the onboarding hint sits on the dock, so the two never overlap. */
+function placeFlash() {
+  flashPill.mesh.position.set(0, DOCK_H / 2 + 0.034 + (hint?.mesh.visible && hint.mesh.parent === dock.group ? 0.06 : 0), 0.003);
+}
 function flash(text: string) {
   status(text);
   window.clearTimeout(flashTimer);
   flashPill.set(text);
-  flashPill.mesh.position.set(0, DOCK_H / 2 + 0.034 + (hint?.mesh.visible && hint.mesh.parent === dock.group ? 0.06 : 0), 0.003);
+  placeFlash();
   flashPill.mesh.visible = true;
   flashTimer = window.setTimeout(() => { flashPill.mesh.visible = false; status(''); }, 3500);
 }
@@ -1052,9 +1110,12 @@ function openReplySheet() {
   group.position.set(0, 0.3, 0.1);
   group.rotation.x = -0.35;
   const entity = world.createTransformEntity(group, { parent: tableEntity });
+  // Headset: closer and lower, facing the person, so the choices never cover the other person's face
+  // (found in Meta's emulator: at eye level the sheet hid Maya and the screen's captions).
+  if (world.renderer.xr.isPresenting || xrPreview) setFacing(group, XR_SHEET, SEATED_HEAD, 0.8);
   const panel = new CanvasPanel(0.52, 0.1, { renderOrder: 5 });
   panel.draw((ctx, W, H) => {
-    glass(ctx, 2, 2, W - 4, H - 4, H * 0.3, { tint: 'rgba(36, 32, 29, 0.8)' });
+    glass(ctx, 2, 2, W - 4, H - 4, H * 0.3, { tint: 'rgba(26, 27, 26, 0.7)' });
     ctx.fillStyle = '#ffffff';
     ctx.font = `700 ${Math.round(H * 0.3)}px ${FONT}`;
     ctx.textBaseline = 'middle';
@@ -1124,17 +1185,60 @@ function showInfo(title: string, lines: string[], footer?: string) {
 // Partner avatar: simulated (sample), recorded, or live
 // ---------------------------------------------------------------------------
 
-function setupPartner() {
+async function setupPartner() {
   const other = room.members.find((m) => m.id !== me.id);
   if (!other) return;
-  const def = other.avatar?.definition ?? SAMPLE_PEOPLE['sample-maya'].avatar;
-  partner = createPartner(def, other.displayName);
+  partner = await createPartner(other.avatar, other.displayName);
+  partnerAvatarKey = avatarKey(other.avatar);
   partnerKind = mode === 'sample' ? 'simulated' : 'away';
   partner.setPresence(partnerKind);
 }
 
-function createPartner(def: AvatarDefinition, name: string) {
-  const p = new Avatar3D(kit, def, name, env.seat);
+/** Which figure a view resolves to: the exact approved version, or the demo definition. */
+function avatarKey(avatar: AvatarView | null | undefined) {
+  return avatar?.kind === 'photo_derived' && avatar.assetId ? `photo|${avatar.assetId}|${avatar.assetVersion ?? 0}` : `demo|${JSON.stringify(avatar?.definition ?? null)}`;
+}
+
+let partnerAvatarKey = '';
+let partnerSwap = Promise.resolve();
+
+/** Swap in a partner's newer approved avatar (or their demo after they stop sharing) without a reload. */
+function replacePartner(avatar: AvatarView | null | undefined, name: string) {
+  const key = avatarKey(avatar);
+  if (!partner || key === partnerAvatarKey) return;
+  partnerAvatarKey = key;
+  partnerSwap = partnerSwap.then(async () => {
+    const next = await createPartner(avatar, name);
+    if (avatarKey(avatar) !== partnerAvatarKey) { next.dispose(); return; } // superseded while loading
+    partner?.dispose();
+    partner = next;
+    partner.setPresence(partnerKind);
+  });
+}
+
+/**
+ * The person's owner-approved photo-derived model when they share it with us, otherwise the labelled demo
+ * avatar. A model that fails to load falls back to the demo avatar and says so — never silently.
+ */
+async function createPartner(avatar: AvatarView | null | undefined, name: string) {
+  let figure: CharacterModel | SkinnedAvatar | null = null;
+  let release: (() => void) | null = null;
+  if (avatar?.kind === 'photo_derived' && avatar.modelUrl && avatar.assetId) {
+    try {
+      const held = await acquireAvatarModel(`${me.id}|${avatar.assetId}|${avatar.assetVersion ?? 0}`, avatar.modelUrl);
+      release = held.release;
+      figure = new SkinnedAvatar(held.gltf, 2);
+    } catch (e) {
+      console.warn('[avatar] could not load the approved model', e);
+      release?.();
+      release = null;
+      window.setTimeout(() => flash(`Couldn't load ${name}'s avatar, so a demo avatar is shown.`), 1500);
+    }
+  }
+  figure ??= new CharacterModel(kit, avatar?.definition ?? SAMPLE_PEOPLE['sample-maya'].avatar, 2);
+  const p = new Avatar3D(figure, name, env.seat);
+  p.releaseModel = release;
+  p.demoNote = mode === 'live';
   p.character.blinking = !capture;
   p.setRest(mode === 'sample' ? 'chin' : 'table');
   tableEntity.object3D!.add(p.root);
@@ -1154,10 +1258,7 @@ async function joinLive(sessionId: string) {
   live = new LiveSession(sessionId, token, {
     onWelcome: (_me, state, participants) => {
       const other = participants.find((p) => p.userId !== me.id);
-      if (other && partner && other.avatar) {
-        partner.dispose();
-        partner = createPartner(other.avatar.definition, other.displayName);
-      }
+      if (other?.avatar) replacePartner(other.avatar, other.displayName);
       partnerKind = other?.online ? 'live' : 'away';
       partner?.setPresence(partnerKind);
       const m = moments.find((x) => x.id === state.momentId);
@@ -1170,7 +1271,17 @@ async function joinLive(sessionId: string) {
       if (partnerKind !== 'live') { partnerKind = 'live'; partner?.setPresence('live'); }
       partner?.setPose(mirrorPose(pose.head), pose.left ? mirrorPose(pose.left) : null, pose.right ? mirrorPose(pose.right) : null, pose.tracked);
     },
-    onPeerJoined: (_uid, name) => { partnerKind = 'live'; partner?.setPresence('live'); flash(`${name ?? 'They'} joined.`); },
+    onPeerJoined: (uid, name, avatar) => {
+      partnerKind = 'live';
+      partner?.setPresence('live');
+      flash(`${name ?? 'They'} joined.`);
+      // The broadcast never says whether a likeness exists; ask with our own authorization.
+      if (avatar?.refresh) void ds.userAvatar(uid).then((r) => replacePartner(r.avatar, r.displayName)).catch(() => undefined);
+    },
+    onAvatarChanged: (uid) => {
+      if (uid === me.id) return;
+      void ds.userAvatar(uid).then((r) => replacePartner(r.avatar, r.displayName)).catch(() => undefined);
+    },
     onPeerLeft: (_uid, reason) => { partnerKind = 'away'; partner?.setPresence('away'); flash(reason === 'presence_expired' ? 'Connection to them was lost.' : 'They left the room.'); },
     onReaction: (_uid, kind) => flash(kind === 'heart' ? '❤️' : '✨'),
     onClosed: (reason, final) => { if (final) { flash(reason); live = null; partnerKind = 'away'; partner?.setPresence('away'); } else status('Reconnecting…'); },
@@ -1200,6 +1311,8 @@ function syncVideo(force = false) {
 const SEATED_HEAD = new Vector3(0, 0.43, 0.8);
 const XR_SCREEN = new Vector3(-0.6, 0.5, -0.32);
 const XR_DOCK = new Vector3(0, 0.035, 0.47);
+/** Reply sheet in a headset: ~0.56 m from a seated eye, top edge below the eye-to-chin line of the person opposite. */
+const XR_SHEET = new Vector3(0, 0.182, 0.3);
 const _a = new Vector3();
 const _b = new Vector3();
 const _c = new Vector3();
@@ -1499,6 +1612,9 @@ function positionCupLabel() {
   if (!cupLabel) return;
   const cup = cupLabel.entry.group.position;
   const card = cupLabel.card;
+  // the reply sheet is modal: the cup card would otherwise draw through it in a headset
+  card.mesh.visible = !sheet;
+  cupLabel.pressable.enabled = !sheet;
   const narrow = flatView && window.innerWidth / window.innerHeight < 0.8;
   let k = legibleScale(cupLabel.entry.group, 0.072 * 0.22, 12);
   if (flatView) {
@@ -1549,9 +1665,13 @@ class RoomSystem extends createSystem({ grabbed: { required: [Grabbed] } }) {
   update(delta: number, time: number) {
     frameT = capture ? CAPTURE_T : time;
     const dt = capture ? 1 / 60 : delta;
+    // the emulator installs itself on window load, which can land after boot: check until it appears
+    if (emulated || (emulated = emulatorActive())) snapshotInputs();
+    testFrame++;
     updateViewer();
     pressables.forEach(updateHover);
     memory.forEach(pulseGlow);
+    memory.forEach(syncFarProxy);
 
     // Story pacing + voice captions (memoized: redrawn only when the cue changes).
     if (story && !story.paused) {
@@ -1653,3 +1773,100 @@ boot().catch((e) => {
   console.error(e);
   showLoadError('The room could not start on this device. Try reloading, or use the companion instead.');
 });
+
+// ---------------------------------------------------------------------------
+// Test hooks (read-only): used by web/scripts/xr-emulator-test.mjs and the capture scripts
+// ---------------------------------------------------------------------------
+
+interface RoomState {
+  presenting: boolean;
+  emulated: boolean;
+  presence: string;
+  captionsOn: boolean;
+  muted: boolean;
+  screen: string | null;
+  story: boolean;
+  voice: string | null;
+  replySheet: boolean;
+  info: boolean;
+  pressables: number;
+  roomOffset: [number, number, number];
+  head: [number, number, number];
+  frame: number;
+}
+
+function shown(o: Object3D | null): boolean {
+  for (let x: Object3D | null = o; x; x = x.parent) if (!x.visible) return false;
+  return true;
+}
+
+function testTargets() {
+  const out: { label: string; position: [number, number, number]; size: [number, number, number]; normal: [number, number, number]; enabled: boolean; hovered: boolean }[] = [];
+  const box = new Box3();
+  const c = new Vector3();
+  const size = new Vector3();
+  const n = new Vector3();
+  const q = new Quaternion();
+  for (const p of pressables.values()) {
+    if (!p.label || !shown(p.object)) continue;
+    box.setFromObject(p.object);
+    if (box.isEmpty()) continue;
+    box.getCenter(c);
+    box.getSize(size);
+    // panels and hit planes face +Z locally: their world normal is the direction a finger presses against
+    n.set(0, 0, 1).applyQuaternion(p.object.getWorldQuaternion(q));
+    out.push({ label: p.label, position: [c.x, c.y, c.z], size: [size.x, size.y, size.z], normal: [n.x, n.y, n.z], enabled: p.enabled, hovered: p.hovered });
+  }
+  return out;
+}
+
+// Emulator only: where each input's target ray and index fingertip actually are this frame, in world space, so
+// the emulator test can aim by measurement rather than by guessing IWER's internal offsets.
+interface InputSnapshot { handedness: string; kind: 'hand' | 'controller'; origin: [number, number, number]; direction: [number, number, number]; tip: [number, number, number] | null; select: boolean }
+let emulated = false;
+let inputSnapshot: InputSnapshot[] = [];
+let testFrame = 0;
+const _rayDir = new Vector3();
+const _rayQ = new Quaternion();
+function snapshotInputs() {
+  const xr = world.renderer.xr;
+  const frame = xr.getFrame();
+  const ref = xr.getReferenceSpace();
+  if (!frame || !ref) { inputSnapshot = []; return; }
+  const next: InputSnapshot[] = [];
+  for (const src of frame.session.inputSources) {
+    const ray = frame.getPose(src.targetRaySpace, ref);
+    if (!ray) continue;
+    const t = ray.transform;
+    _rayQ.set(t.orientation.x, t.orientation.y, t.orientation.z, t.orientation.w);
+    _rayDir.set(0, 0, -1).applyQuaternion(_rayQ);
+    let tip: [number, number, number] | null = null;
+    const joint = src.hand?.get('index-finger-tip');
+    if (joint && frame.getJointPose) {
+      const jp = frame.getJointPose(joint, ref);
+      if (jp) tip = [jp.transform.position.x, jp.transform.position.y, jp.transform.position.z];
+    }
+    next.push({ handedness: src.handedness, kind: src.hand ? 'hand' : 'controller', origin: [t.position.x, t.position.y, t.position.z], direction: [_rayDir.x, _rayDir.y, _rayDir.z], tip, select: false });
+  }
+  inputSnapshot = next;
+}
+
+function roomState(): RoomState {
+  const o = roomEntity.object3D!.position;
+  return {
+    presenting: world.renderer.xr.isPresenting,
+    emulated: !!window.IWER_DEVICE,
+    presence: partner?.presence ?? partnerKind, // what the badge shows (live, simulated, recorded, away)
+    captionsOn,
+    muted,
+    screen: screen.current?.id ?? null,
+    story: !!story,
+    voice: voice?.moment.id ?? null,
+    replySheet: !!sheet,
+    info: !!info,
+    pressables: pressables.size,
+    roomOffset: [o.x, o.y, o.z],
+    head: (() => { const h = world.camera.getWorldPosition(new Vector3()); return [h.x, h.y, h.z] as [number, number, number]; })(),
+    frame: testFrame,
+  };
+}

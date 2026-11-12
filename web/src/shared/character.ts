@@ -14,9 +14,10 @@ import {
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import type { AvatarDefinition } from './contracts';
+import type { Figure } from './figure';
 
 export const KIT_URL = '/assets/models/avatars/characters.glb';
-export const KIT_VERSION = 'kit-3';
+export const KIT_VERSION = 'kit-4';
 
 export interface KitExtras {
   neckPivot: [number, number, number];
@@ -112,7 +113,7 @@ export function definitionKey(def: AvatarDefinition): string {
 
 const DOWN = new Vector3(0, -1, 0);
 export const HEAD_SCALE = 1.18;
-const IRIS = 0.7; // iris cap half-angle (radians): large, friendly irises
+const IRIS = 0.56; // iris cap half-angle (radians): close to a human iris (~12 mm across a ~24 mm eye), not doll-sized
 const _v1 = new Vector3();
 const _v2 = new Vector3();
 const _v3 = new Vector3();
@@ -161,7 +162,12 @@ function irisTexture(): Texture {
 
 let sharedIris: Texture | null = null;
 
-export class CharacterModel {
+/** The labelled DEMO character (procedurally sculpted kit). Photo-derived avatars use SkinnedAvatar instead. */
+export class CharacterModel implements Figure {
+  readonly kind = 'preset_demo' as const;
+  /** The kit is sculpted at ~0.83 adult scale; shown at the table at 1.2x. */
+  readonly displayScale = 1.2;
+  readonly eyeHeight = 0.6;
   readonly root = new Group(); // pelvis on the seat; +Z is the character's forward
   readonly chest = new Group();
   readonly neck = new Group();
@@ -218,8 +224,9 @@ export class CharacterModel {
     const d = this.def;
     const ex = this.kit.extras;
     // Head skin carries sculpted shading cues (blush, socket depth) as vertex colours; other skin parts don't.
-    const skinFace = this.material(new MeshPhysicalMaterial({ color: d.skin, roughness: 0.56, sheen: 0.35, sheenRoughness: 0.6, sheenColor: new Color('#ffb59e'), vertexColors: true }));
-    const skin = this.material(new MeshPhysicalMaterial({ color: d.skin, roughness: 0.58, sheen: 0.3, sheenRoughness: 0.6, sheenColor: new Color('#ffb59e') }));
+    // matte skin with a faint neutral sheen: not glossy, not orange (visual QA pass 2)
+    const skinFace = this.material(new MeshPhysicalMaterial({ color: d.skin, roughness: 0.68, sheen: 0.16, sheenRoughness: 0.7, sheenColor: new Color('#f0d0c4'), vertexColors: true }));
+    const skin = this.material(new MeshPhysicalMaterial({ color: d.skin, roughness: 0.7, sheen: 0.14, sheenRoughness: 0.7, sheenColor: new Color('#f0d0c4') }));
     const lips = this.material(new MeshPhysicalMaterial({ color: mix(d.skin, '#a8433f', 0.55), roughness: 0.4, sheen: 0.2 }));
     const brows = this.material(new MeshStandardMaterial({ color: new Color(d.hairColor).multiplyScalar(0.85), roughness: 0.8 }));
     const hair = this.material(new MeshPhysicalMaterial({ color: d.hairColor, roughness: 0.64, sheen: 0.5, sheenRoughness: 0.45, sheenColor: new Color(d.hairColor).lerp(new Color('#ffe2c0'), 0.5) }));
@@ -282,8 +289,8 @@ export class CharacterModel {
     const eyes = this.kit.extras.eyes[this.def.face];
     const r = eyes.radius;
     sharedIris ??= irisTexture();
-    const sclera = this.material(new MeshPhysicalMaterial({ color: '#f6f1ea', roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 }));
-    const iris = this.material(new MeshPhysicalMaterial({ map: sharedIris, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.05 }));
+    const sclera = this.material(new MeshPhysicalMaterial({ color: '#eee9e2', roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.15 }));
+    const iris = this.material(new MeshPhysicalMaterial({ map: sharedIris, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.12 }));
     const lash = this.material(new MeshStandardMaterial({ color: '#1b1411', roughness: 0.7 }));
     const glint = this.material(new MeshBasicMaterial({ color: '#ffffff' }));
     const scleraGeo = new SphereGeometry(r, 28, 18);
@@ -364,6 +371,10 @@ export class CharacterModel {
       ring.rotation.y = Math.PI / 2;
       this.head.add(ring);
     }
+  }
+
+  chinRest(out: Vector3) {
+    return out.set(-0.022, 0.392, 0.17);
   }
 
   /** Head orientation (character-root space). Position offsets lean the chest toward the target. */

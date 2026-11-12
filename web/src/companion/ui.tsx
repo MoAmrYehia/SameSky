@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { DEFAULT_AVATAR } from '../shared/avatar';
-import type { AvatarDefinition } from '../shared/contracts';
+import type { AvatarDefinition, AvatarView, MediaInfo } from '../shared/contracts';
 import { cityOf } from '../shared/tz';
 
 const P: Record<string, ReactNode> = {
@@ -37,6 +37,7 @@ const P: Record<string, ReactNode> = {
   sprout: <><path d="M12 21v-8" /><path d="M12 13c0-4-3-6-7-6 0 4 3 6 7 6ZM12 11c0-4 3-6 7-6 0 4-3 6-7 6Z" /></>,
   cc: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="M10.5 10.2a2.4 2.4 0 1 0 0 3.6M17 10.2a2.4 2.4 0 1 0 0 3.6" /></>,
   link: <><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></>,
+  share: <><path d="M12 3v12" /><path d="m7.5 7.5 4.5-4.5 4.5 4.5" /><path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" /></>,
   refresh: <><path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v3h3" /><path d="M4 13a8 8 0 0 0 14.6 4.5M20 20v-3h-3" /></>,
   trash: <><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" /></>,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.5v.5" /></>,
@@ -68,14 +69,15 @@ export function Logo({ size = 44 }: { size?: number }) {
 // The renderer is code-split so three.js only loads when a portrait is first needed.
 const renderer = () => import('../shared/portrait');
 
-function usePortrait(def: AvatarDefinition | null | undefined, px: number) {
-  const key = JSON.stringify(def ?? DEFAULT_AVATAR);
+function usePortrait(avatar: AvatarView | null | undefined, def: AvatarDefinition | null | undefined, px: number) {
+  // photo-derived portraits are keyed by asset + version (never by the short-lived URL)
+  const key = avatar?.kind === 'photo_derived' ? `photo|${avatar.assetId}|${avatar.assetVersion}` : JSON.stringify(avatar?.definition ?? def ?? DEFAULT_AVATAR);
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
     setSrc(null);
     renderer()
-      .then((m) => m.renderPortrait(def ?? DEFAULT_AVATAR, px))
+      .then((m) => m.renderAvatarPortrait(avatar ?? (def ? { definition: def, version: 0 } : null), def ?? DEFAULT_AVATAR, px))
       .then((url) => alive && setSrc(url))
       .catch(() => alive && setSrc(null));
     return () => {
@@ -86,12 +88,18 @@ function usePortrait(def: AvatarDefinition | null | undefined, px: number) {
   return src;
 }
 
-export function Avatar({ def, size = 64, name }: { def?: AvatarDefinition | null; size?: number; name?: string }) {
+/**
+ * A person's portrait, rendered from the same 3D avatar they appear as in the room: their owner-approved
+ * photo-derived model when this viewer may see it, otherwise the labelled demo preset (`demo` adds a badge).
+ */
+export function Avatar({ avatar, def, size = 64, name, demoBadge = false }: { avatar?: AvatarView | null; def?: AvatarDefinition | null; size?: number; name?: string; demoBadge?: boolean }) {
   const px = size <= 56 ? 128 : size <= 120 ? 256 : 384;
-  const src = usePortrait(def, px);
+  const src = usePortrait(avatar, def, px);
+  const isDemo = !avatar || avatar.kind !== 'photo_derived';
   return (
     <span className="avatar" style={{ width: size, height: size }}>
-      {src ? <img src={src} alt={name ? `${name}'s avatar` : ''} width={size} height={size} /> : <span className="avatar-loading" role="img" aria-label={name ? `${name}'s avatar (loading)` : undefined} />}
+      {src ? <img src={src} alt={name ? `${name}'s ${isDemo ? 'demo avatar' : 'avatar'}` : ''} width={size} height={size} /> : <span className="avatar-loading" role="img" aria-label={name ? `${name}'s avatar (loading)` : undefined} />}
+      {demoBadge && isDemo && size >= 72 ? <span className="avatar-demo-badge" aria-hidden="true">Demo</span> : null}
     </span>
   );
 }
@@ -148,7 +156,7 @@ export function SourceIcon({ kind }: { kind: string }) {
 }
 
 export function deviceLabel(device?: string | null): string {
-  return ({ phone: 'Phone', tablet: 'Tablet', webcam: 'Webcam', laptop: 'Laptop', camera: 'Camera', action_camera: 'Action camera', drone: 'Drone', glasses: 'AI glasses', other: 'Other device' } as Record<string, string>)[device ?? ''] ?? 'Device';
+  return ({ phone: 'Phone', tablet: 'Tablet', webcam: 'Webcam', laptop: 'Laptop', camera: 'Camera', action_camera: 'Action camera', drone: 'Drone', glasses: 'AI glasses', headset: 'Headset', other: 'Other device' } as Record<string, string>)[device ?? ''] ?? 'Device';
 }
 
 /** "20:55 in Beijing": original local capture time, named by city rather than an opaque abbreviation. */
@@ -156,7 +164,11 @@ export function localWhen(m: { captureLocal: { time: string; zone: string } }): 
   return `${m.captureLocal.time} in ${cityOf(m.captureLocal.zone)}`;
 }
 
-export function kindLabel(kind: string, device?: string | null): string {
+export function kindLabel(kind: string, device?: string | null, origin?: MediaInfo['origin']): string {
+  // sample media says how it was made, so it can't pass for a real recording
+  if (origin === 'simulated' && kind === 'clip') return 'Simulated camera pan';
+  if (origin === 'synthesized' && kind === 'voice') return 'Synthesized voice note';
+  if (origin === 'stock' && kind === 'photo') return 'Sample photo';
   if (kind === 'voice') return 'Voice note';
   if (kind === 'text') return 'Note';
   if (kind === 'clip') return `${deviceLabel(device)} clip`;

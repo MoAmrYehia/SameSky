@@ -26,7 +26,7 @@ from ..config import get_settings
 from ..errors import invalid
 from ..models import MediaAsset, User
 
-SOURCE_DEVICES = ("phone", "tablet", "webcam", "laptop", "camera", "action_camera", "drone", "glasses", "other")
+SOURCE_DEVICES = ("phone", "tablet", "webcam", "laptop", "camera", "action_camera", "drone", "glasses", "headset", "other")
 PROJECTIONS = ("flat", "equirect360", "stereo_sbs")
 VIDEO_CODECS = {"h264", "hevc", "vp8", "vp9", "av1", "mpeg4"}
 AUDIO_CODECS = {"aac", "opus", "vorbis", "mp3", "pcm_s16le", "pcm_s24le", "pcm_f32le", "flac"}
@@ -328,6 +328,13 @@ def _process_audio(asset: MediaAsset) -> None:
           "-c:a", "aac", "-b:a", "96k", "-ac", "1", "-movflags", "+faststart", str(out)])
     asset.duration_ms = probe(out).duration_ms
     asset.derivative_path, asset.derivative_mime = str(out), "audio/mp4"
+    # Native clients (the Quest app's Unity runtime) can't decode AAC audio clips: keep an Ogg Vorbis twin.
+    # Best effort: if this FFmpeg build lacks libvorbis the voice note still works everywhere else.
+    try:
+        _run([exe, "-y", "-hide_banner", "-i", str(out), "-vn", "-map_metadata", "-1", "-c:a", "libvorbis", "-q:a", "4",
+              "-ac", "1", str(out.with_suffix(".ogg"))])
+    except MediaRejected:
+        out.with_suffix(".ogg").unlink(missing_ok=True)
 
 
 def variant_path(asset: MediaAsset, variant: str) -> tuple[Path, str] | None:
@@ -337,6 +344,9 @@ def variant_path(asset: MediaAsset, variant: str) -> tuple[Path, str] | None:
         return Path(asset.derivative_path), asset.derivative_mime or "application/octet-stream"
     if variant == "thumb" and asset.thumbnail_path:
         return Path(asset.thumbnail_path), "image/jpeg"
+    if variant == "ogg" and asset.kind == "audio" and asset.derivative_path:
+        ogg = Path(asset.derivative_path).with_suffix(".ogg")
+        return (ogg, "audio/ogg") if ogg.exists() else None
     return None  # originals are never served to recipients
 
 

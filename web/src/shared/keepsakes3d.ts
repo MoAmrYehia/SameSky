@@ -41,9 +41,19 @@ export function tex(url: string, srgb = true, repeat = 1): Texture {
 
 /**
  * The CC0 veneer scan (Poly Haven american_walnut_veneer) is a grey-washed finish; this tint multiplies its
- * grain back to a warm walnut brown (texture ~0.16 linear grey -> ~#66432a).
+ * grain back to a natural walnut brown (texture ~0.16 linear grey -> ~#5d4331), not an orange stain.
  */
-export const WALNUT_TINT = '#e8a066';
+export const WALNUT_TINT = '#d6a07a';
+
+/**
+ * Decorative instanced detail (leaves, blossoms) takes no part in hand *touch* tests. Its custom spherecast
+ * replaces @pmndrs/pointer-events' sphere test, which also treats an InstancedMesh as one plain mesh with its
+ * base geometry at the object's origin (a phantom touch volume). Ray picking still uses three's per-instance
+ * raycast, and the keepsake stays touchable through its pot, trunk and plinth.
+ */
+function untouchable(mesh: InstancedMesh) {
+  (mesh as InstancedMesh & { spherecast?: () => void }).spherecast = () => undefined;
+}
 
 export function walnutMaterial(repeat = 1) {
   return new MeshPhysicalMaterial({
@@ -52,8 +62,8 @@ export function walnutMaterial(repeat = 1) {
     normalMap: tex('/assets/textures/walnut/normal.webp', false, repeat),
     roughnessMap: tex('/assets/textures/walnut/rough.webp', false, repeat),
     roughness: 1,
-    clearcoat: 0.22,
-    clearcoatRoughness: 0.45,
+    clearcoat: 0.12,
+    clearcoatRoughness: 0.6,
   });
 }
 
@@ -125,7 +135,11 @@ export function buildKeepsake(kind: KeepsakeKind | string, progress = 1, target 
     g.add(pot, wood);
     const leaves = new MeshStandardMaterial({ color: '#5f8a4f', roughness: 0.75 });
     const clusters: [number, number, number, number][] = [[0.002, 0.168, 0.002, 0.034], [-0.048, 0.152, 0.012, 0.026], [0.05, 0.166, -0.004, 0.026], [-0.022, 0.178, -0.012, 0.022], [0.024, 0.182, 0.012, 0.022]];
-    const leafGeo = new IcosahedronGeometry(1, 2);
+    // Leaves are instanced at their real size (~7 mm), not as a unit sphere scaled down per instance: hand
+    // touch pointers (@pmndrs/pointer-events) also test an InstancedMesh as one plain mesh with its *base*
+    // geometry, and a 1 m unit sphere became an invisible 1 m touch volume that captured both hands in VR.
+    const LEAF = 0.007;
+    const leafGeo = new IcosahedronGeometry(LEAF, 2);
     const count = 34;
     const inst = new InstancedMesh(leafGeo, leaves, clusters.length * count);
     let k = 0;
@@ -136,13 +150,14 @@ export function buildKeepsake(kind: KeepsakeKind | string, progress = 1, target 
       for (let i = 0; i < count; i++) {
         const dir = new Vector3(rand() - 0.5, (rand() - 0.3) * 0.8, rand() - 0.5).normalize();
         const p = new Vector3(x, y, z).addScaledVector(dir, r * (0.45 + rand() * 0.5));
-        const s = r * (0.22 + rand() * 0.14);
+        const s = (r * (0.22 + rand() * 0.14)) / LEAF;
         m.compose(p, new Quaternion().setFromAxisAngle(dir, rand() * 6), new Vector3(s, s * 0.8, s));
         inst.setMatrixAt(k++, m);
         inst.setColorAt(k - 1, new Color('#5f8a4f').offsetHSL((rand() - 0.5) * 0.04, 0, (rand() - 0.5) * 0.1));
       }
     }
     inst.castShadow = true;
+    untouchable(inst);
     g.add(inst);
     // blossoms grow with shared days (never shrink for missed days); instanced: one draw call
     const blossoms = Math.max(1, Math.round((Math.min(progress, target) / target) * 12));
@@ -154,6 +169,7 @@ export function buildKeepsake(kind: KeepsakeKind | string, progress = 1, target 
       m.makeTranslation(x + Math.cos(a) * r * 0.75, y + r * 0.55 + Math.sin(i) * 0.004, z + Math.sin(a) * r * 0.75);
       bloom.setMatrixAt(i, m);
     }
+    untouchable(bloom);
     g.add(bloom);
     g.add(plinth());
   }

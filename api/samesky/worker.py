@@ -18,7 +18,7 @@ from sqlalchemy import select
 
 from .db import create_all, new_session
 from .models import CallOpportunity, FreeNow, MediaAsset, utcnow
-from .services import availability, jobs, media, notifications, recaps
+from .services import availability, avatars, jobs, media, notifications, recaps
 
 log = logging.getLogger("samesky.worker")
 _running = True
@@ -37,6 +37,10 @@ def handle(db, job) -> str:
         return recaps.run_daily_draft(db, job.payload["room_id"], date.fromisoformat(job.payload["room_date"]))
     if job.kind == "notify":
         return notifications.dispatch(db, job)
+    if job.kind == "avatar.generate":
+        return avatars.run_generation(db, job.payload["job_id"])
+    if job.kind == "avatar.provider_cleanup":
+        return avatars.run_provider_cleanup(db, job.payload["job_id"])
     return "unknown_kind"
 
 
@@ -76,6 +80,8 @@ def periodic(now=None) -> None:
         db.commit()
         availability.scan_direct_rooms(db, now)
         recaps.schedule_daily_drafts(db, now)
+        # private avatar source photos are deleted when their retention period ends
+        avatars.purge_expired_sources(db, now)
 
 
 def main() -> None:

@@ -37,6 +37,7 @@
 | **Media on a private server volume** + signed URLs that re-check access | Withdrawal blocks the *same* still-valid URL immediately | Needs a persistent volume (or move to a private object store behind the API) |
 | **Deterministic availability engine** in Python, ported to TypeScript for the offline sample | Server is authoritative; sample works without a backend; both tested against the brief's fixture and DST cases | Two implementations to keep in sync |
 | **AI only drafts** (Claude via official SDK, structured JSON) | Model receives server-selected, authorized sources; output is validated; contributors approve | Without a key, recaps are chronological (clearly labelled) |
+| **Photo-derived avatars through a server-side provider adapter** (Avatar SDK MetaPerson REST), skinned GLB in the room via three.js | Keys stay on the server; private sources, durable jobs, owner approval of an exact version, viewer-bound signed model URLs re-authorized per download; no native SDK in the WebXR build | Generation needs the provider’s paid API plan; one-photo likeness has limits; bone names are mapped by convention (see `docs/AVATARS.md`) |
 
 ## Data model
 
@@ -54,5 +55,6 @@ See `api/samesky/models.py` (and `api/migrations/versions/*`). Key ideas:
 Client → server: `auth`, `join {sessionId}`, `pose {head,left,right,tracked,source}` (≤25/s accepted, range
 checked, table-relative), `playback {action, positionMs, baseVersion}`, `ping {t}`, `reaction`, `leave`.
 Server → client: `welcome {state, participants+avatars}`, `state {version, playheadMs, paused, stateAt,
-serverTime}`, `pose`, `peer_joined/left`, `pong` (clock offset), `removed`, `session_ended`.
+serverTime}`, `pose`, `peer_joined/left`, `avatar_changed {userId}` (re-fetch with your own authorization; no
+likeness data in the broadcast), `pong` (clock offset), `removed`, `session_ended`.
 Clients estimate the server clock from the lowest-RTT pong and correct playback when drift > 300 ms.

@@ -1,0 +1,17 @@
+{"t":9.798,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":10.208,"kind":"pause","detail":"input","input":"None"}
+{"t":11.448,"kind":"pause","detail":"resume","input":"None"}
+{"t":11.732,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":11.735,"kind":"screen","detail":"launch","input":"hands"}
+{"t":24.149,"kind":"press","detail":"launch:continue","input":"hands"}
+{"t":24.151,"kind":"screen","detail":"loading","input":"hands"}
+{"t":24.22,"kind":"mode","detail":"live","input":"hands"}
+{"t":24.222,"kind":"screen","detail":"room","input":"hands"}
+{"t":24.346,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda","input":"hands"}
+{"t":24.379,"kind":"presence","detail":"away","input":"hands"}
+{"t":35.303,"kind":"press","detail":"cup:reply","input":"hands"}
+{"t":35.315,"kind":"keyboard","detail":"Reply to Sam","input":"hands"}
+{"t":47.749,"kind":"press","detail":"key:h","input":"hands"}
+{"t":62.377,"kind":"press","detail":"key:done","input":"hands"}
+{"t":62.493,"kind":"reply","detail":"placed:39a8de9c-bb02-488f-a09c-7933120e9283","input":"hands"}
+{"t":62.495,"kind":"toast","detail":"Sent. Your reply waits on the table for Sam.","input":"hands"}

@@ -9,11 +9,12 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from ..config import get_settings
-from ..errors import conflict, forbidden, invalid, not_found
+from ..errors import ApiError, conflict, forbidden, invalid, not_found
 from ..models import (
     CallOpportunity,
     FreeNow,
     Invitation,
+    InviteCodeAttempt,
     Membership,
     Notification,
     Recap,
@@ -23,7 +24,7 @@ from ..models import (
     User,
     utcnow,
 )
-from ..security import hash_invite_token, new_invite_token
+from ..security import hash_invite_code, hash_invite_token, new_invite_code, new_invite_token, normalize_invite_code
 from . import jobs
 from .access import require_member
 
@@ -61,22 +62,33 @@ def active_count(db: Session, room_id: str) -> int:
     ) or 0
 
 
-def issue_invite(db: Session, room_id: str, actor: User) -> tuple[Invitation, str]:
+# Wrong short codes allowed per account before redemption by code pauses (tokens in links aren't limited:
+# they carry 192 random bits).
+CODE_ATTEMPT_LIMIT = 8
+CODE_ATTEMPT_WINDOW = timedelta(minutes=15)
+
+
+def issue_invite(db: Session, room_id: str, actor: User) -> tuple[Invitation, str, str]:
+    """Returns (invitation, link token, short code). Both secrets are shown once; only hashes are stored."""
     room, membership = require_member(db, room_id, actor.id)
     if membership.role != "owner":
         raise forbidden("Only the room's creator can invite people.")
     if active_count(db, room.id) >= room.capacity:
         raise conflict("room_full", f"This room already has {room.capacity} members.")
     token, token_hash = new_invite_token()
+    code, code_hash = new_invite_code()
+    while db.scalar(select(Invitation.id).where(Invitation.code_hash == code_hash)) is not None:
+        code, code_hash = new_invite_code()  # astronomically rare; never reuse a live code's hash
     invite = Invitation(
         room_id=room.id,
         token_hash=token_hash,
+        code_hash=code_hash,
         created_by=actor.id,
         expires_at=utcnow() + timedelta(hours=get_settings().invite_ttl_hours),
     )
     db.add(invite)
     db.commit()
-    return invite, token
+    return invite, token, code
 
 
 def revoke_invite(db: Session, room_id: str, invite_id: str, actor: User) -> None:
@@ -95,6 +107,35 @@ def redeem_invite(db: Session, token: str, actor: User, label: str | None = None
     invite = db.scalar(select(Invitation).where(Invitation.token_hash == hash_invite_token(token)))
     if invite is None:
         raise not_found("invitation")
+    return _redeem(db, invite, actor, label)
+
+
+def redeem_invite_code(db: Session, code: str, actor: User, label: str | None = None) -> Membership:
+    """Redeems by the short code. Codes that match nothing count against the account's attempt budget."""
+    since = utcnow() - CODE_ATTEMPT_WINDOW
+    misses = db.scalar(
+        select(func.count()).select_from(InviteCodeAttempt).where(
+            InviteCodeAttempt.user_id == actor.id, InviteCodeAttempt.created_at >= since
+        )
+    ) or 0
+    if misses >= CODE_ATTEMPT_LIMIT:
+        raise ApiError(
+            429, "too_many_attempts",
+            "Too many codes didn't match. Wait 15 minutes, or open the invite link instead.",
+        )
+    normalized = normalize_invite_code(code)
+    invite = (
+        db.scalar(select(Invitation).where(Invitation.code_hash == hash_invite_code(normalized)))
+        if normalized else None
+    )
+    if invite is None:
+        db.add(InviteCodeAttempt(user_id=actor.id))
+        db.commit()
+        raise ApiError(404, "invite_code_unknown", "That code doesn't match an invitation. Check it and try again.")
+    return _redeem(db, invite, actor, label)
+
+
+def _redeem(db: Session, invite: Invitation, actor: User, label: str | None) -> Membership:
     now = utcnow()
     if invite.redeemed_at is not None:
         # Idempotent retry by the same person returns the membership; anyone else is refused.

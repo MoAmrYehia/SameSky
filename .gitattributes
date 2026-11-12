@@ -4,3 +4,13 @@
 *.mp4 binary
 *.m4a binary
 *.webp binary
+*.glb binary
+*.bin binary
+*.ogg binary
+*.hdr binary
+*.tgz binary
+*.unity text eol=lf
+*.prefab text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.meta text eol=lf

@@ -1,0 +1,13 @@
+{
+  "note": "Development-only accounts for the local native-dev API (api/data/native-dev). Never use these anywhere else.",
+  "accounts": [
+    { "key": "nora",     "email": "nora.native@example.com",     "password": "dev-only-nora-7341",     "name": "Nora",     "zone": "Asia/Dubai" },
+    { "key": "sam",      "email": "sam.native@example.com",      "password": "dev-only-sam-5562",      "name": "Sam",      "zone": "Asia/Shanghai" },
+    { "key": "outsider", "email": "outsider.native@example.com", "password": "dev-only-outsider-9917", "name": "Outsider", "zone": "Europe/London" },
+    { "key": "lina",     "email": "lina.native@example.com",     "password": "dev-only-lina-2208",     "name": "Lina",     "zone": "Europe/London" }
+  ],
+  "rooms": [
+    { "key": "pair",   "kind": "direct", "name": "Nora + Sam",  "owner": "nora", "members": ["sam"] },
+    { "key": "circle", "kind": "circle", "name": "Family circle", "owner": "nora", "members": ["sam", "lina"] }
+  ]
+}

@@ -27,7 +27,7 @@
       ],
       "license": "CC0 1.0 (public domain)",
       "source": "https://polyhaven.com/a/golden_bay",
-      "use": "Adam's waterfront photo + 8 s camera clip (perspective crops)",
+      "use": "Adam's waterfront photo + 8 s camera clip (perspective crops) — the 8 s clip is a simulated camera pan rendered from this panorama, labelled 'Simulated camera pan', never as a camera recording",
       "files": [
         {
           "file": "hdri/golden_bay_tonemapped.jpg",
@@ -81,7 +81,7 @@
       ],
       "license": "CC0 1.0 (public domain)",
       "source": "https://polyhaven.com/a/dusseldorf_bridge",
-      "use": "Window skyline plate (cylindrical crop)",
+      "use": "Window skyline plate (cylindrical crop) — shown as a sample lounge's window view; no geographic claim (not Dubai, not a user's city)",
       "files": [
         {
           "file": "hdri/dusseldorf_bridge_tonemapped.jpg",
@@ -509,6 +509,199 @@
           "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/knitted_fleece/knitted_fleece_ao_1k.jpg",
           "bytes": 828286,
           "sha256": "ffece1dfb62cdc1953458b1bb4863d66eb54d4c889bb14cde2847ad0845a438f"
+        }
+      ]
+    }
+  ],
+  "originals": [
+    {
+      "id": "test-mannequin",
+      "file": "web/tests/fixtures/test-mannequin.glb",
+      "generator": "web/scripts/build-test-rig.mjs",
+      "license": "Original work in this repository",
+      "use": "Skinned non-photo test figure for the photo-derived avatar import, validation, review, approval and room rig checks. Not a person, not a likeness, not shipped in web/public.",
+      "bytes": 926284,
+      "sha256": "1a85f241af84043ad7775f4c115a18d6d9ead2a0850090ab1f6e89fb1ced2555"
+    }
+  ],
+  "native": [
+    {
+      "id": "rocketbox",
+      "title": "Microsoft Rocketbox avatars Female_Adult_14 and Male_Adult_07, sit_table_breathe animations",
+      "authors": [
+        "Microsoft (Rocketbox Studios)"
+      ],
+      "license": "MIT",
+      "source": "https://github.com/microsoft/Microsoft-Rocketbox",
+      "use": "The native sample's fictional Maya and Adam, seated across the table (stock characters, not a scan or photo of any user). TGA textures converted to JPG/PNG for native/quest/Assets/SameSky/Art/Characters/Rocketbox; the specular maps are not shipped.",
+      "files": [
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Export/Female_Adult_14_facial.fbx",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Export/Female_Adult_14_facial.fbx",
+          "bytes": 2148192,
+          "sha256": "8fcaa34c4ed5c3ea5f6b9add7e9a39ac0184d11232688102ef0811ef8cf2914c"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Textures/f017_body_color.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Textures/f017_body_color.tga",
+          "bytes": 12582956,
+          "sha256": "feed2c59b6c4eb2f673cd37d92392686867b4507adf4862c2c3e579f0df51b94"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Textures/f017_body_normal.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Textures/f017_body_normal.tga",
+          "bytes": 12582956,
+          "sha256": "7bf6a8d41d7453ec17a6fd744ecf9d3059bf657160c97bcdd30c7505d638b718"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Textures/f017_body_specular.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Textures/f017_body_specular.tga",
+          "bytes": 12582956,
+          "sha256": "4aad81b133ad46ebafe59e4eba824091b4ca8c6a92d9c6320c7b7466e8aced2b"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Textures/f017_head_color.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Textures/f017_head_color.tga",
+          "bytes": 12582956,
+          "sha256": "c5805bb8b3a1c1ddae011696ee742747c9efefa4be5db4a059251c452031023a"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Textures/f017_head_normal.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Textures/f017_head_normal.tga",
+          "bytes": 12582956,
+          "sha256": "9205d45b4e7ae40050ea7f6587a264671eefe51dac0f43ea140ce6156400690d"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Textures/f017_head_specular.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Textures/f017_head_specular.tga",
+          "bytes": 12582956,
+          "sha256": "6ea5e1cb8627900c2de29d6921d3183d060ad008f3172a0b84d7ede3fab0d0a1"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Female_Adult_14/Textures/f017_opacity_color.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_14/Textures/f017_opacity_color.tga",
+          "bytes": 16777260,
+          "sha256": "2d72503c645408d279d691e2545eddb446b82db57a7519f537bb8fe33fde26aa"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Export/Male_Adult_07_facial.fbx",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Export/Male_Adult_07_facial.fbx",
+          "bytes": 1881520,
+          "sha256": "6fbd1cd44b6145fce3caf18fdd22ccbd00fad2a019b3bf489be7e9c031269b0f"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_color.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_color.tga",
+          "bytes": 12582956,
+          "sha256": "60aa05b5c4bca75696619faba64e9601eb8ad13911b0ae5c541ef420a830f268"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_normal.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_normal.tga",
+          "bytes": 12582956,
+          "sha256": "546063ddc69ae30707f241df15986220d03458508266df41c87df30e1831b8a5"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_specular.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Textures/m013_body_specular.tga",
+          "bytes": 12582956,
+          "sha256": "d792d7878417ea9b6bb9e31593902fea48c59b4e24e3472948cf3ef3587005c1"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_color.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_color.tga",
+          "bytes": 12582956,
+          "sha256": "a3db4a4013f39b2e38f307588b5353398e08b6fa017f5e2554287be19f454789"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_normal.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_normal.tga",
+          "bytes": 12582956,
+          "sha256": "6ad892bd8b044b53a0ab94cdb11a0afcfdacacba08003e7425c185347ea7dd2a"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_specular.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Textures/m013_head_specular.tga",
+          "bytes": 12582956,
+          "sha256": "5fbb4a790f041c8a05257774be153ebc3e445b903c99eb7b4038919b360f221d"
+        },
+        {
+          "file": "Assets/Avatars/Adults/Male_Adult_07/Textures/m013_opacity_color.tga",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_07/Textures/m013_opacity_color.tga",
+          "bytes": 16777260,
+          "sha256": "d5b075decc3904150c0af6afabae65bd66ceb8a5c6b192e93557e094f9af605d"
+        },
+        {
+          "file": "Assets/Animations/all_animations_max_motextr_static/f_sit_table_breathe_01.max.fbx",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_sit_table_breathe_01.max.fbx",
+          "bytes": 3408608,
+          "sha256": "ebd70602249742fa259e50ef8bcf33d499364d48d6896d929e4a1379c2b65597"
+        },
+        {
+          "file": "Assets/Animations/all_animations_max_motextr_static/m_sit_table_breathe_01.max.fbx",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_sit_table_breathe_01.max.fbx",
+          "bytes": 2531376,
+          "sha256": "29ad66f2da4242570c45ee90e2a20c28af88233720a4531a03981a7ee9cbf96a"
+        },
+        {
+          "file": "LICENSE",
+          "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/LICENSE",
+          "bytes": 1066,
+          "sha256": "17474e386e0b9e1a700cc3d06b2b0882a2c376d9c6b49c7f8274409b8f8d2352"
+        }
+      ]
+    },
+    {
+      "id": "figtree",
+      "title": "Figtree (variable)",
+      "authors": [
+        "Erik Kennedy"
+      ],
+      "license": "SIL Open Font License 1.1",
+      "source": "https://github.com/google/fonts/tree/main/ofl/figtree",
+      "use": "Static 400/600/700 instances (fontTools instancer) for the headset interface, native/quest/Assets/SameSky/Art/Fonts/Figtree",
+      "files": [
+        {
+          "file": "native/quest/Assets/SameSky/Art/Fonts/Figtree/Figtree-Bold.ttf",
+          "bytes": 40076,
+          "sha256": "329b5db7d77ccebef395d1e68fe548eda65dd8522776e1e8568a25a0ccf0b300"
+        },
+        {
+          "file": "native/quest/Assets/SameSky/Art/Fonts/Figtree/Figtree-Regular.ttf",
+          "bytes": 40096,
+          "sha256": "f60a28eb1ed1c009de7647ebcae6c02b581c9627e1c386bf9ab8c5b15a952df4"
+        },
+        {
+          "file": "native/quest/Assets/SameSky/Art/Fonts/Figtree/Figtree-SemiBold.ttf",
+          "bytes": 40144,
+          "sha256": "7c4a1fea8260175a91762811b1c9dfb25022d484837234273fdffd3a0a0d8b2d"
+        },
+        {
+          "file": "native/quest/Assets/SameSky/Art/Fonts/Figtree/OFL.txt",
+          "bytes": 4388,
+          "sha256": "140d37233e7f3ce7313798befa9600893bcceaf41a55fa0fa5ad52f7f657a268"
+        }
+      ]
+    },
+    {
+      "id": "lucide",
+      "title": "Lucide icon font (lucide-static 0.460.0)",
+      "authors": [
+        "Lucide contributors"
+      ],
+      "license": "ISC",
+      "source": "https://www.npmjs.com/package/lucide-static/v/0.460.0",
+      "use": "Icon glyphs in headset buttons and the dock, native/quest/Assets/SameSky/Art/Fonts/Lucide",
+      "files": [
+        {
+          "file": "native/quest/Assets/SameSky/Art/Fonts/Lucide/LICENSE.txt",
+          "bytes": 880,
+          "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
+        },
+        {
+          "file": "native/quest/Assets/SameSky/Art/Fonts/Lucide/lucide.ttf",
+          "bytes": 676416,
+          "sha256": "55e868f053500d4e4298fac5515f2d4f63a10aa7b263b022ff96c126cd9e95dc"
         }
       ]
     }

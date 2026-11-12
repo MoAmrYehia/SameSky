@@ -92,6 +92,22 @@ async function loadModel(loader: GLTFLoader, url: string, casts = false) {
   return gltf.scene;
 }
 
+/**
+ * The CC0 tables' roughness maps read as wet varnish under the window (broad mirror-like highlights). A satin
+ * oiled finish: scale the map's roughness up (three.js multiplies the factor by the map and clamps at 1) and
+ * damp image-based reflections, keeping the grain variation.
+ */
+function satin(model: Object3D, roughness = 1.6, reflections = 0.65, tint = '#e4dfdc') {
+  model.traverse((o) => {
+    const m = (o as Mesh).material as MeshStandardMaterial | undefined;
+    if (m && (m as MeshStandardMaterial).isMeshStandardMaterial) {
+      m.roughness = roughness;
+      m.envMapIntensity = reflections;
+      m.color.set(tint); // a touch less red in the scanned albedo: walnut brown, not amber
+    }
+  });
+}
+
 /** Scale a model uniformly so its footprint matches `width`, and stand it on y = 0 centred on the origin. */
 function fit(model: Object3D, width: number) {
   const box = new Box3().setFromObject(model);
@@ -111,7 +127,7 @@ function mushroomLamp(walnut: ReturnType<typeof pbr>) {
   const base = new Mesh(new LatheGeometry([new Vector2(0, 0), new Vector2(0.075, 0), new Vector2(0.08, 0.012), new Vector2(0.05, 0.03), new Vector2(0.022, 0.05), new Vector2(0.018, 0.3), new Vector2(0, 0.3)], 40),
     new MeshPhysicalMaterial({ ...walnut, color: WALNUT_TINT, roughness: 0.8, clearcoat: 0.3, clearcoatRoughness: 0.35 }));
   const shade = new Mesh(new LatheGeometry([new Vector2(0.0, 0.42), new Vector2(0.06, 0.415), new Vector2(0.12, 0.39), new Vector2(0.155, 0.35), new Vector2(0.165, 0.315), new Vector2(0.16, 0.3), new Vector2(0.0, 0.3)], 48),
-    new MeshPhysicalMaterial({ color: '#fff3df', emissive: new Color('#ffcf8f'), emissiveIntensity: 1.35, roughness: 0.6, transmission: 0, sheen: 0.4 }));
+    new MeshPhysicalMaterial({ color: '#fff6ea', emissive: new Color('#ffe0b8'), emissiveIntensity: 1.1, roughness: 0.6, transmission: 0, sheen: 0.4 }));
   g.add(base, shade);
   return g;
 }
@@ -124,10 +140,12 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   gltf.setMeshoptDecoder(MeshoptDecoder);
   const disposables: { dispose(): void }[] = [];
 
-  // --- light: warm interior IBL (set by main.ts through IWSDK's IBLTexture), sun from the window, lamp ---
-  const hemi = new HemisphereLight(0xfff4ea, 0x4a3a2c, 0.28);
+  // --- light: interior IBL (set by main.ts through IWSDK's IBLTexture), sun from the window, lamp ---
+  // Balanced toward a neutral white point: a restrained warm key from the window and a small warm lamp,
+  // so skin and hair keep their own colour instead of reading orange (visual QA pass 2).
+  const hemi = new HemisphereLight(0xf3f5f7, 0x57514b, 0.3);
   root.add(hemi);
-  const sun = new DirectionalLight(0xffdcb8, 1.55);
+  const sun = new DirectionalLight(0xfff3e8, 1.45);
   sun.position.set(-1.6, 2.6, -3.2);
   sun.target.position.set(TABLE.x, TABLE.y, TABLE.z);
   sun.castShadow = true;
@@ -142,14 +160,15 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   sun.shadow.normalBias = 0.02;
   sun.shadow.radius = 4;
   root.add(sun, sun.target);
-  const lamp = new PointLight(0xffc27a, 1.6, 4.5, 1.8);
+  const lamp = new PointLight(0xffd6a6, 1.05, 4.5, 1.8);
   root.add(lamp);
 
   // --- room shell: one curved plaster wall around the table with a wide window arc behind it ---
   const WALL_R = 3.0;
   const WINDOW_ARC = (2.4 * Math.PI) / 3; // 144 degrees of glazing behind the table
   const parquet = pbr(tex, 'parquet', 3, ['map', 'normalMap', 'aoMap']);
-  const floorMat = new MeshStandardMaterial({ ...parquet, roughness: 0.78, color: '#d6bfa6' });
+  // a slightly cool multiplier takes the orange stain out of the oak parquet scan without greying it
+  const floorMat = new MeshStandardMaterial({ ...parquet, roughness: 0.86, color: '#bcc0c8' });
   const floor = new Mesh(new CircleGeometry(WALL_R + 0.05, 64), floorMat);
   floor.rotation.x = -Math.PI / 2;
   floor.position.set(0, 0, TABLE.z);
@@ -157,17 +176,17 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   root.add(floor);
   const boucle = pbr(tex, 'boucle', 9, ['normalMap', 'aoMap']);
   // a cream knitted rug: the boucle relief (normal + AO) without its multicolour albedo
-  const rug = new Mesh(new CircleGeometry(1.55, 64), new MeshStandardMaterial({ ...boucle, color: '#e9dfd0', roughness: 1 }));
+  const rug = new Mesh(new CircleGeometry(1.55, 64), new MeshStandardMaterial({ ...boucle, color: '#e6e1d9', roughness: 1 }));
   rug.rotation.x = -Math.PI / 2;
   rug.position.set(TABLE.x, 0.004, TABLE.z - 0.1);
   rug.receiveShadow = true;
   root.add(rug);
   const plaster = pbr(tex, 'plaster', 3);
-  const wallMat = new MeshStandardMaterial({ ...plaster, color: '#f0e3d2', roughness: 1, side: BackSide });
+  const wallMat = new MeshStandardMaterial({ ...plaster, color: '#ebe6df', roughness: 1, side: BackSide });
   const walls = new Mesh(new CylinderGeometry(WALL_R, WALL_R, 3.2, 72, 1, true, Math.PI + WINDOW_ARC / 2, Math.PI * 2 - WINDOW_ARC), wallMat);
   walls.position.set(0, 1.6, TABLE.z);
   root.add(walls);
-  const ceiling = new Mesh(new CircleGeometry(WALL_R, 48), new MeshStandardMaterial({ color: '#e6d6c3', roughness: 1 }));
+  const ceiling = new Mesh(new CircleGeometry(WALL_R, 48), new MeshStandardMaterial({ color: '#e2ddd6', roughness: 1 }));
   ceiling.rotation.x = Math.PI / 2;
   ceiling.position.set(0, 3.2, TABLE.z);
   root.add(ceiling);
@@ -180,13 +199,13 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   const latBottom = Math.tan((-14 * Math.PI) / 180);
   const eye = 1.2;
   const span = (200 * Math.PI) / 180;
-  const view = new Mesh(new CylinderGeometry(R, R, R * (latTop - latBottom), 96, 1, true, Math.PI - span / 2 - 0.35, span), new MeshBasicMaterial({ map: plate, side: BackSide, toneMapped: false }));
+  const view = new Mesh(new CylinderGeometry(R, R, R * (latTop - latBottom), 96, 1, true, Math.PI - span / 2 - 0.35, span), new MeshBasicMaterial({ map: plate, color: 0xe8eef7, side: BackSide, toneMapped: false }));
   view.position.set(0, eye + (R * (latTop + latBottom)) / 2, TABLE.z);
   view.scale.x = -1; // seen from inside: mirror so the plate reads left-to-right
   root.add(view);
   // window opening: wall below the sill and above the head, mullions in between
   const frameMat = new MeshStandardMaterial({ color: '#2b211b', roughness: 0.55 });
-  const sillMat = new MeshStandardMaterial({ ...plaster, color: '#e8d8c4', roughness: 1 });
+  const sillMat = new MeshStandardMaterial({ ...plaster, color: '#e5dfd7', roughness: 1 });
   const arc = WINDOW_ARC;
   const wallR = WALL_R;
   const lower = new Mesh(new CylinderGeometry(wallR, wallR, 0.62, 48, 1, true, Math.PI - arc / 2, arc), sillMat);
@@ -197,7 +216,7 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   upper.position.set(0, 2.95, TABLE.z);
   root.add(lower, upper);
   // the sill: a flat ring sector (RingGeometry angle phi = cylinder theta - 90 degrees once laid flat) and its front lip
-  const sillTopMat = new MeshStandardMaterial({ color: '#f3eadc', roughness: 0.7 });
+  const sillTopMat = new MeshStandardMaterial({ color: '#f0ece6', roughness: 0.8 });
   const sill = new Mesh(new RingGeometry(wallR - 0.18, wallR, 64, 1, Math.PI / 2 - arc / 2, arc), sillTopMat);
   sill.rotation.x = -Math.PI / 2;
   sill.position.set(0, 0.64, TABLE.z);
@@ -221,6 +240,7 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
 
   // --- the shared table (CC0 model) ---
   const tableModel = await loadModel(gltf, '/assets/models/props/table.glb', true);
+  satin(tableModel);
   const tableFit = fit(tableModel, TABLE.radius * 2);
   TABLE.y = tableFit.height;
   const table = new Group();
@@ -260,6 +280,7 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
 
   // --- side table with the lamp, a ceramic and a plant (CC0 models) ---
   const sideModel = await loadModel(gltf, '/assets/models/props/side-table.glb');
+  satin(sideModel);
   const sideFit = fit(sideModel, 0.52);
   const sideTable = new Group();
   sideTable.position.set(1.12, 0, -1.0);

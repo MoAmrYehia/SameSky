@@ -1,0 +1,20 @@
+{
+  "api": "http://127.0.0.1:8000",
+  "users": {
+    "nora": "31f0e0ec-aa02-4d55-b1ef-456f49636017",
+    "sam": "6b768d48-4232-4699-8dc3-fcbca88457e4",
+    "outsider": "ccbc0b01-0282-4aee-8660-44c0293d7dfc",
+    "lina": "46825995-8a43-4ff0-86fa-4e85416a4e2b"
+  },
+  "rooms": {
+    "pair": "037383ca-003b-48c9-9edd-a2550fa48540",
+    "circle": "82f161d9-9a40-4ecd-8630-a593d3effa56"
+  },
+  "voiceNote": {
+    "momentId": "be558801-0c90-48cd-82e7-2e3133b7416c",
+    "from": "sam",
+    "to": "nora",
+    "room": "pair",
+    "oggUrl": true
+  }
+}

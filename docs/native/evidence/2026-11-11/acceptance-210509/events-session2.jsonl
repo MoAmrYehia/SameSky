@@ -1,0 +1,24 @@
+{"t":10.003,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":10.404,"kind":"pause","detail":"input","input":"None"}
+{"t":11.59,"kind":"pause","detail":"resume","input":"None"}
+{"t":11.859,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":11.862,"kind":"screen","detail":"launch","input":"hands"}
+{"t":26.332,"kind":"press","detail":"launch:sample","input":"hands"}
+{"t":26.333,"kind":"screen","detail":"loading","input":"hands"}
+{"t":26.406,"kind":"mode","detail":"sample","input":"hands"}
+{"t":26.407,"kind":"screen","detail":"room","input":"hands"}
+{"t":26.453,"kind":"reply","detail":"restored:","input":"hands"}
+{"t":26.474,"kind":"presence","detail":"simulated","input":"hands"}
+{"t":26.479,"kind":"toast","detail":"Maya left you a voice note. Pick up the cup.","input":"hands"}
+{"t":34.744,"kind":"grab","detail":"object:cup","input":"hands"}
+{"t":34.745,"kind":"cup","detail":"picked-up","input":"hands"}
+{"t":34.753,"kind":"voice","detail":"play","input":"hands"}
+{"t":34.754,"kind":"presence","detail":"recorded","input":"hands"}
+{"t":44.043,"kind":"voice","detail":"finished","input":"hands"}
+{"t":44.05,"kind":"presence","detail":"simulated","input":"hands"}
+{"t":44.05,"kind":"toast","detail":"Leave a reply? Press Reply by the cup.","input":"hands"}
+{"t":44.346,"kind":"release","detail":"object:cup","input":"hands"}
+{"t":44.347,"kind":"cup","detail":"released","input":"hands"}
+{"t":55.421,"kind":"press","detail":"dock:day","input":"hands"}
+{"t":55.422,"kind":"screen","detail":"day","input":"hands"}
+{"t":55.425,"kind":"screen","detail":"day","input":"hands"}

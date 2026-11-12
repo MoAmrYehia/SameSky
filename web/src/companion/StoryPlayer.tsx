@@ -95,7 +95,7 @@ export function StoryPlayer({ recap, room, onClose, onOpenMoment }: { recap: Rec
           {m?.kind === 'voice' ? (
             <div className="voice-stage">
               <div className="stack" style={{ alignItems: 'center', gap: 18, width: '70%' }}>
-                <Avatar def={member(m.ownerId)?.avatar?.definition} size={120} name={m.ownerName} />
+                <Avatar avatar={member(m.ownerId)?.avatar} size={120} name={m.ownerName} />
                 <Waveform playing={!paused} />
                 <span className="chip">Recorded message · {m.ownerName} · {localWhen(m)}</span>
               </div>
@@ -105,7 +105,7 @@ export function StoryPlayer({ recap, room, onClose, onOpenMoment }: { recap: Rec
           {!m && chapter ? (
             <div className="voice-stage" style={{ padding: 32 }}>
               <div className="stack" style={{ alignItems: 'center', textAlign: 'center', maxWidth: 640 }}>
-                <Avatar def={member(chapter.contributorId)?.avatar?.definition} size={110} />
+                <Avatar avatar={member(chapter.contributorId)?.avatar} size={110} />
                 <p style={{ fontSize: '1.6rem', fontFamily: 'var(--display)' }}>{chapter.segments[0]?.text}</p>
               </div>
             </div>
@@ -113,7 +113,7 @@ export function StoryPlayer({ recap, room, onClose, onOpenMoment }: { recap: Rec
           {!m && !chapter ? (
             <div className="voice-stage" style={{ padding: 32 }}>
               <div className="stack" style={{ alignItems: 'center', textAlign: 'center' }}>
-                <div className="row">{plan.chapters.map((c) => <Avatar key={c.contributorId} def={member(c.contributorId)?.avatar?.definition} size={84} />)}</div>
+                <div className="row">{plan.chapters.map((c) => <Avatar key={c.contributorId} avatar={member(c.contributorId)?.avatar} size={84} />)}</div>
                 <h2 style={{ fontSize: '2rem' }}>{plan.closingLine || plan.title}</h2>
                 {recap.omittedCount ? <p className="small" style={{ color: '#cfd6cf' }}>{recap.omittedCount} more shared moment{recap.omittedCount > 1 ? 's were' : ' was'} not included in this short story.</p> : null}
               </div>

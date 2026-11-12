@@ -21,9 +21,11 @@ Concurrent object moves use optimistic versioning (`expected_version` → `409 v
 
 | Area | Endpoints |
 |---|---|
-| Identity | `POST /auth/signup`, `POST /auth/login`, `GET/PATCH /me`, `PUT /me/avatar`, `GET /avatar-options` |
-| Rooms | `GET/POST /rooms`, `GET/PATCH /rooms/{id}` (mute, label, daily draft time), `POST /rooms/{id}/invites`, `DELETE /rooms/{id}/invites/{inviteId}`, `POST /invites/redeem`, `DELETE /rooms/{id}/members/{userId or "me"}` |
-| Media imports | `POST /media` (multipart: file, kind, source_device, projection, capture_at, trim_start_ms, trim_end_ms), `GET /media/{id}` (owner status), `POST /media/{id}/corrections` (rotation, capture time, trim), `GET /media/{id}/{display\|thumb}?u&e&s` (short-lived signed URL + live access check) |
+| Identity | `POST /auth/signup`, `POST /auth/login`, `GET/PATCH /me`, `PUT /me/avatar` (demo avatar definition), `GET /avatar-options` |
+| Photo-derived avatars (owner-only; see `docs/AVATARS.md`) | `GET /me/avatar-studio`, `POST /me/avatar-consents`, `POST /me/avatar-consents/{id}/withdraw`, `POST /me/avatar-sources` (multipart: file, view, consent_id), `DELETE /me/avatar-sources/{id}`, `POST /me/avatar-jobs` (source_ids, consent_id, options, idempotency_key), `GET /me/avatar-jobs/{id}`, `POST /me/avatar-jobs/{id}/cancel`, `POST /me/avatar-jobs/{id}/retry`, `POST /me/avatar-assets` (multipart GLB import: file, consent_id, attested), `POST /me/avatar-assets/{id}/approve` (visibility, confirmed), `POST /me/avatar-assets/{id}/reject`, `POST /me/avatar-assets/{id}/activate`, `PATCH /me/avatar-assets/{id}` (visibility), `DELETE /me/avatar-assets/{id}`, `POST /me/avatar/demo`, `DELETE /me/avatar-data` |
+| Seeing someone’s avatar | `GET /users/{id}/avatar` (as this viewer may see it: the demo definition, or the approved version with a viewer-bound signed `modelUrl`), `GET /avatar-assets/{id}/model?u&e&s` (signed, re-authorized on every request), `GET /avatar-sources/{id}/image?u&e&s` (owner only, `no-store`) |
+| Rooms | `GET/POST /rooms`, `GET/PATCH /rooms/{id}` (mute, label, daily draft time), `POST /rooms/{id}/invites` (link token and short code, see [Invitations](#invitations)), `DELETE /rooms/{id}/invites/{inviteId}`, `POST /invites/redeem` (`token`), `POST /invites/redeem-code` (`code`), `DELETE /rooms/{id}/members/{userId or "me"}` |
+| Media imports | `POST /media` (multipart: file, kind, source_device, projection, capture_at, trim_start_ms, trim_end_ms), `GET /media/{id}` (owner status), `POST /media/{id}/corrections` (rotation, capture time, trim), `GET /media/{id}/{display\|thumb\|ogg}?u&e&s` (short-lived signed URL + live access check; `ogg` see [Voice notes on native clients](#voice-notes-on-native-clients)). `source_device` is one of `phone`, `tablet`, `webcam`, `laptop`, `camera`, `action_camera`, `drone`, `glasses`, `headset` (recorded in the Quest app) or `other`; it is a label the person chooses |
 | Moments & audiences | `POST/GET /rooms/{id}/moments`, `GET/PATCH/DELETE /moments/{id}`, `POST /moments/{id}/audience/resolve`, `POST /moments/{id}/share`, `POST /moments/{id}/withdraw` (`all_copies`), `POST /moments/{id}/republish` |
 | Social | `GET/POST /moments/{id}/replies`, `POST /moments/{id}/reactions`, `GET/POST /rooms/{id}/objects`, `PATCH /objects/{id}` |
 | Recaps | `POST /rooms/{id}/recaps` (`room_date`, optional `recipient_ids`), `GET /rooms/{id}/recaps` (archive), `GET /rooms/{id}/recaps/pending`, `GET /recaps/{id}`, `POST /recaps/{id}/approve` |
@@ -33,11 +35,44 @@ Concurrent object moves use optimistic versioning (`expected_version` → `409 v
 | Live viewing | `POST /rooms/{id}/sessions` (two participants who can both see the moment), `GET /rooms/{id}/sessions`, `GET /sessions/{id}`, `POST /sessions/{id}/end`, `WS /realtime` |
 | Ops | `GET /health` |
 
+## Invitations
+
+`POST /rooms/{id}/invites` (room owner only) returns both ways to join, each shown once:
+
+```json
+{ "id": "…", "token": "…", "code": "K7PQ-4XMR", "expiresAt": "…", "path": "/join/…" }
+```
+
+- **`token`** goes in the invite link. Redeem it with `POST /invites/redeem` `{ "token": "…" }`.
+- **`code`** is for typing by hand, for example on the headset's keypad: 8 characters from an alphabet without
+  look-alikes (no I, L, O, 0 or 1), shown as `XXXX-XXXX`. Redeem it with `POST /invites/redeem-code`
+  `{ "code": "K7PQ-4XMR" }`. Case, spaces and dashes don't matter. An optional `label` (40 characters) is also
+  accepted.
+
+Both need a signed-in account, return the room, and redeem the same single-use invitation: whichever is used
+first wins. A retry by the person who redeemed it succeeds again; anyone else gets an error. Errors are `409 invite_used`,
+`invite_revoked`, `invite_expired`, `already_member` and `room_full`. Codes also have:
+
+- `404 invite_code_unknown` when the code matches nothing;
+- `429 too_many_attempts` after 8 codes that matched nothing in 15 minutes for that account.
+
+Only hashes are stored: SHA-256 for tokens, and an HMAC keyed with the server secret for codes.
+
+## Voice notes on native clients
+
+Unity's runtime can't decode AAC audio clips. Processed voice notes therefore also get an Ogg Vorbis copy, and a
+moment's `media` then carries **`oggUrl`** next to `url`. It is a signed URL for the **`ogg`** variant of
+`GET /media/{id}/{variant}`, bound to the viewer and authorized on every request like the original: withdrawal,
+removal and forged links fail the same way. The copy is best effort. If the server's FFmpeg lacks libvorbis,
+`oggUrl` is absent and the voice note still plays everywhere else.
+
 ## Realtime (`/v1/realtime`)
 
 1. Connect, then send `{"type":"auth","token":"…"}` and `{"type":"join","sessionId":"…"}` (tokens are never
    put in URLs).
-2. Receive `welcome` with the authoritative playback state and both participants' avatars.
+2. Receive `welcome` with the authoritative playback state and both participants' avatars, each as this viewer
+   may see it. `peer_joined` and `avatar_changed` (sent when someone approves, replaces, stops sharing, deletes
+   or edits their avatar) carry no likeness information; clients re-fetch `GET /users/{id}/avatar`.
 3. Send `pose` at ~15 Hz (table-relative metres/quaternions; out-of-range or excess updates are dropped),
    `playback` commands, `ping` for clock sync, `reaction`, `leave`.
 4. Every playback command re-checks membership and source visibility; removal or withdrawal closes the socket

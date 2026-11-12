@@ -21,10 +21,11 @@ export const COLORS = {
   greenSoft: '#d9e8da',
   dark: 'rgba(22, 28, 26, 0.88)',
   gold: '#e3b766',
-  glass: 'rgba(42, 38, 35, 0.58)',
-  glassDark: 'rgba(24, 24, 22, 0.72)',
+  // neutral (not brown) smoked glass, light enough to see the room through, dark enough for white text
+  glass: 'rgba(28, 29, 28, 0.5)',
+  glassDark: 'rgba(22, 23, 22, 0.66)',
   glassLight: 'rgba(250, 244, 236, 0.20)',
-  hairline: 'rgba(255, 255, 255, 0.42)',
+  hairline: 'rgba(255, 255, 255, 0.3)',
   onGlass: '#ffffff',
   onGlassMuted: 'rgba(255, 255, 255, 0.78)',
 };
@@ -75,7 +76,7 @@ export function glass(ctx: CanvasRenderingContext2D, x: number, y: number, w: nu
   roundRect(ctx, x, y, w, h, r);
   ctx.fillStyle = opts.tint ?? COLORS.glass;
   ctx.fill();
-  const hi = opts.highlight ?? 0.16;
+  const hi = opts.highlight ?? 0.08;
   if (hi > 0) {
     const g = ctx.createLinearGradient(0, y, 0, y + h);
     g.addColorStop(0, `rgba(255,255,255,${hi})`);
@@ -375,6 +376,8 @@ export interface Pressable {
   redraw?: (hovered: boolean) => void;
   hovered: boolean;
   enabled: boolean;
+  /** Stable name for automated checks (e.g. `dock:reply`, `object:cup:<moment>`); never shown to people. */
+  label?: string;
 }
 
 export const pressables = new Map<number, Pressable>();
@@ -384,16 +387,16 @@ export function guardInput(ms = 600) {
   inputGuardUntil = performance.now() + ms;
 }
 
-export function makePressable(world: World, object: Object3D, parent: Entity, onPress: () => void, redraw?: (hovered: boolean) => void): Pressable {
+export function makePressable(world: World, object: Object3D, parent: Entity, onPress: () => void, redraw?: (hovered: boolean) => void, label?: string): Pressable {
   const entity = world.createTransformEntity(object, { parent });
-  return registerPressable(entity, object, onPress, redraw);
+  return registerPressable(entity, object, onPress, redraw, label);
 }
 
 /** Make an existing entity selectable. Its object must already contain its meshes: IWSDK indexes them when the tag is added. */
-export function registerPressable(entity: Entity, object: Object3D, onPress: () => void, redraw?: (hovered: boolean) => void): Pressable {
+export function registerPressable(entity: Entity, object: Object3D, onPress: () => void, redraw?: (hovered: boolean) => void, label?: string, opts: { poke?: boolean } = {}): Pressable {
   entity.addComponent(RayInteractable);
-  entity.addComponent(PokeInteractable);
-  const p: Pressable = { entity, object, onPress, redraw, hovered: false, enabled: true };
+  if (opts.poke !== false) entity.addComponent(PokeInteractable);
+  const p: Pressable = { entity, object, onPress, redraw, hovered: false, enabled: true, label };
   pressables.set(entity.index, p);
   let lastFire = 0;
   (object as unknown as { addEventListener: (t: string, f: () => void) => void }).addEventListener('click', () => {
@@ -436,7 +439,7 @@ export class Button {
   constructor(world: World, parent: Entity, opts: ButtonOptions, onPress: () => void) {
     this.opts = { width: 0.11, height: 0.11, primary: false, dark: false, ...opts };
     this.panel = new CanvasPanel(this.opts.width, this.opts.height, { renderOrder: 4 });
-    this.pressable = makePressable(world, this.panel.mesh, parent, onPress, (h) => this.render(h));
+    this.pressable = makePressable(world, this.panel.mesh, parent, onPress, (h) => this.render(h), `button:${opts.label}`);
     this.render(false);
   }
 

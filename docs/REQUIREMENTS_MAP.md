@@ -75,6 +75,74 @@ See [VISUAL_QA.md](VISUAL_QA.md) for captures, comparisons and remaining differe
 | Our day, Share (populated, filmstrip trim, audience), Together, keepsake renders | `src/companion/views/*`, `src/companion/styles.css` | 🟢 |
 | Budgets: ~150–200k tris, ≤100–120 draws, 1–2K textures, ~15 MB critical art | Measured: 123k–136k tris, 95–101 draws, ≤2K, about 6.3 MB | 🟢 desktop / 🟡 Quest |
 
+## Realistic scenes and photo-derived avatars (instructions of 7 November 2026)
+
+| Instruction | Where | Status |
+|---|---|---|
+| “Create from my photos” in onboarding and Settings, labelled demo alternative | `OurDay.tsx` (`AvatarPrompt`), `views/AvatarStudio.tsx` | ✅ e2e |
+| Explain/consent (service, who sees it, removal), file or camera capture, photo requirements, retake | `AvatarStudio.tsx` (consent, `PhotoStep`); `POST /me/avatar-consents`, `/me/avatar-sources` | 🟢 UI / ✅ API |
+| Owner-chosen options, never inferred | body model + glasses step; `services/avatars.py` (`BODIES`) | ✅ API |
+| Real job states, cancel, retry | `avatar_jobs`, `worker.py` (`avatar.generate`), job step polling | ✅ `test_avatars.py` (fake provider) / 🟡 real provider |
+| Neutral-light review (front, three-quarter, side, seated, source photo), rotate, retake, regenerate | `ReviewStep`, `portrait.ts` (`renderReviewViews`, `mountAvatarViewer`) | ✅ e2e (test mannequin) |
+| “This looks like me — use this avatar” records version and scope | `POST /me/avatar-assets/{id}/approve` (compare-and-set) | ✅ |
+| Approved version everywhere; replace, stop sharing, delete sources, delete avatar | `serializers.avatar_view`, `GET /users/{id}/avatar`, `avatar_changed` realtime notice | ✅ API + e2e (open room swaps without reload) |
+| Real provider adapter (MetaPerson), no invented endpoints, no purchase | `services/avatar_providers.py` (documented REST flow only) | ✅ fake-provider tests / ❌ never run live (no credentials) |
+| Manual GLB import when generation is unavailable, stated as such | `ImportStep`, `POST /me/avatar-assets`, `services/glb.py` | ✅ e2e |
+| Tables: sources, jobs, assets + profile active reference; migration | `models.py`, `migrations/versions/1c9e35884ad2_photo_derived_avatars.py` | ✅ upgrade/downgrade/check |
+| Secure private uploads, EXIF strip, retention | `store_source` (re-encode), `purge_expired_sources` | ✅ |
+| Authorized short-lived model delivery, GLB validation, cache clearing | signed viewer-bound URLs + re-authorization per request; `glb.inspect`; `purgeAvatarCaches`, ref-counted model cache | ✅ |
+| Rig: skinning/morphs preserved, per-participant skeleton, units/facing, seated fit, IK; blinks only where supported | `shared/avatarRig.ts` (`SkinnedAvatar`) | 🟢 desktop (test mannequin) / 🟡 real export / 🟡 headset |
+| Less amber, fewer glossy wood highlights, quieter dock and panels | `env.ts` (lights, `satin()`), `keepsakes3d.ts` (`WALNUT_TINT`), `ui3d.ts`/`main.ts` (glass) | 🟢 `docs/VISUAL_QA.md` |
+| No Dubai claim for the Düsseldorf plate; simulated clip labelled as such | `room.html` place note; `origin` on sample media → *Simulated camera pan*, *Synthesized voice note*, *Sample photo* | ✅ |
+| Settings overflow at 1440 px | `styles.css` (`.settings-grid`, `.rule-row` container query); `web/scripts/overflow-check.mjs` | ✅ |
+| Captures 1672×941, 1440×900, 390×844 incl. avatar setup/approval | `web/scripts/capture.mjs`, `web/scripts/avatar-e2e.mjs` → `docs/visual-qa/after/` | ✅ |
+| Docs: provider setup, config example without secrets, provenance, results table | `docs/AVATARS.md`, `.env.example`, `docs/ASSET_MANIFEST.md`, `docs/asset-provenance.json`, `docs/STATUS.md` | ✅ |
+| Two consenting real-photo subjects, recognisable likenesses | — | ❌ not done (no subjects; no real photos used) |
+| Quest performance with two skinned avatars | — | ❌ no hardware |
+
+## Full application UX and emulator testing (8 November 2026)
+
+| Request | Where | Status |
+|---|---|---|
+| A complete first-run journey for a new account | `views/Setup.tsx` (`GetStarted`: you → room or invite link → invite → avatar → usual times → done), routed from `App.tsx` | ✅ `web/scripts/onboarding-e2e.mjs` (1440×900, 390×844) |
+| Invite links that are easy to send | `InviteCard` (single-use link, Copy, system Share sheet, New link) in setup, Our day, Together, Share, Settings | ✅ |
+| No dead ends while someone hasn't joined yet | Our day "waiting for someone" card; Together "nobody to meet yet" with usual-times presets; Share "nobody has joined yet" (save privately still works); `NoRoom` for views that need a room | ✅ e2e |
+| Usual free times without a form | `QuickTimes` presets (weekday evenings, weekend mornings …), full editor in Settings | ✅ e2e |
+| Room settings | Settings → Rooms → *Room settings*: mute this room (per person), daily recap draft time (owner) | ✅ e2e |
+| Distinct people by default | Varied starter demo avatars per account (face, hair, hair colour, clothing; one neutral skin) — `starter_definition` | ✅ `test_new_people_get_valid_varied_demo_avatars` |
+| Test inside Meta's emulator | `web/scripts/xr-emulator-test.mjs` drives IWER's emulated Quest 3 (hands: poke, point + pinch, tracking loss; controller: ray + trigger; recenter; leave); `docs/EMULATOR.md` | ✅ 13 checks / 🟡 real headset still needed |
+| Fix what the emulator finds | `src/xr/emulator.ts` (dev-only session shim), leaves instanced at real size + no phantom touch volumes, far-select proxies for table objects, flash/hint spacing, headset reply-sheet placement | ✅ |
+
+## Native Quest application (instructions of 11 November 2026)
+
+A native Unity client for Quest in `native/quest/`, tested in Meta XR Simulator, plus an APK. It uses Unity
+6000.3.28f1, the Meta XR Core and Interaction SDK 209, OpenXR, URP and glTFast. The statuses come from
+[NATIVE_STATUS.md](NATIVE_STATUS.md), which keeps the kinds of evidence apart. The legend above doesn't apply: a
+desktop or IWER result says nothing about the native client.
+
+`scripts/native/acceptance.ps1` runs the acceptance checks (marked *check n* below) in Meta XR Simulator 207.1 with a
+simulated Meta Quest 3 and simulated hands, through the simulator's own controls. Latest full run:
+[`acceptance-065004`](native/evidence/2026-11-12/acceptance-065004.md), 12 November 2026, **8 of 8 passed**
+(**simulator-tested**; check 5 is also **real-service-tested**). The rows follow the acceptance checks in these
+instructions; the brief itself isn't in this repository.
+
+| Acceptance row | Where | Status |
+|---|---|---|
+| Native app on the same API and authorization as the companion (no special endpoints) | `native/quest/Assets/SameSky/Scripts` (`Api/ApiClient.cs`, `Api/RealtimeClient.cs`, `App/`) | Compiled (Unity 6000.3.28f1, 0 errors). Live mode simulator-tested against the real local API (check 5) |
+| XR session in the simulator: simulated Meta Quest 3, hand input | `scripts/native/play_in_sim.ps1`, `sim.ps1`, the probe (`App/TestProbe.cs`); check 1 | ✅ simulator-tested (OpenXR runtime "Meta XR Simulator 207.1.0", both hands tracked) |
+| A dock button pressed by hand | `SameSkyApp.SetDock`, `Interaction/Pressable.cs` (poke, or point and pinch; a press counts on release); check 2 | ✅ simulator-tested: a simulated fingertip pressed *Our day* |
+| The cup grabbed by hand | `SameSkyApp.Room.cs` (`BuildCup`), `Interaction/GrabbableObject.cs` (hand grab, distance grab); check 3 | ✅ simulator-tested: a palm grab lifted the cup, which moved with the hand |
+| The waiting voice note heard within the first minute | Offline sample day (`App/RoomData.cs`, `Resources/Sample/`), `PlayWaiting` with timed captions; check 4 | ✅ simulator-tested: playing 25.9 s after a fresh start, captions shown, played to the end. Hearing it is a manual step |
+| A reply on the table survives an app restart and an API restart | `StartReply` and `RestoreNotes` (`SameSkyApp.Room.cs`); `test_replies_and_placements_survive_restart`; check 5 (`stop.ps1`, `start.ps1`) | ✅ simulator-tested and real-service-tested: a new reply typed on the spatial keyboard came back after both restarts; the server kept it and its placement |
+| Recenter, pause and exit | `SameSkyApp.Recenter`, `SetPaused`, `ShowPause`, `ConfirmExit`; check 6 | ✅ simulator-tested (recenter from 35° off to 0°). The system pause (Meta button, headset off) needs a headset |
+| Tracking loss without ghost presses | `Pressable.cs` (a release is confirmed a frame later; tracking loss unselects and unhovers at once and counts as a cancel), `GrabbableObject.cs` (clean release); check 7 (`metavr xrsim input source --hand right --source none`) | ✅ simulator-tested: a cancel, no press. The first runs found a real ghost press here; fixed |
+| MP4 of the simulator run | Check 8: one file per app session. Simulator 207.1's runtime has no MP4 recorder, so FFmpeg records the simulator window | ✅ 5 of 5 sessions recorded |
+| Invite codes typed by hand (headset keypad) | `POST /v1/invites/redeem-code`, `test_invite_codes.py` (6 tests); companion join step; `UI/SpatialKeyboard.cs` code keypad | API ✅ automated, and real-service-tested (`seed.ps1` redeems codes); keypad not simulator-tested |
+| Voice notes playable in the native app | Ogg copy (`services/media.py`, `oggUrl`); `RoomData` `Audio()` | API ✅ `test_headset_voice_note_gets_an_ogg_twin_for_native_playback`; the sample note's playback is simulator-tested (check 4) |
+| Repeatable local setup: preflight, bootstrap, start/stop/seed, per-user installs | `scripts/native/*.ps1` (and `.sh` for macOS/Linux) | start, stop and seed real-service-tested on the Windows machine (check 5 restarts the API with them) |
+| APK for Quest 3/3S | `scripts/native/build.ps1 -Target Android`, `Editor/BuildScript.cs` | ✅ APK-built: 116 MB, ARM64, `com.samesky.quest` 0.9.0, SHA-256 in [NATIVE_STATUS.md](NATIVE_STATUS.md). Not installed on a headset |
+| Installed on a headset and measured there | `docs/NATIVE_QUICKSTART.md` (section 5) | Not done: no Quest |
+
 ## P1 (not implemented)
 
 More than two live avatars · WebRTC audio/video and TURN · live phone/webcam streaming · 360°/stereo footage ·

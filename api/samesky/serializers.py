@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
@@ -10,6 +11,7 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .models import (
     Avatar,
+    AvatarAsset,
     MediaAsset,
     Moment,
     Reaction,
@@ -20,7 +22,7 @@ from .models import (
     RoomObject,
     User,
 )
-from .security import sign_media_url
+from .security import sign_media_url, sign_resource_url
 from .services.access import (
     can_view_moment,
     can_view_recap,
@@ -35,18 +37,54 @@ def media_url(asset_id: str, variant: str, viewer_id: str) -> str:
     return (get_settings().public_api_url or "").rstrip("/") + sign_media_url(asset_id, variant, viewer_id)
 
 
-def user_public(user: User, avatar: Avatar | None = None) -> dict:
+RIG_FIELDS = ("bones", "blink", "expressions", "morphTargets", "triangles", "joints", "textures", "maxTexturePx")
+
+
+def avatar_url(asset_id: str, variant: str, viewer_id: str) -> str:
+    return (get_settings().public_api_url or "").rstrip("/") + sign_resource_url("/v1/avatar-assets", asset_id, variant, viewer_id)
+
+
+def avatar_view(db: Session | None, owner_id: str, avatar: Avatar | None, viewer_id: str | None) -> dict | None:
+    """What this viewer sees of a person's avatar: the owner-approved photo-derived model when they may see it,
+    otherwise the clearly labelled demo preset. Model URLs are short-lived, viewer-bound and re-authorized on fetch."""
+    if avatar is None:
+        return None
+    data: dict = {"kind": "preset_demo", "definition": avatar.definition, "version": avatar.version}
+    if db is None or not avatar.active_asset_id or not viewer_id:
+        return data
+    from .services.avatars import can_view_asset
+
+    asset = db.get(AvatarAsset, avatar.active_asset_id)
+    if asset is None or asset.state != "active" or not can_view_asset(db, asset, viewer_id):
+        return data
+    data.update(
+        {
+            "kind": "photo_derived",
+            "assetId": asset.id,
+            "assetVersion": asset.version,
+            "modelUrl": avatar_url(asset.id, "model", viewer_id),
+            "rig": {k: (asset.rig or {}).get(k) for k in RIG_FIELDS},
+            "provider": asset.provider,
+            "approvedAt": asset.approved_at.isoformat() if asset.approved_at else None,
+        }
+    )
+    if viewer_id == owner_id:
+        data["visibility"] = asset.visibility
+    return data
+
+
+def user_public(user: User, avatar: Avatar | None = None, db: Session | None = None, viewer_id: str | None = None) -> dict:
     return {
         "id": user.id,
         "displayName": user.display_name,
         "timeZone": user.time_zone,
-        "avatar": {"definition": avatar.definition, "version": avatar.version} if avatar else None,
+        "avatar": avatar_view(db, user.id, avatar, viewer_id),
     }
 
 
-def me(user: User, avatar: Avatar | None) -> dict:
+def me(user: User, avatar: Avatar | None, db: Session | None = None) -> dict:
     return {
-        **user_public(user, avatar),
+        **user_public(user, avatar, db, user.id),
         "email": user.email,
         "quietStart": user.quiet_start,
         "quietEnd": user.quiet_end,
@@ -75,7 +113,7 @@ def room(db: Session, r: Room, viewer: User, members: list[tuple] | None = None)
         "isOwner": r.owner_id == viewer.id,
         "muted": bool(viewer_membership and viewer_membership.muted),
         "members": [
-            {**user_public(u, avatars.get(u.id)), "role": m.role, "label": m.label, "joinedAt": m.joined_at.isoformat()}
+            {**user_public(u, avatars.get(u.id), db, viewer.id), "role": m.role, "label": m.label, "joinedAt": m.joined_at.isoformat()}
             for m, u in members
         ],
     }
@@ -119,6 +157,8 @@ def moment(db: Session, m: Moment, viewer: User) -> dict:
             media["url"] = media_url(asset.id, "display", viewer.id)
             if asset.thumbnail_path:
                 media["thumbUrl"] = media_url(asset.id, "thumb", viewer.id)
+            if asset.kind == "audio" and asset.derivative_path and Path(asset.derivative_path).with_suffix(".ogg").exists():
+                media["oggUrl"] = media_url(asset.id, "ogg", viewer.id)  # for native clients without AAC decoding
         if m.owner_id != viewer.id:
             media.pop("inputProfile", None)
             media.pop("safeError", None)

@@ -119,3 +119,23 @@ def test_unsupported_codec_gets_useful_message(api, tmp_path):
     status = api.call(adam, "GET", f"/v1/media/{asset['id']}").json()
     assert status["processingState"] == "failed"
     assert status["safeError"].startswith("unsupported_codec") and "H.264" in status["safeError"]
+
+
+def test_headset_voice_note_gets_an_ogg_twin_for_native_playback(api, tmp_path):
+    """A WAV recorded in the Quest app is processed like any voice note, plus an Ogg copy Unity can decode."""
+    adam, maya, sam = api.signup("Adam"), api.signup("Maya"), api.signup("Sam")
+    room = api.room(adam, "direct", "Us", members=[maya])
+    wav = tmp_path / "reply.wav"
+    subprocess.run([ffmpeg_path(), "-y", "-hide_banner", "-f", "lavfi", "-i", "sine=frequency=330", "-t", "2",
+                    "-ac", "1", "-ar", "24000", str(wav)], check=True, capture_output=True)
+    asset = api.upload(adam, wav.read_bytes(), "audio", "reply.wav", source_device="headset").json()
+    run_worker()
+    voice = api.call(adam, "POST", f"/v1/rooms/{room['id']}/moments", json={"kind": "voice", "media_asset_id": asset["id"], "caption": "Back home"}).json()
+    shared = api.share(adam, voice["id"], [maya["id"]])
+    view = api.call(maya, "GET", f"/v1/moments/{shared['id']}").json()
+    assert view["media"]["url"] and view["media"]["oggUrl"]
+    resp = api.c.get(view["media"]["oggUrl"])
+    assert resp.status_code == 200 and resp.headers["content-type"] == "audio/ogg" and resp.content[:4] == b"OggS"
+    # the Ogg twin is authorized exactly like the original: an outsider's forged link fails
+    forged = view["media"]["oggUrl"].replace(f"u={maya['id']}", f"u={sam['id']}")
+    assert api.c.get(forged).status_code == 403

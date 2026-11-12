@@ -97,7 +97,8 @@ for (const theme of themes) {
         await page.waitForTimeout(600);
       }
       const file = `${out}/${shot}${theme === 'light' ? '' : `-${theme}`}-${w}x${h}.jpg`;
-      await page.screenshot({ path: file, type: 'jpeg', quality: 84 });
+      // software WebGL renders the room at ~2-4 fps, so a single frame can take well over 30 s to capture
+      await page.screenshot({ path: file, type: 'jpeg', quality: 84, timeout: 180_000 });
       console.log('captured', file);
       await context.close();
     }

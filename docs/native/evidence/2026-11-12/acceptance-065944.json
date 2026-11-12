@@ -1,0 +1,704 @@
+{
+    "schema":  "samesky-native-acceptance/1",
+    "run":  "acceptance-065944",
+    "evidenceKind":  "simulator-tested",
+    "startedAt":  "2026-11-12T06:59:44.7117443+04:00",
+    "finishedAt":  "2026-11-12T07:01:37.3622080+04:00",
+    "commit":  "c2ff6c6",
+    "workingTreeClean":  false,
+    "target":  "Unity Play mode (editor) in Meta XR Simulator",
+    "profile":  "acceptance",
+    "api":  "http://127.0.0.1:8000",
+    "options":  {
+                    "assist":  false,
+                    "nonInteractive":  true,
+                    "recording":  true,
+                    "firstMinuteSec":  60
+                },
+    "environment":  {
+                        "os":  "Microsoft Windows 11 Home 10.0.26300",
+                        "gpu":  "NVIDIA GeForce RTX 5060 Laptop GPU; Intel(R) Graphics",
+                        "unity":  "6000.3.28f1",
+                        "simulatorRuntime":  "%USERPROFILE%\\SameSkyTools\\MetaXRSimulator\\PFiles\\MetaXRSimulator\\v207.1\\meta_openxr_simulator.json",
+                        "metavr":  "metavr 1.10.0.30.10",
+                        "powershell":  "5.1.26100.9818"
+                    },
+    "simulatorKeys":  {
+                          "Forward":  "W",
+                          "Back":  "S",
+                          "Left":  "A",
+                          "Right":  "D",
+                          "Up":  "R",
+                          "Down":  "F",
+                          "YawLeft":  "Left",
+                          "YawRight":  "Right",
+                          "PitchUp":  "Up",
+                          "PitchDown":  "Down",
+                          "TiltLeft":  "Q",
+                          "TiltRight":  "E",
+                          "PoseDefault":  "D1",
+                          "PosePoke":  "D2",
+                          "PosePinch":  "D3",
+                          "PoseGrab":  "D4",
+                          "ResetPoses":  "Space"
+                      },
+    "setup":  [
+                  {
+                      "step":  "API and worker running (scripts/native/start.ps1)",
+                      "ok":  true,
+                      "at":  "2026-11-12T06:59:45.7390074+04:00",
+                      "detail":  {
+                                     "api":  "http://127.0.0.1:8000"
+                                 }
+                  },
+                  {
+                      "step":  "Development accounts and rooms, and a voice note from Sam to Nora (seed_dev.py --voice-note)",
+                      "ok":  true,
+                      "at":  "2026-11-12T06:59:47.0561861+04:00",
+                      "detail":  {
+                                     "command":  "python.exe \u003crepo\u003e\\scripts\\native\\seed_dev.py --api http://127.0.0.1:8000 --seed \u003crepo\u003e\\scripts\\native\\dev-seed.json --voice-note --json-out \u003crepo\u003e\\docs\\native\\evidence\\2026-11-12\\acceptance-065944\\seed.json",
+                                     "exit":  0,
+                                     "timedOut":  false,
+                                     "output":  "account nora: nora.native@example.com\r\naccount sam: sam.native@example.com\r\naccount outsider: outsider.native@example.com\r\naccount lina: lina.native@example.com\r\nroom pair: exists (2 members)\r\nroom circle: exists (3 members)\r\nvoice note: exists (be558801-0c90-48cd-82e7-2e3133b7416c)\r\n{\r\n  \"api\": \"http://127.0.0.1:8000\",\r\n  \"users\": {\r\n    \"nora\": \"31f0e0ec-aa02-4d55-b1ef-456f49636017\",\r\n    \"sam\": \"6b768d48-4232-4699-8dc3-fcbca88457e4\",\r\n    \"outsider\": \"ccbc0b01-0282-4aee-8660-44c0293d7dfc\",\r\n    \"lina\": \"46825995-8a43-4ff0-86fa-4e85416a4e2b\"\r\n  },\r\n  \"rooms\": {\r\n    \"pair\": \"037383ca-003b-48c9-9edd-a2550fa48540\",\r\n    \"circle\": \"82f161d9-9a40-4ecd-8630-a593d3effa56\"\r\n  },\r\n  \"voiceNote\": {\r\n    \"momentId\": \"be558801-0c90-48cd-82e7-2e3133b7416c\",\r\n    \"from\": \"sam\",\r\n    \"to\": \"nora\",\r\n    \"room\": \"pair\",\r\n    \"oggUrl\": true\r\n  }\r\n}"
+                                 }
+                  },
+                  {
+                      "step":  "Signed in as Nora (nora.native@example.com, development account) through POST /v1/auth/login; the token is never written to the evidence",
+                      "ok":  true,
+                      "at":  "2026-11-12T06:59:47.2567835+04:00",
+                      "detail":  null
+                  },
+                  {
+                      "step":  "Meta XR Simulator window found",
+                      "ok":  true,
+                      "at":  "2026-11-12T06:59:54.4734427+04:00",
+                      "detail":  {
+                                     "runtime":  "%USERPROFILE%\\SameSkyTools\\MetaXRSimulator\\PFiles\\MetaXRSimulator\\v207.1\\meta_openxr_simulator.json"
+                                 }
+                  },
+                  {
+                      "step":  "Simulator movement speed 0.3 (metavr xrsim input speed)",
+                      "ok":  true,
+                      "at":  "2026-11-12T07:00:12.8297727+04:00",
+                      "detail":  {
+                                     "command":  "metavr.cmd xrsim input speed --value 0.3",
+                                     "exit":  0,
+                                     "timedOut":  false,
+                                     "output":  "MOVEMENT SPEED\n--------------\n0.3"
+                                 }
+                  }
+              ],
+    "calibration":  {
+                        "ok":  true,
+                        "device":  "body",
+                        "speedsMetresPerSec":  {
+                                                   "Forward":  0.307,
+                                                   "Back":  0.307,
+                                                   "Right":  0.317,
+                                                   "Left":  0.303,
+                                                   "Up":  0.32,
+                                                   "Down":  0.307
+                                               },
+                        "resolution":  0.008,
+                        "fingertip":  [
+                                          -0.054,
+                                          0.008,
+                                          0.167
+                                      ],
+                        "fingertipSource":  "the app\u0027s right poke interactor (probe pokeAt), in the poke pose",
+                        "fingertipLog":  [
+
+                                         ],
+                        "headReset":  {
+                                          "yaw":  0,
+                                          "pitch":  0,
+                                          "seatError":  0.006
+                                      },
+                        "note":  ""
+                    },
+    "executionOrder":  [
+                           "Invoke-Check1",
+                           "Invoke-Check7"
+                       ],
+    "checks":  [
+                   {
+                       "id":  1,
+                       "name":  "XR session active: simulated Meta Quest 3 with hand input",
+                       "status":  "pass",
+                       "driver":  "script (metavr)",
+                       "summary":  "XR active True, runtime \u0027Meta XR Simulator 207.1.0\u0027, hands L True R True, input hands; metavr device set exit 0, input sync exit 0/0",
+                       "startedAt":  "2026-11-12T06:59:54.5110584+04:00",
+                       "finishedAt":  "2026-11-12T07:00:49.4538619+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "command",
+                                            "label":  "simulated device",
+                                            "at":  "2026-11-12T07:00:06.8756829+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim device set --name \"Meta Quest 3\" --wait",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "DEVICE      \n------------\nMeta Quest 3"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "hand input",
+                                            "at":  "2026-11-12T07:00:08.6725710+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input sync --source hand",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HANDS        SOURCE\n-----------  ------\nleft, right  hand"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "MP4 recorder in this runtime",
+                                            "at":  "2026-11-12T07:00:10.4300180+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim record status",
+                                                         "exit":  1,
+                                                         "timedOut":  false,
+                                                         "output":  "Error: this XR Simulator runtime does not support native MP4 recording: its build doesn\u0027t include the recording service, so `record start`, `record stop` and `record status` keep failing against it; record the simulator window with your OS screen recorder instead"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "hand input after the restart",
+                                            "at":  "2026-11-12T07:00:48.6835291+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input sync --source hand",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HANDS        SOURCE\n-----------  ------\nleft, right  hand"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check1-xr",
+                                            "at":  "2026-11-12T07:00:48.7014232+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "xrDevice":  "OpenXR Display",
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "activeInput":  "hands",
+                                                                        "fps":  62.5,
+                                                                        "screen":  "launch",
+                                                                        "head":  [
+                                                                                     0.0,
+                                                                                     1.18,
+                                                                                     0.0
+                                                                                 ],
+                                                                        "handsAt":  {
+                                                                                        "left":  [
+                                                                                                     -0.3,
+                                                                                                     0.88,
+                                                                                                     0.5
+                                                                                                 ],
+                                                                                        "right":  [
+                                                                                                      0.3,
+                                                                                                      0.88,
+                                                                                                      0.5
+                                                                                                  ]
+                                                                                    }
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check1-xr.json"
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+                                      {
+                                          "check":  1,
+                                          "step":  "Confirm the simulated headset is Meta Quest 3",
+                                          "how":  "The probe cannot see the headset model: check Device in the simulator Inputs panel (screenshot sim-check1-session.png).",
+                                          "status":  "to do"
+                                      }
+                                  ]
+                   },
+                   {
+                       "id":  2,
+                       "name":  "Dock button pressed by a simulated hand",
+                       "status":  "skipped",
+                       "driver":  "",
+                       "summary":  "not selected (-Only)",
+                       "startedAt":  "2026-11-12T07:01:37.3284355+04:00",
+                       "finishedAt":  "2026-11-12T07:01:37.3299522+04:00",
+                       "evidence":  [
+
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  3,
+                       "name":  "Cup grabbed by a simulated hand",
+                       "status":  "skipped",
+                       "driver":  "",
+                       "summary":  "not selected (-Only)",
+                       "startedAt":  "2026-11-12T07:01:37.3321193+04:00",
+                       "finishedAt":  "2026-11-12T07:01:37.3338081+04:00",
+                       "evidence":  [
+
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  4,
+                       "name":  "Voice note heard within the first minute of a fresh start (sample day)",
+                       "status":  "skipped",
+                       "driver":  "",
+                       "summary":  "not selected (-Only)",
+                       "startedAt":  "2026-11-12T07:01:37.3354919+04:00",
+                       "finishedAt":  "2026-11-12T07:01:37.3365003+04:00",
+                       "evidence":  [
+
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  5,
+                       "name":  "Reply on the table survives an app restart and an API restart",
+                       "status":  "skipped",
+                       "driver":  "",
+                       "summary":  "not selected (-Only)",
+                       "startedAt":  "2026-11-12T07:01:37.3385306+04:00",
+                       "finishedAt":  "2026-11-12T07:01:37.3405382+04:00",
+                       "evidence":  [
+
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  6,
+                       "name":  "Recenter, pause and exit",
+                       "status":  "skipped",
+                       "driver":  "",
+                       "summary":  "not selected (-Only)",
+                       "startedAt":  "2026-11-12T07:01:37.3415386+04:00",
+                       "finishedAt":  "2026-11-12T07:01:37.3445871+04:00",
+                       "evidence":  [
+
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  7,
+                       "name":  "Hand tracking lost mid-press and found again: no ghost press",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "right hand lost True and back True; presses during and after: 0 (count 0 -\u003e 0); cancels: 1",
+                       "startedAt":  "2026-11-12T07:00:49.4621612+04:00",
+                       "finishedAt":  "2026-11-12T07:01:30.6883903+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check7-before",
+                                            "at":  "2026-11-12T07:01:17.9028611+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "activeInput":  "hands",
+                                                                        "presses":  0,
+                                                                        "lastPress":  "",
+                                                                        "handsAt":  {
+                                                                                        "left":  [
+                                                                                                     -0.629,
+                                                                                                     0.892,
+                                                                                                     0.266
+                                                                                                 ],
+                                                                                        "right":  [
+                                                                                                      -0.029,
+                                                                                                      0.892,
+                                                                                                      0.266
+                                                                                                  ]
+                                                                                    }
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check7-before.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-target",
+                                            "label":  "was the button held down when tracking was dropped",
+                                            "at":  "2026-11-12T07:01:17.9038642+04:00",
+                                            "data":  {
+                                                         "target":  "launch:recenter",
+                                                         "downBeforeTrackingLoss":  true
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "right-hand tracking off",
+                                            "at":  "2026-11-12T07:01:19.7015822+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input source --hand right --source none",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HAND   SOURCE\n-----  ------\nright  none"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check7-lost",
+                                            "at":  "2026-11-12T07:01:19.7211802+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "hands":  {
+                                                                                      "left":  false,
+                                                                                      "right":  false
+                                                                                  },
+                                                                        "activeInput":  "None",
+                                                                        "presses":  0,
+                                                                        "lastPress":  ""
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check7-lost.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "hand tracking back",
+                                            "at":  "2026-11-12T07:01:26.9314276+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input sync --source hand",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HANDS        SOURCE\n-----------  ------\nleft, right  hand"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check7-after",
+                                            "at":  "2026-11-12T07:01:30.0170320+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "activeInput":  "hands",
+                                                                        "presses":  0,
+                                                                        "lastPress":  ""
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check7-after.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "press cancelled by the tracking loss",
+                                            "at":  "2026-11-12T07:01:30.0316192+04:00",
+                                            "data":  {
+                                                         "t":  23.098,
+                                                         "kind":  "cancel",
+                                                         "detail":  "launch:recenter",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-12T07:01:29.9370298+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-count",
+                                            "label":  "presses counted by the probe",
+                                            "at":  "2026-11-12T07:01:30.0316192+04:00",
+                                            "data":  {
+                                                         "pressesBefore":  0,
+                                                         "pressesAfter":  0,
+                                                         "pressEvents":  0,
+                                                         "cancelEvents":  1
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  8,
+                       "name":  "MP4 of the simulator for every app session",
+                       "status":  "pass",
+                       "driver":  "script (FFmpeg window capture)",
+                       "summary":  "2 of 2 recordings saved",
+                       "startedAt":  "2026-11-12T07:01:37.2858412+04:00",
+                       "finishedAt":  "2026-11-12T07:01:37.3212593+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session2-sample",
+                                            "at":  "2026-11-12T07:01:37.3070498+04:00",
+                                            "data":  {
+                                                         "label":  "session2-sample",
+                                                         "file":  "docs/native/evidence/2026-11-12/acceptance-065944/session2-sample.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  78384,
+                                                         "durationSec":  2.6,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session2-sample.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session2-sample.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-12T07:00:46.7059428+04:00",
+                                                         "stoppedAt":  "2026-11-12T07:00:50.5359687+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  15.51
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "launch",
+                                                                             "mode":  "none",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  18.21
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session2-sample started",
+                                            "at":  "2026-11-12T07:01:37.3090930+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  15.51
+                                                                    }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session3-tracking",
+                                            "at":  "2026-11-12T07:01:37.3090930+04:00",
+                                            "data":  {
+                                                         "label":  "session3-tracking",
+                                                         "file":  "docs/native/evidence/2026-11-12/acceptance-065944/session3-tracking.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  553466,
+                                                         "durationSec":  20.1,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session3-tracking.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session3-tracking.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-12T07:01:10.7334208+04:00",
+                                                         "stoppedAt":  "2026-11-12T07:01:31.7517875+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  14.96
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "launch",
+                                                                             "mode":  "none",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  34.86
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session3-tracking started",
+                                            "at":  "2026-11-12T07:01:37.3101061+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  14.96
+                                                                    }
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+                                     "The simulator runtime has no MP4 recorder (metavr xrsim record says its build doesn\u0027t include the recording service), so FFmpeg recorded the simulator window: the 3D view as the simulator showed it, plus its side panel."
+                                 ],
+                       "manual":  [
+                                      {
+                                          "check":  8,
+                                          "step":  "Watch the recordings",
+                                          "how":  "Check each MP4 shows the steps above (the script only checks the files exist and have a length).",
+                                          "status":  "to do"
+                                      }
+                                  ]
+                   }
+               ],
+    "manual":  [
+                   {
+                       "check":  1,
+                       "step":  "Confirm the simulated headset is Meta Quest 3",
+                       "how":  "The probe cannot see the headset model: check Device in the simulator Inputs panel (screenshot sim-check1-session.png).",
+                       "status":  "to do"
+                   },
+                   {
+                       "check":  8,
+                       "step":  "Watch the recordings",
+                       "how":  "Check each MP4 shows the steps above (the script only checks the files exist and have a length).",
+                       "status":  "to do"
+                   }
+               ],
+    "artifacts":  [
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/seed.json",
+                          "what":  "seeded ids (development data)",
+                          "bytes":  560,
+                          "sha256":  "0efe88d686dd008da6169f3a7a93b718d29c42891d382e38cb8d82c20d5720d3"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/events-session1.jsonl",
+                          "what":  "probe events, app session 1",
+                          "bytes":  302,
+                          "sha256":  "4c8b4e8ae2ab13106322e7d8d9df8915bd342f9c0fe39d88fd6691961db9dbf1"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check1-xr.json",
+                          "what":  "probe state: check1-xr",
+                          "bytes":  3049,
+                          "sha256":  "f4bf0529654b9e94bf3501f049e1a33a94317c5a1369c69e77c4f3790e8491e7"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/sim-check1-session.png",
+                          "what":  "simulator view: check1-session",
+                          "bytes":  968318,
+                          "sha256":  "24aefb51bedf2bad71f1729299f603b378a266a755471f886833dad95fafc09f"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/seat-launch.png",
+                          "what":  "seated view (fixed camera): the launch screen in the room (reference 10)",
+                          "bytes":  1104577,
+                          "sha256":  "dc98bdc15386467d1af7642aba806ec0d2e5e040bbaf8bbce222d59a3cfea3df"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/session2-sample.mp4",
+                          "what":  "simulator window recording (FFmpeg): session2-sample",
+                          "bytes":  78384,
+                          "sha256":  "43b57d16e7a69570620952e7742841c00efa49c88c3c9a95345f70ecbfced497"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/events-session2.jsonl",
+                          "what":  "probe events, app session 2",
+                          "bytes":  365,
+                          "sha256":  "b3f07eabb3752f3dd80c57cc6955037ed6af1a97d85b1be8b06a1cbefcbde2fc"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check7-before.json",
+                          "what":  "probe state: check7-before",
+                          "bytes":  3083,
+                          "sha256":  "3df754cdaea1c10241dd74cefa3efd5365114fcb9ddc84c9e7105821ca141b5c"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check7-lost.json",
+                          "what":  "probe state: check7-lost",
+                          "bytes":  2985,
+                          "sha256":  "176fca1197cc3e794b60ca8d0c628bb5dec539459061c2c224f40ff6b5c4c48a"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/state-check7-after.json",
+                          "what":  "probe state: check7-after",
+                          "bytes":  3084,
+                          "sha256":  "582dc0f7ce92913f80692b0bc7689a625018b421380e54b5fd1f642e7b1deec6"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/sim-check7-after.png",
+                          "what":  "simulator view: check7-after",
+                          "bytes":  962414,
+                          "sha256":  "e95f51821bd1fbf101b81e03ad2f89cea5ef281d374fe91f20da64a1a95ed47d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/session3-tracking.mp4",
+                          "what":  "simulator window recording (FFmpeg): session3-tracking",
+                          "bytes":  553466,
+                          "sha256":  "b6597f83e3ced4cbc0cad33e6032df0e1b31ea0750ad64d9ba881ceee99943a0"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-12/acceptance-065944/events-session3.jsonl",
+                          "what":  "probe events, app session 3",
+                          "bytes":  377,
+                          "sha256":  "64d4451a82eefa53244bbdfe58b2dbc66950c9ad3d24f7af82b757def76b907a"
+                      }
+                  ],
+    "notes":  [
+                  "metavr xrsim record: Error: this XR Simulator runtime does not support native MP4 recording: its build doesn\u0027t include the recording service, so `record start`, `record stop` and `record status` keep failing against it; record the simulator window with your OS screen recorder instead The recordings are FFmpeg captures of the simulator window instead."
+              ]
+}

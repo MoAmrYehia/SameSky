@@ -104,3 +104,23 @@ def test_avatar_face_preset_is_validated_and_defaults_for_older_definitions(api)
     assert older["definition"]["face"] == "soft"
     api.call(maya, "PUT", "/v1/me/avatar", expect=422, json={"skin": "#d29a72", "hair": "long", "hairColor": "#2b1d14", "top": "#e9e0cf", "face": "photoreal"})
     assert "defined" in api.call(maya, "GET", "/v1/avatar-options").json()["face"]
+
+
+def test_avatar_change_tells_live_peers_to_look_again_without_revealing_it(api):
+    adam, maya, lina, room, m, session = _setup(api)
+    with api.c.websocket_connect("/v1/realtime") as a:
+        _next(_hello(a, adam, session["id"]), "welcome")
+        # Maya isn't connected (say she's on her phone): her change still reaches Adam's open room.
+        api.call(maya, "PUT", "/v1/me/avatar", json={"skin": "#d29a72", "hair": "short", "hairColor": "#2b1d14", "top": "#e9e0cf", "accessory": "none"})
+        notice = _next(a, "avatar_changed")
+        assert notice == {"type": "avatar_changed", "userId": maya["id"]}  # no kind, asset id or URL
+        api.call(maya, "POST", "/v1/me/avatar/demo")
+        assert _next(a, "avatar_changed")["userId"] == maya["id"]
+        # Lina isn't in this session, so her changes aren't sent here.
+        api.call(lina, "PUT", "/v1/me/avatar", json={"skin": "#d29a72", "hair": "short", "hairColor": "#2b1d14", "top": "#e9e0cf", "accessory": "none"})
+        a.send_json({"type": "ping", "t": 7})
+        seen = []
+        while (msg := a.receive_json())["type"] != "pong":
+            seen.append(msg)
+        assert not [x for x in seen if x["type"] == "avatar_changed"]
+        a.send_json({"type": "leave"})

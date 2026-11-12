@@ -9,6 +9,9 @@ of a person; all people in the sample are fictional.
   `scripts/assets/fetch_polyhaven.py`. Authors, source URLs and the SHA-256 of every downloaded source file are
   recorded in [`asset-provenance.json`](asset-provenance.json), retrieved on 2026-11-06.
 - Source downloads live in `.asset-cache/` (git-ignored, about 190 MB). Only the optimized outputs below are committed.
+- The native Quest app adds three more third-party sources, each with its licence text beside it: Microsoft
+  Rocketbox characters and animations (MIT), the Figtree typeface (SIL OFL 1.1) and Lucide icons (ISC). See
+  *Native app copies*.
 
 ## Runtime assets (`web/public/assets/`)
 
@@ -26,18 +29,42 @@ of a person; all people in the sample are fictional.
 | `textures/walnut/{color,normal,rough,ao}.webp` | Frames, lamp base and keepsake plinths. The scan is a grey-washed veneer, so materials tint it warm (`WALNUT_TINT`) | CC0, Poly Haven *American Walnut Veneer* | 179 KB |
 | `textures/knit/normal.webp` | Knit relief on the characters' sweaters | CC0, Poly Haven *Knitted Fleece* | 476 KB |
 | `env/lounge_1k.hdr` | Interior light probe, prefiltered at runtime with PMREM (IWSDK `IBLTexture`) and reused by the portrait renderer | CC0, Poly Haven HDRI *Lythwood Lounge* (Greg Zaal), 1k, unmodified | 1.54 MB |
-| `sample/window-skyline.jpg` | Distant skyline seen through the window: a 200° cylindrical projection (straight verticals, correct heights), sunset grade, slight softening, 2048×512 | Derived from CC0 HDRI *Dusseldorf Bridge* (Greg Zaal) by `scripts/assets/build_sample_media.py` | 123 KB |
+| `sample/window-skyline.jpg` | Distant skyline seen through the window: a 200° cylindrical projection (straight verticals, correct heights), sunset grade, slight softening, 2048×512 | Derived from CC0 HDRI *Dusseldorf Bridge* (Greg Zaal) by `scripts/assets/build_sample_media.py`. In the room it is multiplied by a slightly cool white (`#e8eef7`) to temper the sunset grade. **No geographic claim:** the room is a *sample lounge* (its welcome card says the view is a CC0 photograph, not a live view of anyone’s city); it is not Dubai or any user’s location | 123 KB |
 | `backdrops/lounge.jpg`, `lounge-dark.jpg` | Blurred companion backdrops (light and dark). No UI text, no people, no private content | Derived from CC0 HDRI *Lythwood Lounge* | 48 KB, 30 KB |
 | `sample/maya-park.jpg` (+`-thumb`) | Maya's afternoon walk photo | Perspective crop of CC0 HDRI *Ballawley Park* (Savva Zakharov), graded | 408 KB + 77 KB |
 | `sample/adam-waterfront.jpg` (+`-thumb`) | Adam's harbour walk photo | Perspective crop of CC0 HDRI *Golden Bay* (Greg Zaal) | 291 KB + 55 KB |
 | `sample/adam-desert.jpg` (+`-thumb`) | Adam's desert-hills photo (family circle) | Perspective crop of CC0 HDRI *Rogland Sunset* (Greg Zaal) | 358 KB + 62 KB |
 | `sample/lina-courtyard.jpg` (+`-thumb`) | Lina's courtyard evening photo (family circle) | Perspective crop of CC0 HDRI *Courtyard Night* (Greg Zaal) | 227 KB + 45 KB |
-| `sample/adam-clip.mp4`, `-poster.jpg`, `-thumb.jpg` | 8-second 1280×720 handheld-style camera pan along the promenade, H.264 High plus AAC (quiet brown-noise ambience), `+faststart` | Rendered frame by frame from CC0 HDRI *Golden Bay* along a simulated camera path. Labelled as a *Camera* clip | 3.85 MB (loaded only when played) |
-| `sample/maya-voice.m4a`, `.vtt` | Maya's 9-second voice note and its captions | **Original.** Synthesized with the operating system's text-to-speech voice by `scripts/fixtures/make_illustrated_media.py` (`voice()`), AAC 96 kb/s. A synthesized sample voice, not a recording of a person | 79 KB |
+| `sample/adam-clip.mp4`, `-poster.jpg`, `-thumb.jpg` | 8-second 1280×720 handheld-style camera pan along the promenade, H.264 High plus AAC (quiet brown-noise ambience), `+faststart` | Rendered frame by frame from CC0 HDRI *Golden Bay* along a simulated camera path. **Not a camera recording**: its sample data carries `origin: 'simulated'`, so the companion labels it *Simulated camera pan* and the room *Adam’s simulated camera pan*. Real device imports keep their own source labels (*Phone*, *Camera*, *Action camera* …) | 3.85 MB (loaded only when played) |
+| `sample/maya-voice.m4a`, `.vtt` | Maya's 9-second voice note and its captions | **Original.** Synthesized with the operating system's text-to-speech voice by `scripts/fixtures/make_illustrated_media.py` (`voice()`), AAC 96 kb/s. A synthesized sample voice, not a recording of a person; labelled *Synthesized voice note* in the companion and *Synthesized voice* on the cup | 79 KB |
 | Figtree Variable font | Companion and in-room interface type | SIL Open Font License 1.1, self-hosted from the `@fontsource-variable/figtree` npm package and bundled by Vite | 20 KB (variable woff2, latin; latin-ext 10 KB only if needed) |
 
 The sample's people, captions and recaps are fictional. The photos are crops of public-domain panoramas
-with no identifiable people. They stand in for what a user would share.
+with no identifiable people. They stand in for what a user would share, and are labelled *Sample photo*
+(`origin: 'stock'`) rather than as a phone or camera photo.
+
+## Native app copies (`native/quest/Assets/SameSky/`)
+
+The Unity app ships its own copies of the assets above. Unity can't import the web room's WebP-in-glTF props
+or decode AAC audio clips, so it gets the original formats instead: `scripts/native/build_native_assets.py`
+copies or converts from the same sources. The headset room also has its own type, icons and seated characters
+(the rows marked third-party below); the room's walls, glazing, furniture and props are generated by
+`Editor/LoungeBuilder.cs` and `Scripts/Room/MeshGen.cs` from the CC0 texture sets.
+
+| Path | What it is | Origin and licence | Size |
+|---|---|---|---|
+| `Art/Models/{table,armchair,side-table,plant,vase}/` | The five room props as Poly Haven's 1k glTF: `.gltf`, `.bin` and 1024 px JPG maps (diffuse, normal and ARM; the vase has roughness instead of ARM) | CC0, the same Poly Haven assets as the web props above; authors, URLs and SHA-256 in [`asset-provenance.json`](asset-provenance.json). Copied unchanged from `.asset-cache/` (`scripts/assets/fetch_polyhaven.py`) | 5.68 MB, 25 files |
+| `Art/Textures/{herringbone_parquet,clay_plaster,american_walnut_veneer,wool_boucle,knitted_fleece}/` | Tiling sets for the floor, walls, wood, rug and knit: diffuse, normal, roughness and AO JPGs, 1024 px wide | CC0 Poly Haven, as above, unchanged | 14.13 MB, 20 files |
+| `Art/Env/lythwood_lounge_1k.hdr` | Interior light for the skybox and reflections | CC0 Poly Haven HDRI *Lythwood Lounge* (Greg Zaal), unchanged | 1.54 MB |
+| `Art/Textures/window-skyline.jpg` | The window plate | Copy of `sample/window-skyline.jpg` above (same derivation, same "no geographic claim") | 123 KB |
+| `Art/Characters/Rocketbox/{Female_Adult_14,Male_Adult_07}/`, `Animations/`, `Resources/Characters/{maya,adam}.prefab` | The sample's Maya and Adam in the native room: stock adult characters with facial rigs (Rocketbox *Female_Adult_14* and *Male_Adult_07*, 81-bone Biped skeletons imported as Humanoid), seated with Rocketbox's `f_sit_table_breathe_01` / `m_sit_table_breathe_01` loops. Textures converted from TGA (head colour 2048 px JPG, other colour maps 1024 px JPG, normal and hair/lash opacity maps PNG); the specular maps are not used. URP materials, animator controllers and prefabs are made by `Editor/CharacterSetup.cs` | **Third-party, MIT** (© 2020 Microsoft), [Microsoft Rocketbox](https://github.com/microsoft/Microsoft-Rocketbox) `Assets/Avatars/Adults/*/Export/*_facial.fbx`, `*/Textures/*.tga` and `Assets/Animations/`; licence text in `Art/Characters/Rocketbox/LICENSE.txt`, source hashes in [`asset-provenance.json`](asset-provenance.json) (`native`). Stock characters standing in for fictional people: not a scan or photo of anyone who uses the app | 17.9 MB, 14 files (models 3.8 MB, animations 5.7 MB, textures 8.4 MB) |
+| `Resources/Characters/lina.glb` | Lina (the sample's family circle) | **Original.** Exported from the companion's character kit (`models/avatars/characters.glb` above) by `web/scripts/export-characters.mjs` through `web/dev/export-characters.html` (needs `npm run dev`). Procedural sculpt: no scan, no photo, no likeness | 3.5 MB |
+| `Art/Fonts/Figtree/Figtree-{Regular,SemiBold,Bold}.ttf`, `OFL.txt` | The interface type in the headset (TextMesh Pro dynamic font assets in `Resources/Fonts`, made by `Editor/FontSetup.cs`) | **Third-party, SIL Open Font License 1.1**, Figtree by Erik Kennedy ([google/fonts](https://github.com/google/fonts/tree/main/ofl/figtree)); static 400/600/700 instances cut from the variable font with fontTools' instancer, unmodified otherwise | 120 KB |
+| `Art/Fonts/Lucide/lucide.ttf`, `LICENSE.txt` | Line icons in buttons and the dock (a fallback font of the interface type; codepoints in `Scripts/UI/Icons.cs`) | **Third-party, ISC**, Lucide (`lucide-static` 0.460.0 from npm), unchanged | 661 KB |
+| `Resources/Characters/demo-figure.glb` | The labelled demo figure in live rooms, for someone without an approved avatar | **Original.** Byte-identical copy of the test mannequin `web/tests/fixtures/test-mannequin.glb` (see *Test fixtures*); not a likeness | 905 KB |
+| `Resources/Sample/Media/*.jpg`, `adam-clip.mp4` | The sample day's photos, the clip, its poster and the thumbnails | Byte-identical copies of `web/public/assets/sample/`. The native app labels them *Stock photo (sample)* and *Simulated camera pan (sample)* (`OriginLabel` in `SameSkyApp.Room.cs`) | 5.36 MB, 11 files |
+| `Resources/Sample/Media/maya-voice.ogg` | Maya's voice note in the cup | **Original.** Converted from the synthesized `sample/maya-voice.m4a` to Ogg Vorbis (mono, 44.1 kHz, quality 5) by `build_native_assets.py`. Still the operating system's text-to-speech voice, not a recording; labelled *Synthesized voice (sample)* on the cup | 55 KB |
+| `Resources/Sample/sample-day.json` | The fictional sample day, captions included as timed cues | Exported from `web/src/shared/sample.ts` by `scripts/native/export_sample.mjs` | 34 KB |
 
 ## Derived renders (not files)
 
@@ -48,6 +75,14 @@ with no identifiable people. They stand in for what a user would share.
 - Small canvas textures (mug speckle, cork, iris, interface panels) are drawn procedurally at runtime.
 
 ## Test fixtures (not shipped)
+
+| Path | What it is | Origin and licence | Size |
+|---|---|---|---|
+| `web/tests/fixtures/test-mannequin.glb` | Skinned test figure for the photo-derived avatar path: an artist's-mannequin body with a Mixamo-style 24-joint skeleton, eye-blink morph targets, A-pose, metres, facing +Z | **Original.** Generated procedurally by `web/scripts/build-test-rig.mjs` (no scan, no photo, no person). Used only by `web/scripts/avatar-e2e.mjs`, the dev rig page and API validation tests; it never ships in `web/public` and is not a likeness | 905 KB, 17,584 triangles |
+
+No real person's photo, face scan or provider-generated avatar is committed. Photo-derived avatars are private
+per-user data stored by the API (`SAMESKY_MEDIA_ROOT/avatar-private/`), never repository assets.
+
 
 `scripts/fixtures/make_illustrated_media.py` (formerly `scripts/make_sample_media.py`) still produces the
 earlier Pillow illustrations for tests and fallbacks. Its output goes to `scripts/fixtures/out/` (git-ignored) and

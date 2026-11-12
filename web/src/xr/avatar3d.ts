@@ -1,5 +1,6 @@
-// The person across the table, built from the shared sculpted character kit (src/shared/character.ts) —
-// the same model, outfit and materials the companion renders as their portrait.
+// The person across the table. The figure is either their owner-approved, photo-derived model
+// (SkinnedAvatar, src/shared/avatarRig.ts) or the clearly labelled demo kit (CharacterModel) — the same
+// figure the companion renders as their portrait.
 //
 // Compatible with the previous Avatar3D interface (root, head, leftHand/rightHand anchors, setPresence,
 // setPose, playGesture, update, dispose), so table-relative networking is unchanged. Presence is always
@@ -8,8 +9,7 @@
 // separate from tracking: a tracked head or hand always wins over idle animation and gestures.
 
 import { Euler, Group, type Material, type Mesh, type Object3D, Quaternion, Vector3 } from 'three';
-import { type CharacterKit, CharacterModel } from '../shared/character';
-import type { AvatarDefinition } from '../shared/contracts';
+import type { Figure } from '../shared/figure';
 import { COLORS, FittedPill } from './ui3d';
 
 export type PresenceKind = 'live' | 'recorded' | 'simulated' | 'away';
@@ -23,8 +23,8 @@ export interface Seat {
   yaw: number;
 }
 
-/** Character units -> metres. The kit is sculpted slightly small; this brings it to adult seated scale. */
-export const AVATAR_SCALE = 1.2;
+/** Kit-authored constants (gestures, gaze) are in demo-kit units; this converts them to any figure. */
+const KIT_SCALE = 1.2;
 const TABLE_RADIUS = 0.54;
 /** A remote participant's head when seated at their own table, mirrored to our far side (table space). */
 const TRACKED_ORIGIN = new Vector3(0, 0.43, -0.8);
@@ -39,7 +39,11 @@ export class Avatar3D {
   /** Table space, at the seat. Contains the (rotated, scaled) body and the presence badge. */
   readonly root = new Group();
   readonly body = new Group();
-  readonly character: CharacterModel;
+  readonly character: Figure;
+  /** Live rooms only: say when someone is shown with the demo avatar rather than their own. */
+  demoNote = false;
+  /** Releases the cached photo-derived model this figure was cloned from. */
+  releaseModel: (() => void) | null = null;
   readonly head: Object3D;
   readonly leftHand: Object3D;
   readonly rightHand: Object3D;
@@ -68,15 +72,15 @@ export class Avatar3D {
   private opacity = 1;
   private materials: Material[] = [];
 
-  constructor(kit: CharacterKit, def: AvatarDefinition, readonly name: string, seat: Seat, seed = 2) {
-    this.character = new CharacterModel(kit, def, seed);
+  constructor(figure: Figure, readonly name: string, seat: Seat) {
+    this.character = figure;
     this.head = this.character.head;
     this.leftHand = this.character.leftWrist;
     this.rightHand = this.character.rightWrist;
     this.root.name = `avatar-${name}`;
     this.root.position.set(seat.x, seat.y, seat.z);
     this.body.rotation.y = seat.yaw;
-    this.body.scale.setScalar(AVATAR_SCALE);
+    this.body.scale.setScalar(figure.displayScale);
     this.body.add(this.character.root);
     this.label = new FittedPill(0.78, 0.085, 20);
     // the badge is interface: always legible, never hidden inside the hair or head
@@ -94,7 +98,8 @@ export class Avatar3D {
 
   /** Where the table top and its near edge are in character space, for rest poses that touch the table. */
   private measureTable(seat: Seat) {
-    this.tableTop = -seat.y / AVATAR_SCALE;
+    const scale = this.character.displayScale;
+    this.tableTop = -seat.y / scale;
     // first intersection of the character's forward ray with the table's rim (table space, XZ)
     const fx = Math.sin(seat.yaw);
     const fz = Math.cos(seat.yaw);
@@ -102,7 +107,7 @@ export class Avatar3D {
     const c = seat.x * seat.x + seat.z * seat.z - TABLE_RADIUS * TABLE_RADIUS;
     const disc = b * b - 4 * c;
     const t = disc > 0 ? (-b - Math.sqrt(disc)) / 2 : 0.4;
-    this.tableEdge = Math.max(0.2, t / AVATAR_SCALE);
+    this.tableEdge = Math.max(0.2 / scale * KIT_SCALE, t / scale);
   }
 
   /** Seated rest pose: forearms on the table, or chin resting on one hand (the other arm on the table). */
@@ -112,7 +117,7 @@ export class Avatar3D {
     const edge = this.tableEdge + 0.045;
     if (pose === 'chin') {
       // viewer-left hand (index 0) under the chin, elbow forward and down toward the table
-      this.restHand[0].set(-0.022, 0.392, 0.17);
+      this.character.chinRest(this.restHand[0]);
       this.restHandQ[0].copy(handBasis(_v1.set(0.28, 1, -0.32), _v2.set(0.45, 0.1, -1)));
       this.restOriented[0] = true;
       this.character.setPole(0, _v1.set(-0.15, -0.8, 0.75));
@@ -132,11 +137,12 @@ export class Avatar3D {
 
   setPresence(kind: PresenceKind, detail?: string) {
     this.presence = kind;
+    const demo = this.demoNote && this.character.kind === 'preset_demo' ? ' · demo avatar' : '';
     const text = {
-      live: `${this.name} · Here now`,
+      live: `${this.name} · Here now${demo}`,
       recorded: `${this.name} · Recorded message${detail ? ` · ${detail}` : ''}`,
       simulated: `${this.name} · Simulated (sample)`,
-      away: `${this.name} · Not here right now`,
+      away: `${this.name} · Not here right now${demo}`,
     }[kind];
     const dot = { live: '#58c27d', recorded: COLORS.gold, simulated: '#b8c2bd', away: '#9aa5a0' }[kind];
     this.label.set(text, { dot });
@@ -184,7 +190,7 @@ export class Avatar3D {
 
   /** Table space -> character space (the body's local frame). */
   private toCharacter(p: Vector3, out: Vector3) {
-    return out.copy(p).sub(this.root.position).applyAxisAngle(UP, -this.body.rotation.y).divideScalar(AVATAR_SCALE);
+    return out.copy(p).sub(this.root.position).applyAxisAngle(UP, -this.body.rotation.y).divideScalar(this.character.displayScale);
   }
 
   /**
@@ -201,12 +207,12 @@ export class Avatar3D {
       this.headQ.copy(_q1);
       this.toCharacter(_v1.copy(this.trackedHeadP).sub(TRACKED_ORIGIN).add(this.root.position), this.lean);
       this.lean.clampScalar(-0.12, 0.12);
-      this.gaze.set(0, 0.6, 2).applyQuaternion(this.headQ);
+      this.gaze.set(0, c.eyeHeight, 2).applyQuaternion(this.headQ);
     } else {
       // authored attention: look toward the attention point with a slow, small idle drift
       this.toCharacter(this.attention, this.gaze);
       const dx = this.gaze.x;
-      const dy = this.gaze.y - 0.6;
+      const dy = this.gaze.y - c.eyeHeight;
       const dz = this.gaze.z;
       const look = Math.max(-0.6, Math.min(0.6, Math.atan2(dx, dz) + Math.sin(t * 0.37) * 0.05));
       const pitch = Math.max(-0.3, Math.min(0.35, -Math.atan2(dy, Math.hypot(dx, dz)) + Math.sin(t * 0.23) * 0.025));
@@ -229,7 +235,8 @@ export class Avatar3D {
         c.setHand(idx, _v1, null);
       } else if (i === 1 && this.wave > 0 && !(this.tracked && this.hasTrackedHand[1])) {
         this.wave = Math.max(0, this.wave - dt);
-        _v1.set(0.2 + Math.sin(this.wave * 9) * 0.035, 0.62, 0.12);
+        const k = KIT_SCALE / c.displayScale;
+        _v1.set((0.2 + Math.sin(this.wave * 9) * 0.035) * k, 0.62 * k, 0.12 * k);
         c.setHand(1, _v1, handBasis(_v2.set(-0.1, 1, 0.1), _q1Vec.set(0, 0, 1)) );
       } else {
         c.setHand(idx, this.restHand[i], this.restOriented[i] ? this.restHandQ[i] : null);
@@ -267,6 +274,8 @@ export class Avatar3D {
 
   dispose() {
     this.character.dispose();
+    this.releaseModel?.();
+    this.releaseModel = null;
     this.label.dispose();
     this.root.removeFromParent();
   }

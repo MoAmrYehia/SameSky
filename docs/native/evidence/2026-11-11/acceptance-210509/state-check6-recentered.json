@@ -1,0 +1,250 @@
+{
+  "time": 50.48,
+  "xrDeviceActive": true,
+  "xrDevice": "OpenXR Display",
+  "openxrRuntime": "Meta XR Simulator 207.1.0",
+  "hands": {
+    "left": true,
+    "right": true
+  },
+  "activeInput": "hands",
+  "fps": 67.2,
+  "screen": "room",
+  "mode": "live",
+  "room": "Nora + Sam",
+  "paused": false,
+  "presses": 2,
+  "lastPress": "dock:recenter",
+  "grabs": 0,
+  "lastGrab": "",
+  "hovers": 12,
+  "audio": "",
+  "captionsOn": true,
+  "captions": "",
+  "head": [
+    -0.279,
+    1.297,
+    -0.754
+  ],
+  "headForward": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "handsAt": {
+    "left": [
+      -0.579,
+      0.997,
+      -0.254
+    ],
+    "right": [
+      0.021,
+      0.997,
+      -0.254
+    ]
+  },
+  "pokeAt": {
+    "left": [
+      -0.52,
+      0.992,
+      -0.093
+    ],
+    "right": null
+  },
+  "presence": "away",
+  "cupHeld": false,
+  "voicePlaying": false,
+  "story": "none",
+  "live": "none",
+  "driftMs": 0.0,
+  "targets": [
+    {
+      "id": "dock:together",
+      "at": [
+        -0.086,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:keepsakes",
+      "at": [
+        0.0,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:share",
+      "at": [
+        -0.172,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:settings",
+      "at": [
+        0.086,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:day",
+      "at": [
+        -0.258,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:pause",
+      "at": [
+        0.172,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:recenter",
+      "at": [
+        0.258,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:play",
+      "at": [
+        0.095,
+        0.924,
+        0.46
+      ],
+      "normal": [
+        -0.324,
+        0.258,
+        -0.91
+      ],
+      "size": [
+        0.1,
+        0.036
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:reply",
+      "at": [
+        0.199,
+        0.924,
+        0.424
+      ],
+      "normal": [
+        -0.324,
+        0.258,
+        -0.91
+      ],
+      "size": [
+        0.1,
+        0.036
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "object:cup",
+      "at": [
+        0.15,
+        0.836,
+        0.45
+      ],
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        0.09,
+        0.1
+      ]
+    }
+  ]
+}

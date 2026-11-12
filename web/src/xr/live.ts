@@ -2,7 +2,7 @@
 // Poses: ephemeral, 15 Hz, table-relative. Playback: server-authorized commands + clock-offset estimate.
 
 import { API_BASE } from '../shared/data';
-import type { AvatarDefinition } from '../shared/contracts';
+import type { AvatarView } from '../shared/contracts';
 
 export interface PlaybackState {
   sessionId: string;
@@ -18,7 +18,7 @@ export interface PlaybackState {
 export interface Participant {
   userId: string;
   displayName: string;
-  avatar: { definition: AvatarDefinition; version: number } | null;
+  avatar: AvatarView | null;
   online: boolean;
 }
 
@@ -35,6 +35,8 @@ export interface LiveHandlers {
   onState(state: PlaybackState): void;
   onPose(userId: string, pose: PoseMessage): void;
   onPeerJoined(userId: string, name: string | undefined, avatar: Participant['avatar']): void;
+  /** Their avatar changed (approved, replaced, stopped sharing, deleted): re-ask with our own authorization. */
+  onAvatarChanged?(userId: string): void;
   onPeerLeft(userId: string, reason: string): void;
   onReaction(userId: string, kind: string): void;
   onClosed(reason: string, final: boolean): void;
@@ -97,6 +99,9 @@ export class LiveSession {
         break;
       case 'peer_joined':
         this.h.onPeerJoined(msg.userId as string, msg.displayName as string | undefined, msg.avatar as Participant['avatar']);
+        break;
+      case 'avatar_changed':
+        this.h.onAvatarChanged?.(msg.userId as string);
         break;
       case 'peer_left':
         this.h.onPeerLeft(msg.userId as string, msg.reason as string);

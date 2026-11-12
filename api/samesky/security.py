@@ -84,12 +84,49 @@ def hash_invite_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+# Short invite codes are typed by hand (in a headset, on a spatial keypad), so they use an alphabet without
+# look-alikes (no I, L, O, 0 or 1). 31^8 ≈ 8.5e11 codes; redemption needs a signed-in account and is
+# rate-limited per account (services/rooms.py), and only an HMAC of the code is stored, so a database copy
+# without the server key can't be used to enumerate live codes.
+INVITE_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+INVITE_CODE_LENGTH = 8
+
+
+def new_invite_code() -> tuple[str, str]:
+    """Returns (display code such as 'K7PQ-4XMR', HMAC stored server-side)."""
+    raw = "".join(secrets.choice(INVITE_CODE_ALPHABET) for _ in range(INVITE_CODE_LENGTH))
+    return f"{raw[:4]}-{raw[4:]}", hash_invite_code(raw)
+
+
+def normalize_invite_code(code: str) -> str | None:
+    """Uppercases and drops spaces and dashes; None if it can't be a code."""
+    cleaned = "".join(ch for ch in code.upper() if ch not in " -_\t")
+    if len(cleaned) != INVITE_CODE_LENGTH or any(ch not in INVITE_CODE_ALPHABET for ch in cleaned):
+        return None
+    return cleaned
+
+
+def hash_invite_code(normalized: str) -> str:
+    key = get_settings().secret_key.encode()
+    return hmac.new(key, f"invite-code:{normalized}".encode(), hashlib.sha256).hexdigest()
+
+
 def sign_media_url(asset_id: str, variant: str, user_id: str, ttl: int | None = None) -> str:
     settings = get_settings()
     expires = int(time.time()) + (ttl or settings.media_url_ttl_seconds)
     message = f"{asset_id}:{variant}:{user_id}:{expires}".encode()
     sig = hmac.new(settings.secret_key.encode(), message, hashlib.sha256).hexdigest()[:40]
     return f"/v1/media/{asset_id}/{variant}?u={user_id}&e={expires}&s={sig}"
+
+
+def sign_resource_url(prefix: str, resource_id: str, variant: str, user_id: str, ttl: int | None = None) -> str:
+    """Same signature scheme as media, for other private resources (avatar models and source photos).
+    The variant is part of the signed message, so a link for one resource kind can't be replayed for another."""
+    settings = get_settings()
+    expires = int(time.time()) + (ttl or settings.media_url_ttl_seconds)
+    message = f"{resource_id}:{variant}:{user_id}:{expires}".encode()
+    sig = hmac.new(settings.secret_key.encode(), message, hashlib.sha256).hexdigest()[:40]
+    return f"{prefix}/{resource_id}/{variant}?u={user_id}&e={expires}&s={sig}"
 
 
 def verify_media_signature(asset_id: str, variant: str, user_id: str, expires: int, sig: str) -> bool:

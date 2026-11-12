@@ -1,0 +1,273 @@
+{
+  "time": 103.07,
+  "xrDeviceActive": true,
+  "xrDevice": "OpenXR Display",
+  "openxrRuntime": "Meta XR Simulator 207.1.0",
+  "hands": {
+    "left": true,
+    "right": true
+  },
+  "activeInput": "hands",
+  "fps": 63.0,
+  "screen": "room",
+  "mode": "live",
+  "room": "Nora + Sam",
+  "paused": false,
+  "presses": 4,
+  "lastPress": "pause:resume",
+  "grabs": 0,
+  "lastGrab": "",
+  "hovers": 40,
+  "audio": "",
+  "captionsOn": true,
+  "captions": "",
+  "head": [
+    -0.708,
+    1.38,
+    -1.554
+  ],
+  "headForward": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "handsAt": {
+    "left": [
+      -1.009,
+      1.081,
+      -1.054
+    ],
+    "right": [
+      -0.408,
+      1.081,
+      -1.054
+    ]
+  },
+  "pokeAt": {
+    "left": [
+      -0.949,
+      1.077,
+      -0.893
+    ],
+    "right": [
+      -0.462,
+      1.089,
+      -0.887
+    ]
+  },
+  "presence": "away",
+  "cupHeld": false,
+  "voicePlaying": false,
+  "story": "none",
+  "live": "none",
+  "driftMs": 0.0,
+  "targets": [
+    {
+      "id": "cup:reply",
+      "at": [
+        0.27,
+        0.801,
+        0.381
+      ],
+      "normal": [
+        -0.482,
+        0.309,
+        -0.82
+      ],
+      "size": [
+        0.11,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:share",
+      "at": [
+        -0.138,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.084,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:play",
+      "at": [
+        0.013,
+        0.804,
+        0.454
+      ],
+      "normal": [
+        -0.201,
+        0.309,
+        -0.93
+      ],
+      "size": [
+        0.1,
+        0.052
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:pause",
+      "at": [
+        0.195,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.046,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:room",
+      "at": [
+        -0.178,
+        0.908,
+        0.333
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.17,
+        0.034
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:together",
+      "at": [
+        -0.05,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.084,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:day",
+      "at": [
+        -0.226,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.084,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:recenter",
+      "at": [
+        0.245,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.046,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:keepsakes",
+      "at": [
+        0.038,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.084,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:settings",
+      "at": [
+        0.126,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.084,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "object:cup",
+      "at": [
+        0.15,
+        0.832,
+        0.45
+      ],
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        0.09,
+        0.1
+      ]
+    }
+  ]
+}
