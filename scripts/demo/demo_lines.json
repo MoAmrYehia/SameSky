@@ -1,0 +1,12 @@
+{
+  "note": "The narration of the demo video 'I Saved You a Seat' (real footage of the native app in Meta XR Simulator). One synthesized narrator voice (Windows text-to-speech); the other voice in the film is the app's own sample voice note, played by the app. scripts/demo/trailer_voices.ps1 -Lines demo_lines.json -Out demo-build/demo/voice renders these.",
+  "lines": [
+    { "id": "n1-distance", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-8%", "pitch": "-1st", "text": "Different cities. Different routines. Some days, we miss each other by hours." },
+    { "id": "n2-cup", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-8%", "pitch": "-1st", "text": "In SameSky, a familiar object can hold a message for later.", "say": "In Same Sky, a familiar object can hold a message for later." },
+    { "id": "n3-day", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-8%", "pitch": "-1st", "text": "A few moments become a day you can step into." },
+    { "id": "n4-reply", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-8%", "pitch": "-1st", "text": "Leave an answer, and it waits on the table." },
+    { "id": "n5-share", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-8%", "pitch": "-1st", "text": "Share the little things, from your phone or your camera's footage, with the people you choose." },
+    { "id": "n6-keep", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-8%", "pitch": "-1st", "text": "A place for the moments between visits." },
+    { "id": "n7-close", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-10%", "pitch": "-1st", "text": "SameSky. A place to be close, even when you're far.", "say": "Same Sky. A place to be close, even when you're far." }
+  ]
+}

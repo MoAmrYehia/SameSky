@@ -1,0 +1,28 @@
+{
+  "note": "Third-party assets of the animated film 'Wish You Were Here' that are not kept in git: motion clips and four background characters from the Microsoft Rocketbox avatar library. scripts/demo/wish_fetch.py downloads them into .asset-cache/rocketbox-film (and records sizes and hashes in docs/cinematic/asset-provenance.json); scripts/demo/wish_cast.py converts the textures and places everything in the Unity project's film-only folder (native/quest/Assets/SameSky/Editor/Film/Cast, git-ignored, editor-only: nothing of it goes into a build of the app).",
+  "source": "https://github.com/microsoft/Microsoft-Rocketbox",
+  "base": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/",
+  "licence": "MIT, (c) 2020 Microsoft Corporation (LICENSE in the repository; a copy is in native/quest/Assets/SameSky/Art/Characters/Rocketbox/LICENSE.txt)",
+  "clips": {
+    "static": [
+      "f_idle_breathe_01", "f_idle_look_around_01", "f_idle_touch_hair_01", "f_gestic_laugh_low", "f_gestic_laugh_loud",
+      "f_sit_chair_breathe_01", "f_sit_chair_idle_look_around", "f_wave_01", "f_claphands_01", "f_dancing_neutral",
+      "m_idle_breathe_01", "m_idle_look_around_01", "m_gestic_laugh_low", "m_gestic_laugh_loud",
+      "m_sit_chair_breathe_01", "m_sit_chair_idle_look_around", "m_wave_01", "m_claphands_01", "m_dancing_cool"
+    ],
+    "xy": [
+      "f_walk_neutral_01", "f_walk_stroll_01", "f_walk_fast_01", "f_walk_slow_01", "f_walk_start", "f_walk_stop",
+      "m_walk_neutral_01", "m_walk_stroll_01", "m_walk_fast_01", "m_walk_slow_01", "m_walk_cool_01", "m_walk_start", "m_walk_stop"
+    ],
+    "xyz": [
+      "f_turn_left_90", "f_turn_right_90", "f_turn_left_180", "f_turn_right_180", "f_sit_down_chair_01",
+      "m_turn_left_90", "m_turn_right_90", "m_sit_down_chair_01"
+    ]
+  },
+  "people": [
+    { "name": "Female_Adult_02", "id": "f002", "opacity": true },
+    { "name": "Female_Adult_09", "id": "f009", "opacity": true },
+    { "name": "Male_Adult_03", "id": "m004", "opacity": true },
+    { "name": "Male_Adult_12", "id": "m007", "opacity": false }
+  ]
+}

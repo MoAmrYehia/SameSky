@@ -1,0 +1,336 @@
+{
+  "source": "https://github.com/microsoft/Microsoft-Rocketbox",
+  "licence": "MIT, (c) 2020 Microsoft Corporation (LICENSE in the repository; a copy is in native/quest/Assets/SameSky/Art/Characters/Rocketbox/LICENSE.txt)",
+  "files": [
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_idle_breathe_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_idle_breathe_01.max.fbx",
+      "bytes": 1379504,
+      "sha256": "e470ba984484149c8269772b7640b754bd996ba83b23ae75535128412997aa45"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_idle_look_around_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_idle_look_around_01.max.fbx",
+      "bytes": 1617760,
+      "sha256": "61a70b35f08d5308c01fd1bce75ecbdb2cd320193ee900bbef26ad0e9d52261e"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_idle_touch_hair_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_idle_touch_hair_01.max.fbx",
+      "bytes": 1696944,
+      "sha256": "e7b1c1433a03f10c49515f351d88207460dee492438a37d633801fe20c4797c0"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_gestic_laugh_low.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_gestic_laugh_low.max.fbx",
+      "bytes": 2499584,
+      "sha256": "1eee4faad79a77b111e539449b72328cd551fde103cf82b0c73835ca4d09413b"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_gestic_laugh_loud.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_gestic_laugh_loud.max.fbx",
+      "bytes": 2281280,
+      "sha256": "2cafba42dc5d80ad01e742c890daa1ee6c41362052603eee64d0a1c44382a1c1"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_sit_chair_breathe_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_sit_chair_breathe_01.max.fbx",
+      "bytes": 3445856,
+      "sha256": "3ca0abad7b573b22b3b9684d96835ce8bdc956e11e7008f86d9c66d3eca38be7"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_sit_chair_idle_look_around.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_sit_chair_idle_look_around.max.fbx",
+      "bytes": 2166576,
+      "sha256": "8a6129aece3d382cecb4db5c3ef62a9e2826ef776a7cbec84eb5e28771d699f9"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_wave_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_wave_01.max.fbx",
+      "bytes": 1839824,
+      "sha256": "1a7461a5b44f258ac75b89e4885e692837d052dfb0070dfd7e79af86a8054b94"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_claphands_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_claphands_01.max.fbx",
+      "bytes": 3088480,
+      "sha256": "125b108aa10a1207d4beb9a0041a0b20fcb29d96f7c2fb9fc5e343e51aae863a"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/f_dancing_neutral.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/f_dancing_neutral.max.fbx",
+      "bytes": 4442480,
+      "sha256": "7dc7ada183b537183b19e575d947fb17162646e0f13eea9be44729b26427a971"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_idle_breathe_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_idle_breathe_01.max.fbx",
+      "bytes": 1397280,
+      "sha256": "281735704260d96e882d13e3c77d0ede00ed5d2e40805cd305000b3e5cbb1090"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_idle_look_around_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_idle_look_around_01.max.fbx",
+      "bytes": 1651456,
+      "sha256": "018b19ad26695c5ebbd4131e0506da69dc76f4001a8100a9e38fcdb9a202b7a4"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_gestic_laugh_low.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_gestic_laugh_low.max.fbx",
+      "bytes": 2402608,
+      "sha256": "6aa3fe89175327d6b181e7712a3a590274dbac9f7a5a799f8e62409374514c09"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_gestic_laugh_loud.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_gestic_laugh_loud.max.fbx",
+      "bytes": 3194512,
+      "sha256": "138f00c1a0f41a98d86270438fdc222715ff3e3761283aa88f7948d442124593"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_sit_chair_breathe_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_sit_chair_breathe_01.max.fbx",
+      "bytes": 2537504,
+      "sha256": "8e4dae334b6036bf7da539e2763d57b453b4f382cb1b024e441f5329ce66ea0c"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_sit_chair_idle_look_around.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_sit_chair_idle_look_around.max.fbx",
+      "bytes": 1997872,
+      "sha256": "08fbd2b1a75fa6c697e652905749187bc0cd5647d20bc6184d618032972cf3c2"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_wave_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_wave_01.max.fbx",
+      "bytes": 1424016,
+      "sha256": "42ec91d2f077fe02321b2e929d878b10ec86936c3c43d11310001050a4d79c73"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_claphands_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_claphands_01.max.fbx",
+      "bytes": 2133184,
+      "sha256": "b1db818b9381e959e367d5ce23babf26c27b3f2cdc5540f0cd0b6bda1d8694bc"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_static/m_dancing_cool.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_static/m_dancing_cool.max.fbx",
+      "bytes": 5111840,
+      "sha256": "790ee8db973829da4169c05db95db352d1f3e9d6e55fa7b6b030b8287726ba90"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/f_walk_neutral_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/f_walk_neutral_01.max.fbx",
+      "bytes": 993792,
+      "sha256": "20238709c689d46f5864aebaa58918cc1233cb9045b24aa4d58cf2752786a73b"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/f_walk_stroll_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/f_walk_stroll_01.max.fbx",
+      "bytes": 1048576,
+      "sha256": "799d6e7673faefab8f0a40ed095882852556d8964fecd099740207d0450c993b"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/f_walk_fast_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/f_walk_fast_01.max.fbx",
+      "bytes": 948912,
+      "sha256": "3abb1346ade5949ba443aad90d28501cb0f3a85b3f25b7f9fb07475fac298891"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/f_walk_slow_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/f_walk_slow_01.max.fbx",
+      "bytes": 1075504,
+      "sha256": "75a8083f0a1c324cef42aae08e3de6c46503ae2f6916956e571a2bb79ef350be"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/f_walk_start.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/f_walk_start.max.fbx",
+      "bytes": 922800,
+      "sha256": "509cb6486c0938bdc8ed000041c6c6be82bc7324b8b2ab68515a6bc143b3e24b"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/f_walk_stop.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/f_walk_stop.max.fbx",
+      "bytes": 1147184,
+      "sha256": "e2f7d8dd7b08f53e33befb5515095af54f87effc6491b0774e401c99f497256b"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/m_walk_neutral_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_neutral_01.max.fbx",
+      "bytes": 994336,
+      "sha256": "e6805ae6b6b49fe10f06c1b17b14ddde90d09b9fea689ac34793df252f44dcd0"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/m_walk_stroll_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_stroll_01.max.fbx",
+      "bytes": 1093264,
+      "sha256": "57356aae720f92b04996fbacc28d17039a0d7ecc7846e6560ddf6a35c271afa0"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/m_walk_fast_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_fast_01.max.fbx",
+      "bytes": 957776,
+      "sha256": "a8b7962c7dd016b1e9781a6c0983efbac62ad069feb2884d2b2e5686ffe90053"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/m_walk_slow_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_slow_01.max.fbx",
+      "bytes": 1066224,
+      "sha256": "8c5e5ed18be9e1062a26d230677d2801a679c70fd67f8aa8de14ff37f6d20577"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/m_walk_cool_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_cool_01.max.fbx",
+      "bytes": 1012368,
+      "sha256": "401a790aeb084c43f0cfe7b01ded3a3c6d163985e1e4454acdabd72fbf968e17"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/m_walk_start.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_start.max.fbx",
+      "bytes": 931792,
+      "sha256": "05243edcc6712bbd526ac2d7022e6a8bd49debaadf012f96d4b81795fb169817"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xy/m_walk_stop.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xy/m_walk_stop.max.fbx",
+      "bytes": 1209760,
+      "sha256": "808f112c37c0db60fd1855fb2785749557ecdb9107e8028cd3f28b11aa9c62b1"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/f_turn_left_90.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/f_turn_left_90.max.fbx",
+      "bytes": 1299280,
+      "sha256": "240d68bd4ef3ab65a7307256fb733b16bd66b8e2c0e6a437d412cd157e1096c9"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/f_turn_right_90.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/f_turn_right_90.max.fbx",
+      "bytes": 1299280,
+      "sha256": "63bdb1b5e3bf2206b37ff22aada0bde668ae06c48820d7bd9b1f68001227e860"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/f_turn_left_180.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/f_turn_left_180.max.fbx",
+      "bytes": 1175568,
+      "sha256": "c8de395f622eb6816de5f0250f05eb1ac9d2440dcdbf472927d0daad71773211"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/f_turn_right_180.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/f_turn_right_180.max.fbx",
+      "bytes": 1139344,
+      "sha256": "983f9f89312c901b49cbe0bec0a7179f4e6c86e6bfec9f15b3eb1a36e622cd4a"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/f_sit_down_chair_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/f_sit_down_chair_01.max.fbx",
+      "bytes": 1725744,
+      "sha256": "6ef5c1d78ed9050e722795cb2edca96e9551647a47729cab1d84a4c8383a3ed5"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/m_turn_left_90.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/m_turn_left_90.max.fbx",
+      "bytes": 1299184,
+      "sha256": "da138838ea930b29c9996c6633e588b5352fe1f4d74f5cfa5c7acb22798dc97f"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/m_turn_right_90.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/m_turn_right_90.max.fbx",
+      "bytes": 1254448,
+      "sha256": "721ac18eb4cc5278b479734e185423fe05a4bf6b2ae95514e02d049b4ce70b3a"
+    },
+    {
+      "file": "Assets/Animations/all_animations_max_motextr_xyz/m_sit_down_chair_01.max.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Animations/all_animations_max_motextr_xyz/m_sit_down_chair_01.max.fbx",
+      "bytes": 1451824,
+      "sha256": "2dbfccc5febc8d37ff9d1593f75253cbd8d5393c6a448695184755535491e4cf"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_02/Export/Female_Adult_02.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_02/Export/Female_Adult_02.fbx",
+      "bytes": 580800,
+      "sha256": "71a9d3495d06e42e33f9276795bd75fea9d4779c5ad47f65490f049ae2b7eaa9"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_02/Textures/f002_body_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_02/Textures/f002_body_color.tga",
+      "bytes": 12582956,
+      "sha256": "94577d184374270beef531394253c864483b9b9cb2c58e30ecd9364e8baa9f29"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_02/Textures/f002_head_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_02/Textures/f002_head_color.tga",
+      "bytes": 12582956,
+      "sha256": "a258f150c9a185d0335b74bd16acb8f4c18eabf469e2e2ea97066e20aa475a66"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_02/Textures/f002_opacity_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_02/Textures/f002_opacity_color.tga",
+      "bytes": 4194348,
+      "sha256": "6f6bde560371ac39cd65f8f1f26e0e7db8b8c7d6224c4139844a21593c962d45"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_09/Export/Female_Adult_09.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_09/Export/Female_Adult_09.fbx",
+      "bytes": 611632,
+      "sha256": "a578ec65cabf169d7b13c0bb0a6c472e898857e81f6207b2af7f846d8b0d8523"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_09/Textures/f009_body_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_09/Textures/f009_body_color.tga",
+      "bytes": 12582956,
+      "sha256": "7e2a7688798489cb2a124947c581c1f5c0cd62b36303d5cee1d9b0baf320724b"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_09/Textures/f009_head_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_09/Textures/f009_head_color.tga",
+      "bytes": 12582956,
+      "sha256": "b311e6f30a9b587d62e4fd301354b24ea7f58a6cdf2c39abb73d46d9d40e799a"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Female_Adult_09/Textures/f009_opacity_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Female_Adult_09/Textures/f009_opacity_color.tga",
+      "bytes": 16777260,
+      "sha256": "868688524e4427758e716da5cc9bc3a6c6b35cf640e4fbe81c99618a750babf4"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Male_Adult_03/Export/Male_Adult_03.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_03/Export/Male_Adult_03.fbx",
+      "bytes": 513728,
+      "sha256": "7064a9f50c95975c6d64ab0c5f5504364bad4ac987750728d0b5f1788fd59dcf"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Male_Adult_03/Textures/m004_body_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_03/Textures/m004_body_color.tga",
+      "bytes": 12582956,
+      "sha256": "13686c52f5a8552a7263545f22d79aeef7269112f8b48fc1e7864a13de0b045b"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Male_Adult_03/Textures/m004_head_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_03/Textures/m004_head_color.tga",
+      "bytes": 12582956,
+      "sha256": "96130ef4c94702d8ee6004ce7d1c48f4b5fb6383ad70410f7316ff4031b031e4"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Male_Adult_03/Textures/m004_opacity_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_03/Textures/m004_opacity_color.tga",
+      "bytes": 8388652,
+      "sha256": "7b7255ae4042577edbf3dff253b2a32231db6fe281cd8781306d9e26fcf9d03a"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Male_Adult_12/Export/Male_Adult_12.fbx",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_12/Export/Male_Adult_12.fbx",
+      "bytes": 487776,
+      "sha256": "b44fa6011b934abd69954fd6c5025c1e2011e05c7892acb6bbc2e9cf70a84014"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Male_Adult_12/Textures/m007_body_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_12/Textures/m007_body_color.tga",
+      "bytes": 12582956,
+      "sha256": "9e5951e67e90ade61f33c51c9673aa1b974358dac12dc0a9abdd4b281cda6b61"
+    },
+    {
+      "file": "Assets/Avatars/Adults/Male_Adult_12/Textures/m007_head_color.tga",
+      "url": "https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/Assets/Avatars/Adults/Male_Adult_12/Textures/m007_head_color.tga",
+      "bytes": 12582956,
+      "sha256": "164007a5ca94b3f84b04ab77a3a7bc49f65f12af4153781dcbf429589750f7c1"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "note": "The cut of the demo video 'I Saved You a Seat': real footage of the native Quest app running in Meta XR Simulator (clips in demo-build/capture, filmed by scripts/demo/film.ps1), one insert of the companion web app (web/scripts/demo-companion.mjs), a synthesized narrator and a synthesized score. Each clip names its source and the seconds used from it; times in the lists below are seconds into the named clip. scripts/demo/demo_timeline.py works out the film's timeline, demo_audio.py the sound, demo_edit.py the picture. 'view' shows part of a captured frame: [centre x, centre y, share of the width], fixed ('at') or as an eased move ('from'/'to'). 'voice' marks where the app plays a recorded voice in the clip's own seconds.",
+  "fps": 30,
+  "clips": [
+    { "id": "hook", "src": "s01-hook", "in": 0.3, "out": 7.8, "what": "The lounge: a push toward the empty chair and the cup (capture camera, no hands)" },
+    { "id": "away", "src": "s02-away", "in": 0.8, "out": 4.2, "what": "The empty chair's label: Maya, not here now, her local time" },
+    { "id": "together", "src": "s03-together", "in": 7.4, "out": 16.4, "view": { "from": [0.5, 0.5, 1.0], "to": [0.5, 0.45, 0.86], "start": 2.9, "end": 4.6 }, "what": "A hand presses Together on the dock: both local times and the time they both have" },
+    { "id": "cup", "src": "s04-cup", "in": 5.5, "out": 24.0, "voice": [ [11.1, 20.45] ], "what": "First person, one take: the hand reaches and grabs the cup, her recorded voice note plays with captions; when it ends the sample seats a simulated Maya" },
+    { "id": "maya", "src": "s12-maya", "in": 1.0, "out": 4.2, "what": "Maya's figure under the app's own label: simulated presence (fictional sample)" },
+    { "id": "play", "src": "d20-day", "in": 21.6, "out": 26.6, "view": { "from": [0.5, 0.47, 0.78], "to": [0.6, 0.47, 0.78], "start": 2.3, "end": 3.6 }, "what": "Our day: the hand presses Play; the story starts on the room's screen" },
+    { "id": "photo", "src": "d21-story", "in": 1.0, "out": 4.6, "what": "The story on the screen: her photo and its caption, the app's label for the recap" },
+    { "id": "heart", "src": "d20-day", "in": 37.4, "out": 42.2, "view": { "at": [0.6, 0.45, 0.8] }, "what": "The hand presses Love: a reaction is sent" },
+    { "id": "clip", "src": "d21-story", "in": 53.2, "out": 57.0, "what": "The second chapter: a video clip plays on the room's screen" },
+    { "id": "reply", "src": "d07-reply-open", "in": 14.9, "out": 18.6, "what": "The hand presses Reply by the cup; the keyboard opens" },
+    { "id": "type-a", "src": "d08-reply-type", "in": 15.6, "out": 18.6, "what": "The first key" },
+    { "id": "type-b", "src": "d08-reply-type", "keys": { "before": 0.15, "after": 0.2, "skipFirst": 1 }, "what": "Every other key press of the reply at its real speed, with the waits between presses cut" },
+    { "id": "type-c", "src": "d08-reply-type", "in": 540.6, "out": 545.2, "what": "Done is pressed; the reply is placed on the table" },
+    { "id": "card", "src": "d09-card", "in": 0.5, "out": 4.7, "what": "The reply as a card on the table, beside the cup" },
+    { "id": "companion", "phone": "companion", "in": 1.6, "out": 20.6, "speed": 1.3, "fadeIn": 0.3, "fadeOut": 0.3, "what": "The companion web app at phone size, sample mode: a clip chosen, previewed, shared with Maya only" },
+    { "id": "keepsakes", "src": "d11-keepsakes", "in": 16.6, "out": 20.2, "view": { "from": [0.5, 0.5, 1.0], "to": [0.6, 0.47, 0.74], "start": 1.5, "end": 2.8 }, "what": "The hand presses Keepsakes: what the two have earned, past stories, the inbox" },
+    { "id": "shelf", "src": "d12-shelf", "in": 2.6, "out": 5.9, "what": "The keepsake shelf in the alcove" },
+    { "id": "market-a", "src": "d22-market", "in": 60.5, "out": 63.7, "what": "Marketplace: the hand tries the Evening study look; the chairs, table and rug change" },
+    { "id": "market-b", "src": "d22-market", "in": 94.5, "out": 97.3, "what": "Marketplace: the hand picks Walnut and ivory, the room as it comes" },
+    { "id": "pause", "src": "d13-pause", "in": 62.4, "out": 67.0, "view": { "at": [0.55, 0.5, 0.78] }, "what": "The pause panel, and Resume pressed by hand" },
+    { "id": "payoff", "src": "s11-payoff", "in": 2.0, "out": 13.6, "hold": 6.6, "card": { "at": 7.6 }, "what": "The opening picture again: the chair taken by the sample's simulated Maya, the reply by the cup" }
+  ],
+  "prelap": { "src": "s04-cup", "in": 11.2, "out": 12.5, "clip": "hook", "at": 2.3, "text": "Saved you a seat.", "what": "The first words of the app's sample voice note, heard early over the opening" },
+  "narration": [
+    { "line": "n1-distance", "clip": "away", "at": 0.3, "text": "Different cities. Different routines. Some days, we miss each other by hours." },
+    { "line": "n2-cup", "clip": "cup", "at": 0.3, "text": "In SameSky, a familiar object can hold a message for later." },
+    { "line": "n3-day", "clip": "play", "at": 0.6, "text": "A few moments become a day you can step into." },
+    { "line": "n4-reply", "clip": "type-c", "at": 1.2, "text": "Leave an answer, and it waits on the table." },
+    { "line": "n5-share", "clip": "companion", "at": 0.8, "text": "Share the little things, from your phone or your camera's footage, with the people you choose." },
+    { "line": "n6-keep", "clip": "keepsakes", "at": 1.3, "text": "A place for the moments between visits." },
+    { "line": "n7-close", "clip": "payoff", "at": 8.1, "text": "SameSky. A place to be close, even when you're far." }
+  ],
+  "voiceNote": { "clip": "cup", "at": 5.6, "who": "Maya, recorded message (the app's sample voice note, a synthesized voice)", "parts": [ { "from": 0.05, "to": 1.9, "text": "Saved you a seat." }, { "from": 2.1, "to": 5.6, "text": "The bench by the big oak, same as always." }, { "from": 5.95, "to": 9.0, "text": "Tell me about your sunset when you get home." } ] },
+  "captions": [
+    { "clip": "hook", "from": 4.3, "to": 7.4, "style": "Question", "y": 290, "text": "What if someone could leave you a moment?" },
+    { "clip": "together", "from": 4.7, "to": 8.7, "text": "Meet when you can.", "margin": 56 },
+    { "clip": "reply", "from": 0.5, "to": 5.6, "text": "Leave a moment." },
+    { "clip": "companion", "from": 7.8, "to": 13.8, "text": "Share your day." },
+    { "clip": "market-a", "from": 0.4, "to": 5.6, "text": "Make the room yours." }
+  ],
+  "labels": [
+    { "clip": "together", "from": 0.3, "to": 5.4, "text": "Hand tracking here is Meta XR Simulator's, driven by a script. No controllers are used." },
+    { "clip": "cup", "from": 15.2, "to": 21.5, "text": "Offline sample: Maya's arrival is simulated. It is not a live connection." },
+    { "clip": "play", "from": 0.3, "to": 8.4, "text": "A sample story, put together in advance: no AI call is made here." },
+    { "clip": "type-b", "from": 0.2, "to": 6.4, "text": "Each key is pressed by the simulated hand. The waits between keys are cut." },
+    { "clip": "companion", "from": 0.4, "to": 14.3, "text": "Companion web app, sample mode. The clip is stock footage, and the page labels it." },
+    { "clip": "payoff", "from": 0.4, "to": 7.2, "text": "Offline sample: Maya's presence is simulated. It is not a live session." }
+  ],
+  "steps": [
+    { "clip": "companion", "from": 0.5, "to": 14.4, "x": 120, "y": 300, "text": "1   Choose a photo or clip" },
+    { "clip": "companion", "from": 2.6, "to": 14.4, "x": 120, "y": 380, "text": "2   Preview it, trim it" },
+    { "clip": "companion", "from": 6.4, "to": 14.4, "x": 120, "y": 460, "text": "3   Pick who can see it" },
+    { "clip": "companion", "from": 9.5, "to": 14.4, "x": 120, "y": 540, "text": "4   Confirm" },
+    { "clip": "companion", "from": 1.2, "to": 14.4, "x": 120, "y": 650, "style": "Fine", "text": "Footage from a camera, a drone or AI glasses comes in as an exported file\\N(a photo, or a clip of up to 60 seconds). There is no direct link to a device." }
+  ],
+  "standing": "Meta XR Simulator  ·  native Quest app  ·  offline sample",
+  "endCard": { "clip": "payoff", "at": 7.6, "title": "SameSky", "small": "Save someone a seat.", "credit": "Filmed in Meta XR Simulator from the native Quest app. Offline sample: fictional people, stock media, synthesized voices, scripted hand-tracking input.", "titleAt": 0.5, "creditAt": 1.2, "smallAt": 5.4 }
+}
