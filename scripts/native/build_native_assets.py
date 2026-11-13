@@ -61,6 +61,9 @@ def copy(src: Path, dst: Path) -> None:
 
 
 def main() -> None:
+    # the furniture marketplace's catalogue: the app bundles the same file the API validates against
+    copy(ROOT / "api" / "samesky" / "furniture_catalog.json", UNITY / "SameSky" / "Resources" / "furniture-catalog.json")
+    print("furniture catalogue")
     if not CACHE.exists():
         sys.exit(".asset-cache/ is missing: run scripts/assets/fetch_polyhaven.py first (CC0 sources, ~290 MB)")
 

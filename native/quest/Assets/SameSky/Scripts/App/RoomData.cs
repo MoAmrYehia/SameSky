@@ -38,6 +38,10 @@ namespace SameSky.App
         Task<RoomObject> Place(string roomId, string objectType, string momentId, string replyId, Vector3 p, float yaw, CancellationToken ct = default);
         Task<RoomObject> Move(RoomObject o, Vector3 p, float yaw, CancellationToken ct = default);
         Task<List<Award>> Awards(string roomId, CancellationToken ct = default);
+        /// <summary>How the room is furnished (the marketplace).</summary>
+        Task<Decor> GetDecor(string roomId, CancellationToken ct = default);
+        /// <summary>Keeps a furnishing: the slots of <paramref name="wanted"/> that differ from <paramref name="from"/>.</summary>
+        Task<Decor> SaveDecor(string roomId, Decor wanted, Decor from, CancellationToken ct = default);
         Task<List<InboxItem>> Inbox(CancellationToken ct = default);
         Task MarkRead(string id, CancellationToken ct = default);
         Media Media { get; }
@@ -166,6 +170,20 @@ namespace SameSky.App
             _api.CreateObject(roomId, type, momentId, replyId, p, yaw, ct);
         public Task<RoomObject> Move(RoomObject o, Vector3 p, float yaw, CancellationToken ct = default) => _api.MoveObject(o.Id, o.Version, p, yaw, ct);
         public Task<List<Award>> Awards(string roomId, CancellationToken ct = default) => _api.Awards(roomId, ct);
+
+        public async Task<Decor> GetDecor(string roomId, CancellationToken ct = default)
+        {
+            var d = await _api.Decor(roomId, ct);
+            return FurnitureCatalog.Current.Resolve(d.Choices, d.Version);
+        }
+
+        public async Task<Decor> SaveDecor(string roomId, Decor wanted, Decor from, CancellationToken ct = default)
+        {
+            var changes = wanted.Changes(from);
+            if (changes.Count == 0) return from ?? wanted;
+            var d = await _api.SaveDecor(roomId, changes, from?.Version, ct);
+            return FurnitureCatalog.Current.Resolve(d.Choices, d.Version);
+        }
         public Task<List<InboxItem>> Inbox(CancellationToken ct = default) => _api.Notifications(ct);
         public async Task MarkRead(string id, CancellationToken ct = default) => await _api.MarkRead(id, ct);
     }
@@ -292,6 +310,32 @@ namespace SameSky.App
 
         public Task<List<Award>> Awards(string roomId, CancellationToken ct = default) =>
             Task.FromResult(_awards.TryGetValue(roomId, out var a) ? a : new List<Award>());
+
+        // the sample's furniture is kept on this headset, per sample room
+        public Task<Decor> GetDecor(string roomId, CancellationToken ct = default)
+        {
+            var catalog = FurnitureCatalog.Current;
+            var d = catalog.Defaults();
+            if (SampleState.Current.decor.TryGetValue(roomId, out var stored))
+            {
+                foreach (var kv in stored)
+                    if (kv.Value is { Length: 2 } && catalog.TryChoice(kv.Key, kv.Value[0], kv.Value[1], out var choice)) d.Choices[kv.Key] = choice;
+                d.Version = stored.Count > 0 ? Math.Max(1, SampleState.Current.decorVersion) : 0;
+            }
+            return Task.FromResult(d);
+        }
+
+        public Task<Decor> SaveDecor(string roomId, Decor wanted, Decor from, CancellationToken ct = default)
+        {
+            var stored = new Dictionary<string, string[]>();
+            foreach (var kv in wanted.Choices) stored[kv.Key] = new[] { kv.Value.Item, kv.Value.Finish };
+            SampleState.Current.decor[roomId] = stored;
+            SampleState.Current.decorVersion++;
+            SampleState.Save();
+            var kept = wanted.Clone();
+            kept.Version = Math.Max(1, SampleState.Current.decorVersion);
+            return Task.FromResult(kept);
+        }
 
         public Task<List<InboxItem>> Inbox(CancellationToken ct = default) => Task.FromResult(_inbox);
 

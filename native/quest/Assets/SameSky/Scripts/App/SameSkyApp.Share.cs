@@ -298,7 +298,8 @@ namespace SameSky.App
                     done.Title("That's how sharing works");
                     done.Tag("Sample: nothing was sent");
                     done.Body($"In your own room this would now reach {names} and nobody else. The daily story's AI {(_sampleAi ? "could" : "would not")} use it. You could withdraw it at any time.");
-                    done.Row(("share:account", "Create an account", ShowSignUp, PressStyle.Secondary), ("share:room", "Back to the room", EnterRoom, PressStyle.Primary));
+                    if (AppConfig.SampleOnly) done.Row(("share:room", "Back to the room", EnterRoom, PressStyle.Primary));   // no server in this build: nothing to create an account on
+                    else done.Row(("share:account", "Create an account", ShowSignUp, PressStyle.Secondary), ("share:room", "Back to the room", EnterRoom, PressStyle.Primary));
                     FinishPanel(done);
                 }, "Sample: nothing is sent anywhere");
         }, "Couldn't open sharing", EnterRoom);

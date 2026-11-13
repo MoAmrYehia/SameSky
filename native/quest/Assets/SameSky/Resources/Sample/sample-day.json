@@ -200,6 +200,7 @@
         "processingState": "ready",
         "sourceDevice": "phone",
         "origin": "stock",
+        "credit": "Photo: Iurie Nistor · CC0 · Wikimedia Commons",
         "projection": "flat",
         "durationMs": null,
         "width": 1600,
@@ -304,6 +305,7 @@
         "processingState": "ready",
         "sourceDevice": "phone",
         "origin": "stock",
+        "credit": "Photo: kallerna · CC0 · Wikimedia Commons",
         "projection": "flat",
         "durationMs": null,
         "width": 1600,
@@ -318,10 +320,10 @@
       "ownerId": "sample-adam",
       "ownerName": "Adam",
       "kind": "clip",
-      "caption": "Evening lights along the promenade.",
-      "captureAt": "2026-11-06T13:35:00Z",
+      "caption": "Crossing the creek this afternoon.",
+      "captureAt": "2026-11-06T11:10:00Z",
       "captureLocal": {
-        "time": "17:35",
+        "time": "15:10",
         "date": "2026-11-06",
         "zone": "Asia/Dubai",
         "abbreviation": "GMT+4"
@@ -345,9 +347,10 @@
         "kind": "video",
         "processingState": "ready",
         "sourceDevice": "camera",
-        "origin": "simulated",
+        "origin": "stock",
+        "credit": "Footage: 54t4n0d · CC BY 3.0 · Wikimedia Commons",
         "projection": "flat",
-        "durationMs": 8000,
+        "durationMs": 8500,
         "width": 1280,
         "height": 720,
         "url": "res:Sample/Media/adam-clip",
@@ -427,6 +430,7 @@
         "processingState": "ready",
         "sourceDevice": "camera",
         "origin": "stock",
+        "credit": "Photo: Lxs · CC BY 4.0 · Wikimedia Commons",
         "projection": "flat",
         "durationMs": null,
         "width": 1600,
@@ -441,7 +445,7 @@
       "ownerId": "sample-lina",
       "ownerName": "Lina",
       "kind": "photo",
-      "caption": "A quiet evening at home in the courtyard.",
+      "caption": "A quiet evening in the courtyard garden.",
       "captureAt": "2026-11-06T18:30:00Z",
       "captureLocal": {
         "time": "18:30",
@@ -473,6 +477,7 @@
         "processingState": "ready",
         "sourceDevice": "phone",
         "origin": "stock",
+        "credit": "Photo: Pseudopanax · public domain · Wikimedia Commons",
         "projection": "flat",
         "durationMs": null,
         "width": 1600,
@@ -547,7 +552,7 @@
                 ]
               },
               {
-                "text": "The path looks lit by low, golden sun through the trees.",
+                "text": "The path looks covered in fallen leaves, under a long row of autumn trees.",
                 "kind": "visual_interpretation",
                 "sources": [
                   {
@@ -593,7 +598,7 @@
                 ]
               },
               {
-                "text": "He filmed the evening lights along the promenade.",
+                "text": "He filmed the creek from the water on his way across.",
                 "kind": "stated",
                 "sources": [
                   {
@@ -604,7 +609,7 @@
                 ]
               },
               {
-                "text": "The water looks still enough to mirror the lights.",
+                "text": "The water looks choppy under a pale, hazy sky, with a wooden dhow going by.",
                 "kind": "visual_interpretation",
                 "sources": [
                   {
@@ -653,6 +658,7 @@
             "processingState": "ready",
             "sourceDevice": "phone",
             "origin": "stock",
+            "credit": "Photo: Iurie Nistor · CC0 · Wikimedia Commons",
             "projection": "flat",
             "durationMs": null,
             "width": 1600,
@@ -757,6 +763,7 @@
             "processingState": "ready",
             "sourceDevice": "phone",
             "origin": "stock",
+            "credit": "Photo: kallerna · CC0 · Wikimedia Commons",
             "projection": "flat",
             "durationMs": null,
             "width": 1600,
@@ -771,10 +778,10 @@
           "ownerId": "sample-adam",
           "ownerName": "Adam",
           "kind": "clip",
-          "caption": "Evening lights along the promenade.",
-          "captureAt": "2026-11-06T13:35:00Z",
+          "caption": "Crossing the creek this afternoon.",
+          "captureAt": "2026-11-06T11:10:00Z",
           "captureLocal": {
-            "time": "17:35",
+            "time": "15:10",
             "date": "2026-11-06",
             "zone": "Asia/Dubai",
             "abbreviation": "GMT+4"
@@ -798,9 +805,10 @@
             "kind": "video",
             "processingState": "ready",
             "sourceDevice": "camera",
-            "origin": "simulated",
+            "origin": "stock",
+            "credit": "Footage: 54t4n0d · CC BY 3.0 · Wikimedia Commons",
             "projection": "flat",
-            "durationMs": 8000,
+            "durationMs": 8500,
             "width": 1280,
             "height": 720,
             "url": "res:Sample/Media/adam-clip",
@@ -911,7 +919,7 @@
             ],
             "segments": [
               {
-                "text": "Lina spent a quiet evening at home in the courtyard.",
+                "text": "Lina spent a quiet evening in the courtyard garden.",
                 "kind": "stated",
                 "sources": [
                   {
@@ -922,7 +930,7 @@
                 ]
               },
               {
-                "text": "The walls look lit by warm porch lamps at dusk.",
+                "text": "The walls look lit by warm lanterns after dark.",
                 "kind": "visual_interpretation",
                 "sources": [
                   {
@@ -975,6 +983,7 @@
             "processingState": "ready",
             "sourceDevice": "camera",
             "origin": "stock",
+            "credit": "Photo: Lxs · CC BY 4.0 · Wikimedia Commons",
             "projection": "flat",
             "durationMs": null,
             "width": 1600,
@@ -989,7 +998,7 @@
           "ownerId": "sample-lina",
           "ownerName": "Lina",
           "kind": "photo",
-          "caption": "A quiet evening at home in the courtyard.",
+          "caption": "A quiet evening in the courtyard garden.",
           "captureAt": "2026-11-06T18:30:00Z",
           "captureLocal": {
             "time": "18:30",
@@ -1021,6 +1030,7 @@
             "processingState": "ready",
             "sourceDevice": "phone",
             "origin": "stock",
+            "credit": "Photo: Pseudopanax · public domain · Wikimedia Commons",
             "projection": "flat",
             "durationMs": null,
             "width": 1600,
@@ -1038,7 +1048,7 @@
       "momentId": "m-adam-waterfront",
       "authorId": "sample-maya",
       "authorName": "Maya",
-      "text": "Those reflections! Save me a spot on that bench.",
+      "text": "Those reflections! Take me there next time.",
       "createdAt": "2026-11-06T14:02:00Z",
       "label": "Recorded message"
     }

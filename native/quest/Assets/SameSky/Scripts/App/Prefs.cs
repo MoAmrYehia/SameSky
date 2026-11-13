@@ -81,6 +81,7 @@ namespace SameSky.App
         public bool soundOn = true;
         public float seatHeight = 0f;     // metres added to the seated eye height after Recenter
         public bool reduceMotion = false;
+        public int handTone = -1;         // skin tone of the tracked hands: 0..5 (HandSkin.Tones), -1 follows the avatar
 
         // where the person was
         public string mode;               // "sample" | "live" | null (never chose)
@@ -127,6 +128,8 @@ namespace SameSky.App
         public bool voiceNoteHeard;
         public bool storyFinished;
         public int heartsSent;
+        public Dictionary<string, Dictionary<string, string[]>> decor = new();   // room id -> slot -> [piece, finish]
+        public int decorVersion;
 
         static SampleState _current;
         public static SampleState Current => _current ??= LocalStore.Load<SampleState>("sample-state.json");

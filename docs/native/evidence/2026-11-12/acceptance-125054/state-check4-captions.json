@@ -1,0 +1,371 @@
+{
+  "time": 47.16,
+  "xrDeviceActive": true,
+  "xrDevice": "OpenXR Display",
+  "openxrRuntime": "Meta XR Simulator 207.1.0",
+  "hands": {
+    "left": true,
+    "right": true
+  },
+  "activeInput": "hands",
+  "fps": 67.2,
+  "screen": "room",
+  "mode": "sample",
+  "room": "Adam + Maya",
+  "paused": false,
+  "presses": 1,
+  "lastPress": "launch:sample",
+  "grabs": 1,
+  "lastGrab": "object:cup",
+  "hovers": 11,
+  "audio": "cup:m-maya-voice",
+  "captionsOn": true,
+  "captions": "The bench by the big oak, same as always.",
+  "head": [
+    -0.115,
+    1.209,
+    -0.135
+  ],
+  "headForward": [
+    -0.01,
+    -0.016,
+    1.0
+  ],
+  "handsAt": {
+    "left": [
+      -0.42,
+      0.901,
+      0.358
+    ],
+    "right": [
+      0.18,
+      0.901,
+      0.364
+    ]
+  },
+  "pokeAt": {
+    "left": [
+      -0.371,
+      0.934,
+      0.422
+    ],
+    "right": null
+  },
+  "presence": "recorded",
+  "cupHeld": true,
+  "voicePlaying": true,
+  "story": "none",
+  "live": "none",
+  "driftMs": 0.0,
+  "decor": "chairs=tub/cream floor=parquet/natural lamp=drum/brass plant=leafy rug=round/oatmeal table=pedestal/walnut walls=plaster/ivory",
+  "decorVersion": 0,
+  "decorUnsaved": false,
+  "handSkin": {
+    "dressed": 6,
+    "tone": "#D29A72"
+  },
+  "targets": [
+    {
+      "id": "dock:market",
+      "at": [
+        0.073,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:replay",
+      "at": [
+        -0.148,
+        0.905,
+        0.413
+      ],
+      "normal": [
+        0.056,
+        0.381,
+        -0.923
+      ],
+      "size": [
+        0.104,
+        0.036
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:play",
+      "at": [
+        0.011,
+        0.804,
+        0.455
+      ],
+      "normal": [
+        -0.335,
+        0.309,
+        -0.89
+      ],
+      "size": [
+        0.1,
+        0.052
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "frame:m-adam-ride",
+      "at": [
+        0.237,
+        0.848,
+        0.848
+      ],
+      "normal": [
+        -0.242,
+        0.0,
+        -0.97
+      ],
+      "size": [
+        0.2,
+        0.14
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:place",
+      "at": [
+        -0.253,
+        1.094,
+        0.484
+      ],
+      "normal": [
+        0.056,
+        0.381,
+        -0.923
+      ],
+      "size": [
+        0.15,
+        0.044
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:keepsakes",
+      "at": [
+        -0.009,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:settings",
+      "at": [
+        0.155,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:recenter",
+      "at": [
+        0.271,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.046,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:pause",
+      "at": [
+        0.221,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.046,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:share",
+      "at": [
+        -0.173,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "msg:reply",
+      "at": [
+        -0.035,
+        0.905,
+        0.42
+      ],
+      "normal": [
+        0.056,
+        0.381,
+        -0.923
+      ],
+      "size": [
+        0.104,
+        0.036
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:pause",
+      "at": [
+        -0.262,
+        0.905,
+        0.406
+      ],
+      "normal": [
+        0.056,
+        0.381,
+        -0.923
+      ],
+      "size": [
+        0.104,
+        0.036
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:together",
+      "at": [
+        -0.091,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "frame:m-adam-waterfront",
+      "at": [
+        -0.198,
+        0.848,
+        0.608
+      ],
+      "normal": [
+        0.208,
+        0.0,
+        -0.978
+      ],
+      "size": [
+        0.2,
+        0.14
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "dock:day",
+      "at": [
+        -0.255,
+        0.865,
+        0.3
+      ],
+      "normal": [
+        0.0,
+        0.616,
+        -0.788
+      ],
+      "size": [
+        0.078,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "object:cup",
+      "at": [
+        0.139,
+        0.912,
+        0.452
+      ],
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        0.09,
+        0.1
+      ]
+    }
+  ]
+}

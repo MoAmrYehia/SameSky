@@ -182,6 +182,8 @@ export interface MediaInfo {
    * synthesized voice and a stock photograph must stay distinguishable from real uploads (never set by the API).
    */
   origin?: 'simulated' | 'synthesized' | 'stock';
+  /** Sample media only: who made a stock photograph or stock footage, and under which licence (never set by the API). */
+  credit?: string;
   projection: 'flat' | 'equirect360' | 'stereo_sbs';
   durationMs: number | null;
   width: number | null;

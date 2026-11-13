@@ -18,8 +18,8 @@ interface Draft {
   url: string;
   durationMs?: number;
   poster?: string;
-  /** the sample clip is a simulated pan rendered from a still panorama, never a camera recording */
-  origin?: 'simulated';
+  /** the sample clip is stock footage, labelled as such: nobody in the sample day recorded it */
+  origin?: 'stock';
 }
 
 async function downscaleImage(file: File): Promise<Blob> {
@@ -188,9 +188,9 @@ export function Share() {
       const res = await fetch('/assets/sample/adam-clip.mp4');
       const blob = await res.blob();
       setDevice('camera');
-      setCaption('Evening lights along the promenade.');
+      setCaption('Crossing the creek this afternoon.');
       setTrim([3000, 8000]);
-      setDraft({ blob, name: 'sample-promenade-pan.mp4', kind: 'clip', url: URL.createObjectURL(blob), durationMs: 8000, poster: '/assets/sample/adam-clip-poster.jpg', origin: 'simulated' });
+      setDraft({ blob, name: 'sample-creek-crossing.mp4', kind: 'clip', url: URL.createObjectURL(blob), durationMs: 8500, poster: '/assets/sample/adam-clip-poster.jpg', origin: 'stock' });
     } catch {
       setError('The sample clip could not be loaded.');
     } finally {
@@ -245,10 +245,10 @@ export function Share() {
             </div>
           ) : null}
           <details className="glass-panel details-panel">
-            <summary><Icon name="info" />Source and time <span className="muted small">· {tab === 'upload' ? `${draft?.origin === 'simulated' ? 'Simulated camera pan' : deviceLabel(device)} · ` : ''}{new Date(captureLocal).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></summary>
+            <summary><Icon name="info" />Source and time <span className="muted small">· {tab === 'upload' ? `${draft?.origin === 'stock' ? 'Sample clip' : deviceLabel(device)} · ` : ''}{new Date(captureLocal).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span></summary>
             <div className="row wrap" style={{ gap: 16, marginTop: 12 }}>
-              {tab === 'upload' && draft?.origin === 'simulated' ? (
-                <p className="muted small" style={{ margin: 0, maxWidth: 360 }}>This sample clip was rendered from a still CC0 panorama along a simulated camera path. It isn’t a camera recording, so it’s labelled “Simulated camera pan”.</p>
+              {tab === 'upload' && draft?.origin === 'stock' ? (
+                <p className="muted small" style={{ margin: 0, maxWidth: 360 }}>This sample clip is real footage of Dubai Creek by 54t4n0d (CC BY 3.0, from Wikimedia Commons). Nobody in the sample day filmed it, so it’s labelled “Sample clip”.</p>
               ) : tab === 'upload' ? (
                 <label className="field" style={{ minWidth: 200 }}><span>Where it came from</span>
                   <select className="input" value={device} onChange={(e) => setDevice(e.target.value as SourceDevice)}>
@@ -374,7 +374,7 @@ function DraftPreview({ draft, device, trim, setTrim, onReplace }: { draft: Draf
         {draft.kind === 'voice' ? <audio src={draft.url} controls style={{ width: '100%' }} /> : null}
       </div>
       <div className="meta-row">
-        <span className="meta-chip"><Icon name={draft.kind === 'voice' ? 'mic' : 'camera'} />{draft.origin === 'simulated' ? 'Simulated camera pan · sample' : `${deviceLabel(device)} import`}</span>
+        <span className="meta-chip"><Icon name={draft.kind === 'voice' ? 'mic' : 'camera'} />{draft.origin === 'stock' ? 'Sample clip' : `${deviceLabel(device)} import`}</span>
         {draft.kind !== 'photo' ? <span className="meta-chip"><Icon name="clock" />{draft.durationMs ? mmss(draft.durationMs) : '–:–'}</span> : null}
         <span className={`meta-chip${known ? ' ok' : ''}`}><Icon name={known ? 'check' : 'refresh'} />{known ? 'Ready' : 'Reading the file…'}</span>
       </div>

@@ -242,6 +242,7 @@ namespace SameSky.App
             _live.PlaybackChanged += _ => ApplySharedPlayback(force: true);
             _live.Reaction += (uid, kind) => { if (uid != Data.Me.Id) Toast($"{NameOf(uid)} sent {kind}."); };
             _live.AvatarChanged += uid => _ = RefreshPartnerAvatar(uid);
+            _live.DecorChanged += OnDecorChangedElsewhere;
             _live.Ended += reason => { Toast(reason == "not_authorized" ? "You no longer have access to that session." : "The live session ended."); _ = LeaveLiveAndRefresh(); };
             _live.LinkChanged += state => TestProbe.Event("live", state.ToString());
             _live.Start();

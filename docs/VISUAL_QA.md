@@ -38,6 +38,8 @@ Honest labels:
 - The sample clip is labelled *Simulated camera pan* in the companion and the composer, and *Adam’s simulated
   camera pan* on the room screen. The voice is labelled *Synthesized voice note* (*Synthesized voice* on the cup),
   and the photos *Sample photo*.
+- *Since 12 November* the sample photos and the clip are real stock photographs and footage with credits (see
+  `ASSET_MANIFEST.md`), and the clip's label is *Sample clip*. The captures on this page were taken before that.
 
 ### Companion
 
@@ -365,5 +367,5 @@ Hand-tracked pinch and poke were not exercised; that needs a headset.
 ### Known limitations of the asset production
 
 - No DCC tool (Blender) was available in this environment. The characters were sculpted from signed-distance fields in Python, which limits fine detail (lips, lashes, hair strands) and rules out skinned deformation and blend-shape expressions. A Blender pass to retopologize, rig and add expressions is the clearest next improvement.
-- Sample photos and the clip are crops of CC0 panoramas. They are believable but contain no people, and the clip is a simulated camera path, not a real recording.
+- Sample photos and the clip were crops of CC0 panoramas when these captures were taken (believable, but no people, and the clip a simulated camera path). Since 12 November they are real stock photographs and real footage, credited; the room and companion haven't been re-captured with them.
 - The voice note is a synthesized OS text-to-speech voice and is labelled as such.

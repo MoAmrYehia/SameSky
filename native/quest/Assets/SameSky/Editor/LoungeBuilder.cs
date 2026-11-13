@@ -5,9 +5,17 @@
 // olive tree, a woven rug, soft contact shadows. Lighting is neutral afternoon daylight with gentle warmth: a trilight
 // ambient, one window light and a lamp, nothing that tints faces orange. Everything is generated here from
 // procedural meshes (Scripts/Room/MeshGen.cs) and the repository's CC0 textures, so it can be edited and rebuilt.
+//
+// The furniture is the marketplace's catalogue (api/samesky/furniture_catalog.json): every piece of every slot is
+// built here, under "Lounge/Furniture/<slot>/<piece>", and only the default piece of each slot is switched on. Parts
+// that take a finish carry their own finish -> material table (Scripts/Room/RoomDecor.cs applies the choices). All
+// tables share one top at one height and the chairs keep one shape, so everything the app places on the table and
+// whoever sits opposite stay where they belong whatever is chosen.
 
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using SameSky.App;
 using SameSky.Geometry;
 using UnityEditor;
 using UnityEngine;
@@ -95,16 +103,18 @@ namespace SameSky.EditorTools
             Add(window, "Terrace parapet", MeshGen.Sweep("Terrace parapet", deckOuter, -74f, 74f, 48,
                 _ => MeshGen.RoundedSection(0.2f, -0.08f, 0.42f, 0.02f)), stone, Vector3.zero, castShadows: false);
 
-            // ------------------------------------------------------------ furniture
-            BuildTable(geo, walnut, shadow);
-            var chairMesh = TubChair(out var cushionMesh);
-            Chair(geo, "Partner chair", new Vector3(0, 0, 1.56f), 180f, chairMesh, cushionMesh, boucle, shadow);
-            Chair(geo, "Second chair", new Vector3(-1.32f, 0, 1.22f), 112f, chairMesh, cushionMesh, boucle, shadow);
+            // ------------------------------------------------------------ furniture: the marketplace's catalogue
+            var furniture = new GameObject("Furniture").transform;
+            furniture.SetParent(geo, false);
+            var black = Lit("Decor metal black", new Color(0.07f, 0.07f, 0.075f), 0.4f, metallic: 0.35f, folder: DecorFolder);
+            BuildTables(furniture, walnut, bronze, shadow);
+            BuildChairs(furniture, boucle, shadow);
+            BuildRugs(furniture, rug);
+            BuildLamps(furniture, new Vector3(1.6f, 0, 1.72f), brass, bronze, black, shade, shadow);
+            BuildPlants(furniture, new Vector3(-1.9f, 0, 1.6f), ceramic, shadow);
             BuildSideTable(geo, new Vector3(1.12f, 0, 0.62f), walnut, ceramic, shadow);
-            BuildLamp(geo, new Vector3(1.6f, 0, 1.72f), brass, shade, shadow);
-            BuildPlant(geo, new Vector3(-1.9f, 0, 1.6f), shadow);
-            // a lathe profile that ends running inward at the top faces up
-            Add(geo, "Rug", MeshGen.Lathe("Rug", new[] { new Vector2(1.3f, 0.002f), new Vector2(1.28f, 0.006f), new Vector2(0, 0.006f) }, 72, planarUv: 2.5f), rug, new Vector3(TableCenter.x, 0, TableCenter.z));
+            FinishWallsAndFloor(geo, plaster, floor);
+            CheckCatalogue(furniture);
         }
 
         // ------------------------------------------------------------ lighting
@@ -125,15 +135,6 @@ namespace SameSky.EditorTools
             sun.shadowNormalBias = 0.5f;
             sun.transform.rotation = Quaternion.Euler(30, 200, 0);
             sun.lightmapBakeType = LightmapBakeType.Realtime;
-
-            var lamp = new GameObject("Lamp light").AddComponent<Light>();
-            lamp.transform.SetParent(room, false);
-            lamp.transform.position = new Vector3(1.6f, 1.52f, 1.72f);
-            lamp.type = LightType.Point;
-            lamp.range = 2.4f;
-            lamp.intensity = 0.32f;   // a pool of warmth, not a hot spot on the wall beside it
-            lamp.color = new Color(1f, 0.86f, 0.68f);
-            lamp.shadows = LightShadows.None;
 
             // A soft key for whoever sits across the table: their face is turned away from the window. It lights only
             // the people layer (Avatars.PeopleLayer), so the room's balance doesn't change.
@@ -264,24 +265,198 @@ namespace SameSky.EditorTools
             glow.color = new Color(1f, 0.85f, 0.62f);
         }
 
-        static void BuildTable(Transform geo, Material walnut, Material shadow)
+        // ------------------------------------------------------------ the catalogue's pieces
+
+        const string DecorFolder = "Assets/SameSky/Art/Generated/Decor";
+
+        /// <summary>The root of one catalogue piece: "Furniture/<slot>/<piece>", switched on only when it is the default.</summary>
+        static Transform Piece(Transform furniture, string slot, string item, Vector3 pos, bool shown)
         {
-            // a 1.05 m round top with a softened edge on a single pedestal and a disc foot
-            var top = MeshGen.Lathe("Table top", new[]
+            var slotNode = furniture.Find(slot);
+            if (slotNode == null)
+            {
+                slotNode = new GameObject(slot).transform;
+                slotNode.SetParent(furniture, false);
+            }
+            var go = new GameObject(item);
+            go.transform.SetParent(slotNode, false);
+            go.transform.localPosition = pos;
+            var d = go.AddComponent<DecorItem>();
+            d.Slot = slot;
+            d.Item = item;
+            go.SetActive(shown);
+            return go.transform;
+        }
+
+        /// <summary>A part of a piece. Pieces are switched and re-dressed while the app runs, so they aren't static.</summary>
+        static GameObject Part(Transform parent, string name, Mesh mesh, Material mat, Vector3 pos, bool castShadows = true)
+        {
+            var go = Add(parent, name, mesh, mat, pos, castShadows: castShadows);
+            GameObjectUtility.SetStaticEditorFlags(go, 0);
+            return go;
+        }
+
+        /// <summary>Gives a part its finishes: the first is what it wears until the app says otherwise.</summary>
+        static GameObject Finished(GameObject part, string slot, string item, params (string finish, Material material)[] finishes)
+        {
+            var d = part.AddComponent<DecorPart>();
+            d.Slot = slot;
+            d.Item = item;
+            d.Finishes = finishes.Select(f => f.finish).ToArray();
+            d.Materials = finishes.Select(f => f.material).ToArray();
+            part.GetComponent<Renderer>().sharedMaterial = finishes[0].material;
+            return part;
+        }
+
+        /// <summary>A straight round bar from a to b (parent space), r0 thick at a and r1 at b.</summary>
+        static GameObject Strut(Transform parent, string name, Mesh mesh, Vector3 a, Vector3 b, Material mat)
+        {
+            var go = Part(parent, name, mesh, mat, a);
+            go.transform.localRotation = Quaternion.FromToRotation(Vector3.up, (b - a).normalized);
+            return go;
+        }
+
+        static Mesh Bar(string name, float length, float r0, float r1) =>
+            Save(MeshGen.Lathe(name, new[] { new Vector2(r0, 0), new Vector2(r1, length) }, 14, true, true));
+
+        static Vector2[] Ball(float radius, float centreY, int steps = 20)
+        {
+            var pts = new Vector2[steps + 1];
+            for (var i = 0; i <= steps; i++)
+            {
+                var a = Mathf.PI * i / steps;
+                pts[i] = new Vector2(Mathf.Max(0f, Mathf.Sin(a)) * radius, centreY - Mathf.Cos(a) * radius);
+            }
+            return pts;
+        }
+
+        /// <summary>The catalogue and the scene must agree: every piece the catalogue lists is here, and nothing else.</summary>
+        static void CheckCatalogue(Transform furniture)
+        {
+            var path = "Assets/SameSky/Resources/furniture-catalog.json";
+            if (!File.Exists(path))
+            {
+                Debug.LogWarning("[SameSky:setup] furniture-catalog.json is not bundled yet (scripts/native/build_native_assets.py): the catalogue was not checked");
+                return;
+            }
+            var catalog = FurnitureCatalog.Parse(File.ReadAllText(path));
+            var items = furniture.GetComponentsInChildren<DecorItem>(true);
+            var parts = furniture.root.GetComponentsInChildren<DecorPart>(true);
+            var problems = new List<string>();
+            // A component whose class has no file of its own is saved with a script reference that some of the
+            // scene's objects lose when it loads (the piece then can't be switched or re-dressed).
+            if (items.Length > 0 && !AssetDatabase.Contains(MonoScript.FromMonoBehaviour(items[0]))) problems.Add("DecorItem needs a script file of its own (DecorItem.cs)");
+            if (parts.Length > 0 && !AssetDatabase.Contains(MonoScript.FromMonoBehaviour(parts[0]))) problems.Add("DecorPart needs a script file of its own (DecorPart.cs)");
+            foreach (var slot in catalog.Slots)
+                foreach (var item in slot.Items)
+                {
+                    var hasRoot = items.Any(i => i.Slot == slot.Id && i.Item == item.Id);
+                    var itemParts = parts.Where(q => q.Slot == slot.Id && q.Item == item.Id).ToList();
+                    if (!hasRoot && itemParts.Count == 0) { problems.Add($"{slot.Id}/{item.Id} is not built"); continue; }
+                    foreach (var finish in item.Finishes)
+                        if (!itemParts.Any(q => q.Finishes.Contains(finish))) problems.Add($"{slot.Id}/{item.Id} has no part with finish {finish}");
+                }
+            foreach (var i in items)
+                if (catalog.Slot(i.Slot)?.Item(i.Item) == null) problems.Add($"{i.Slot}/{i.Item} is built but not in the catalogue");
+            if (problems.Count > 0) throw new System.InvalidOperationException("Furniture catalogue and scene disagree: " + string.Join("; ", problems));
+            Debug.Log($"[SameSky:setup] furniture: {items.Length} pieces in {catalog.Slots.Count} slots, {parts.Length} finished parts, catalogue v{catalog.Version}");
+        }
+
+        static void BuildTables(Transform furniture, Material walnut, Material bronze, Material shadow)
+        {
+            var veneer = $"{Art}/Textures/american_walnut_veneer";
+            // oak and ash are the same veneer scan with its tones remapped (a tint can only darken a texture)
+            var oak = Lit("Decor table oak", Color.white, 0.36f, Retoned("veneer-oak", $"{veneer}/Diffuse.jpg", new Color(0.63f, 0.5f, 0.34f), new Color(0.88f, 0.76f, 0.57f)),
+                $"{veneer}/nor_gl.jpg", Vector2.one, 0.5f, folder: DecorFolder);
+            var ash = Lit("Decor table ash", Color.white, 0.46f, Retoned("veneer-ash", $"{veneer}/Diffuse.jpg", new Color(0.07f, 0.065f, 0.06f), new Color(0.23f, 0.21f, 0.2f)),
+                $"{veneer}/nor_gl.jpg", Vector2.one, 0.6f, folder: DecorFolder);
+            var marble = Lit("Decor table marble", Color.white, 0.8f, MarbleTexture(), folder: DecorFolder);
+            // the top's planar texture coordinates run about -0.74..0.74: one stretch of marble, no repeat across it
+            marble.SetTextureScale("_BaseMap", new Vector2(0.62f, 0.62f));
+            marble.SetTextureOffset("_BaseMap", new Vector2(0.5f, 0.5f));
+            var tops = new[] { ("walnut", walnut), ("oak", oak), ("ash", ash), ("marble", marble) };
+            var bases = new[] { ("walnut", walnut), ("oak", oak), ("ash", ash), ("marble", bronze) };   // marble sits on dark bronze
+
+            // a 1.05 m round top with a softened edge: the same top, at the same height, on every base
+            var top = Save(MeshGen.Lathe("Table top", new[]
             {
                 new Vector2(0, TableTop - 0.034f), new Vector2(TableRadius - 0.03f, TableTop - 0.034f), new Vector2(TableRadius - 0.006f, TableTop - 0.026f),
                 new Vector2(TableRadius, TableTop - 0.014f), new Vector2(TableRadius - 0.004f, TableTop - 0.003f), new Vector2(TableRadius - 0.012f, TableTop), new Vector2(0, TableTop),
-            }, 96, planarUv: 1.4f);   // grain runs straight across the top
-            var stem = MeshGen.Lathe("Table stem", new[] { new Vector2(0.075f, 0.035f), new Vector2(0.06f, 0.1f), new Vector2(0.055f, TableTop - 0.1f), new Vector2(0.09f, TableTop - 0.035f) }, 40);
-            var foot = MeshGen.Lathe("Table foot", new[] { new Vector2(0, 0), new Vector2(0.27f, 0), new Vector2(0.28f, 0.012f), new Vector2(0.26f, 0.035f), new Vector2(0, 0.035f) }, 64);
-            var table = new GameObject("Shared table").transform;
-            table.SetParent(geo, false);
-            table.localPosition = TableCenter;
-            Add(table, "Top", top, walnut, Vector3.zero);
-            Add(table, "Stem", stem, walnut, Vector3.zero);
-            Add(table, "Foot", foot, walnut, Vector3.zero);
-            ContactShadow(geo, new Vector3(TableCenter.x, 0.008f, TableCenter.z), 0.5f, shadow);
-            ContactShadow(geo, new Vector3(TableCenter.x, 0.008f, TableCenter.z), 0.95f, shadow, 0.35f);   // the top's soft shade on the rug
+            }, 96, planarUv: 1.4f));   // grain runs straight across the top
+            Transform Table(string item, float footprint)
+            {
+                var root = Piece(furniture, "table", item, TableCenter, item == "pedestal");
+                Finished(Part(root, "Top", top, walnut, Vector3.zero), "table", item, tops);
+                ContactShadow(root, new Vector3(0, 0.008f, 0), footprint, shadow);
+                ContactShadow(root, new Vector3(0, 0.008f, 0), 0.95f, shadow, 0.35f);   // the top's soft shade on the rug
+                return root;
+            }
+
+            // pedestal: a single turned stem on a disc foot
+            var pedestal = Table("pedestal", 0.5f);
+            Finished(Part(pedestal, "Stem", MeshGen.Lathe("Table stem", new[] { new Vector2(0.075f, 0.035f), new Vector2(0.06f, 0.1f), new Vector2(0.055f, TableTop - 0.1f), new Vector2(0.09f, TableTop - 0.035f) }, 40), walnut, Vector3.zero), "table", "pedestal", bases);
+            Finished(Part(pedestal, "Foot", MeshGen.Lathe("Table foot", new[] { new Vector2(0, 0), new Vector2(0.27f, 0), new Vector2(0.28f, 0.012f), new Vector2(0.26f, 0.035f), new Vector2(0, 0.035f) }, 64), walnut, Vector3.zero), "table", "pedestal", bases);
+
+            // tripod: three legs splayed from a hub under the top; none of them points at the person's knees
+            var tripod = Table("tripod", 0.55f);
+            Finished(Part(tripod, "Hub", MeshGen.Lathe("Table tripod hub", new[] { new Vector2(0, TableTop - 0.1f), new Vector2(0.085f, TableTop - 0.1f), new Vector2(0.12f, TableTop - 0.05f), new Vector2(0.12f, TableTop - 0.034f) }, 40), walnut, Vector3.zero), "table", "tripod", bases);
+            var hubY = TableTop - 0.075f;
+            var legLength = new Vector2(0.38f - 0.06f, hubY).magnitude;
+            var leg = Bar("Table tripod leg", legLength, 0.03f, 0.019f);
+            foreach (var deg in new[] { 90f, 210f, 330f })   // one towards whoever sits opposite, two out to the sides of the seat
+            {
+                var dir = new Vector3(Mathf.Cos(deg * Mathf.Deg2Rad), 0, Mathf.Sin(deg * Mathf.Deg2Rad));
+                Finished(Strut(tripod, $"Leg {deg:F0}", leg, dir * 0.06f + Vector3.up * hubY, dir * 0.38f, walnut), "table", "tripod", bases);
+            }
+
+            // drum: a fluted drum on a low plinth
+            var drum = Table("drum", 0.5f);
+            Finished(Part(drum, "Drum", Fluted("Table drum", 0.2f, 0.03f, TableTop - 0.034f, 30, 0.012f), walnut, Vector3.zero), "table", "drum", bases);
+            Finished(Part(drum, "Plinth", MeshGen.Lathe("Table drum plinth", new[] { new Vector2(0, 0), new Vector2(0.235f, 0), new Vector2(0.24f, 0.01f), new Vector2(0.235f, 0.03f), new Vector2(0, 0.03f) }, 64), walnut, Vector3.zero), "table", "drum", bases);
+        }
+
+        /// <summary>An upright drum with shallow scallops running up it.</summary>
+        static Mesh Fluted(string name, float radius, float y0, float y1, int flutes, float depth)
+        {
+            const int perFlute = 8;
+            var n = flutes * perFlute;
+            var v = new List<Vector3>();
+            var uv = new List<Vector2>();
+            var t = new List<int>();
+            for (var i = 0; i <= n; i++)
+            {
+                var a = Mathf.PI * 2f * i / n;
+                var r = radius - depth * Mathf.Abs(Mathf.Sin(Mathf.PI * i / perFlute));
+                v.Add(new Vector3(Mathf.Cos(a) * r, y0, Mathf.Sin(a) * r));
+                v.Add(new Vector3(Mathf.Cos(a) * r, y1, Mathf.Sin(a) * r));
+                uv.Add(new Vector2(i / (float)n * 3f, y0));
+                uv.Add(new Vector2(i / (float)n * 3f, y1));
+            }
+            for (var i = 0; i < n; i++) t.AddRange(new[] { i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 2, i * 2 + 1, i * 2 + 3 });
+            var m = new Mesh { name = name };
+            m.SetVertices(v);
+            m.SetUVs(0, uv);
+            m.SetTriangles(t, 0);
+            m.RecalculateNormals();
+            m.RecalculateTangents();
+            m.RecalculateBounds();
+            return m;
+        }
+
+        static void BuildChairs(Transform furniture, Material boucle, Material shadow)
+        {
+            var weave = $"{Art}/Textures/wool_boucle/nor_gl.jpg";
+            var fabrics = new[]
+            {
+                ("cream", boucle),
+                ("sage", Lit("Decor chair sage", new Color(0.6f, 0.67f, 0.55f), 0.04f, null, weave, new Vector2(5, 5), 1.6f, folder: DecorFolder)),
+                ("charcoal", Lit("Decor chair charcoal", new Color(0.23f, 0.25f, 0.25f), 0.06f, null, weave, new Vector2(7, 7), 1f, folder: DecorFolder)),
+                ("cognac", Lit("Decor chair cognac", new Color(0.5f, 0.28f, 0.16f), 0.5f, folder: DecorFolder)),   // smooth leather
+            };
+            var shell = TubChair(out var cushion);
+            var root = Piece(furniture, "chairs", "tub", Vector3.zero, true);
+            Chair(root, "Partner chair", new Vector3(0, 0, 1.56f), 180f, shell, cushion, fabrics, shadow);
+            Chair(root, "Second chair", new Vector3(-1.32f, 0, 1.22f), 112f, shell, cushion, fabrics, shadow);
         }
 
         static Mesh TubChair(out Mesh cushion)
@@ -302,15 +477,15 @@ namespace SameSky.EditorTools
             return shell;
         }
 
-        static void Chair(Transform geo, string name, Vector3 pos, float yaw, Mesh shell, Mesh cushion, Material boucle, Material shadow)
+        static void Chair(Transform root, string name, Vector3 pos, float yaw, Mesh shell, Mesh cushion, (string, Material)[] fabrics, Material shadow)
         {
             var chair = new GameObject(name).transform;
-            chair.SetParent(geo, false);
+            chair.SetParent(root, false);
             chair.localPosition = pos;
             chair.localRotation = Quaternion.Euler(0, yaw, 0);
-            Add(chair, "Shell", shell, boucle, Vector3.zero, register: false);
-            Add(chair, "Seat", cushion, boucle, new Vector3(0, 0, 0.02f), register: false);
-            ContactShadow(geo, new Vector3(pos.x, 0.009f, pos.z), 0.52f, shadow);
+            Finished(Part(chair, "Shell", shell, fabrics[0].Item2, Vector3.zero), "chairs", "tub", fabrics);
+            Finished(Part(chair, "Seat", cushion, fabrics[0].Item2, new Vector3(0, 0, 0.02f)), "chairs", "tub", fabrics);
+            ContactShadow(root, new Vector3(pos.x, 0.009f, pos.z), 0.52f, shadow);
         }
 
         static void BuildSideTable(Transform geo, Vector3 pos, Material walnut, Material ceramic, Material shadow)
@@ -326,32 +501,281 @@ namespace SameSky.EditorTools
             ContactShadow(geo, new Vector3(pos.x, 0.009f, pos.z), 0.3f, shadow);
         }
 
-        static void BuildLamp(Transform geo, Vector3 pos, Material brass, Material shade, Material shadow)
+        static void BuildRugs(Transform furniture, Material oatmeal)
         {
-            var lamp = new GameObject("Floor lamp").transform;
-            lamp.SetParent(geo, false);
-            lamp.localPosition = pos;
-            Add(lamp, "Base", MeshGen.Lathe("Lamp base", new[] { new Vector2(0, 0), new Vector2(0.15f, 0), new Vector2(0.15f, 0.012f), new Vector2(0.03f, 0.02f), new Vector2(0, 0.02f) }, 40), brass, Vector3.zero);
-            Add(lamp, "Pole", MeshGen.Lathe("Lamp pole", new[] { new Vector2(0.011f, 0.02f), new Vector2(0.011f, 1.42f) }, 12), brass, Vector3.zero);
-            Add(lamp, "Shade", MeshGen.Lathe("Lamp shade", new[] { new Vector2(0.24f, 1.36f), new Vector2(0.205f, 1.68f) }, 48), shade, Vector3.zero);
-            ContactShadow(geo, new Vector3(pos.x, 0.009f, pos.z), 0.22f, shadow);
+            var knit = $"{Art}/Textures/knitted_fleece/nor_gl.jpg";
+            Material Knit(string name, Color c) => Lit("Decor rug " + name, c, 0.04f, null, knit, Vector2.one, 0.8f, folder: DecorFolder);
+            var colours = new (string id, Color c)[]
+            {
+                ("oatmeal", new Color(0.84f, 0.8f, 0.73f)), ("sage", new Color(0.62f, 0.68f, 0.57f)), ("charcoal", new Color(0.27f, 0.28f, 0.28f)), ("clay", new Color(0.7f, 0.47f, 0.38f)),
+            };
+            var fields = colours.Select(k => (k.id, k.id == "oatmeal" ? oatmeal : Knit(k.id, k.c))).ToArray();
+            var borders = colours.Select(k => (k.id, Knit(k.id + " border", k.c * 0.78f))).ToArray();
+            var centre = new Vector3(TableCenter.x, 0, TableCenter.z);
+
+            var round = Piece(furniture, "rug", "round", centre, true);
+            // a lathe profile that ends running inward at the top faces up
+            Finished(Part(round, "Rug", MeshGen.Lathe("Rug", new[] { new Vector2(1.3f, 0.002f), new Vector2(1.28f, 0.006f), new Vector2(0, 0.006f) }, 72, planarUv: 2.5f), oatmeal, Vector3.zero, castShadows: false),
+                "rug", "round", fields);
+
+            // a wide flatweave: a plain field inside a darker border
+            var rect = Piece(furniture, "rug", "rectangle", centre, false);
+            Finished(Part(rect, "Border", Slab("Rug flatweave border", 2.7f, 2.2f, 0.004f), oatmeal, Vector3.zero, castShadows: false), "rug", "rectangle", borders);
+            Finished(Part(rect, "Field", Slab("Rug flatweave field", 2.5f, 2f, 0.007f), oatmeal, Vector3.zero, castShadows: false), "rug", "rectangle", fields);
+
+            Piece(furniture, "rug", "none", centre, false);
         }
 
-        static void BuildPlant(Transform geo, Vector3 pos, Material shadow)
+        /// <summary>A flat rectangle lying face up, centred on its parent.</summary>
+        static Mesh Slab(string name, float width, float depth, float y)
         {
-            // the CC0 potted plant (it has its own pot), at a natural floor-plant size by the glazing corner
-            var path = AssetDatabase.FindAssets("t:GameObject", new[] { $"{Art}/Models/plant" });
-            if (path.Length == 0) return;
-            var asset = AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(path[0]));
-            if (asset == null) return;
-            var plant = (GameObject)PrefabUtility.InstantiatePrefab(asset, geo);
-            plant.name = "Plant";
-            plant.transform.localPosition = pos;
-            plant.transform.localRotation = Quaternion.Euler(0, 35, 0);
-            var b = Bounds(plant);
-            if (b.size.y > 0.01f) plant.transform.localScale = Vector3.one * (0.95f / b.size.y);
-            GameObjectUtility.SetStaticEditorFlags(plant, StaticEditorFlags.BatchingStatic);
-            ContactShadow(geo, new Vector3(pos.x, 0.009f, pos.z), 0.32f, shadow);
+            float x = width / 2f, z = depth / 2f;
+            return MeshGen.Fan(name, new List<Vector3> { new(-x, y, -z), new(-x, y, z), new(x, y, z), new(x, y, -z) }, faceUp: true, uvScale: 2.5f);
+        }
+
+        static void BuildLamps(Transform furniture, Vector3 pos, Material brass, Material bronze, Material black, Material shade, Material shadow)
+        {
+            var metals = new[] { ("brass", brass), ("bronze", bronze), ("black", black) };
+            var opal = Lit("Decor lamp opal", new Color(0.98f, 0.96f, 0.92f), 0.6f, emission: new Color(0.8f, 0.7f, 0.56f), folder: DecorFolder);
+            GameObject Metal(Transform root, string item, GameObject part) => Finished(part, "lamp", item, metals);
+            // a pool of warmth, not a hot spot on the wall beside it; each lamp carries its own, lit only while it stands
+            void Glow(Transform root, float height)
+            {
+                var light = new GameObject("Lamp light").AddComponent<Light>();
+                light.transform.SetParent(root, false);
+                light.transform.localPosition = new Vector3(0, height, 0);
+                light.type = LightType.Point;
+                light.range = 2.4f;
+                light.intensity = 0.32f;
+                light.color = new Color(1f, 0.86f, 0.68f);
+                light.shadows = LightShadows.None;
+            }
+            var foot = Save(MeshGen.Lathe("Lamp base", new[] { new Vector2(0, 0), new Vector2(0.15f, 0), new Vector2(0.15f, 0.012f), new Vector2(0.03f, 0.02f), new Vector2(0, 0.02f) }, 40));
+
+            // drum: a slim pole with a linen drum shade
+            var drum = Piece(furniture, "lamp", "drum", pos, true);
+            Metal(drum, "drum", Part(drum, "Base", foot, brass, Vector3.zero));
+            Metal(drum, "drum", Part(drum, "Pole", MeshGen.Lathe("Lamp pole", new[] { new Vector2(0.011f, 0.02f), new Vector2(0.011f, 1.42f) }, 12), brass, Vector3.zero));
+            Part(drum, "Shade", MeshGen.Lathe("Lamp shade", new[] { new Vector2(0.24f, 1.36f), new Vector2(0.205f, 1.68f) }, 48), shade, Vector3.zero);
+            ContactShadow(drum, new Vector3(0, 0.009f, 0), 0.22f, shadow);
+            Glow(drum, 1.52f);
+
+            // globe: an opal glass ball on the same slim pole
+            var globe = Piece(furniture, "lamp", "globe", pos, false);
+            Metal(globe, "globe", Part(globe, "Base", foot, brass, Vector3.zero));
+            Metal(globe, "globe", Part(globe, "Pole", MeshGen.Lathe("Lamp globe pole", new[] { new Vector2(0.011f, 0.02f), new Vector2(0.011f, 1.37f) }, 12), brass, Vector3.zero));
+            Metal(globe, "globe", Part(globe, "Collar", MeshGen.Lathe("Lamp globe collar", new[] { new Vector2(0.012f, 1.34f), new Vector2(0.05f, 1.355f), new Vector2(0.052f, 1.375f), new Vector2(0.03f, 1.39f) }, 32), brass, Vector3.zero));
+            Part(globe, "Globe", MeshGen.Lathe("Lamp globe", Ball(0.15f, 1.52f), 40), opal, Vector3.zero, castShadows: false);
+            ContactShadow(globe, new Vector3(0, 0.009f, 0), 0.22f, shadow);
+            Glow(globe, 1.52f);
+
+            // tripod: three thin legs up to a hub, a tall linen shade above it
+            var tripod = Piece(furniture, "lamp", "tripod", pos, false);
+            const float hub = 1.1f;
+            var legMesh = Bar("Lamp tripod leg", new Vector2(0.27f - 0.015f, hub).magnitude, 0.011f, 0.013f);
+            foreach (var deg in new[] { 30f, 150f, 270f })
+            {
+                var dir = new Vector3(Mathf.Cos(deg * Mathf.Deg2Rad), 0, Mathf.Sin(deg * Mathf.Deg2Rad));
+                Metal(tripod, "tripod", Strut(tripod, $"Leg {deg:F0}", legMesh, dir * 0.27f, dir * 0.015f + Vector3.up * hub, brass));
+            }
+            Metal(tripod, "tripod", Part(tripod, "Hub", MeshGen.Lathe("Lamp tripod hub", new[] { new Vector2(0, hub - 0.03f), new Vector2(0.03f, hub - 0.03f), new Vector2(0.034f, hub + 0.02f), new Vector2(0.012f, hub + 0.04f), new Vector2(0.012f, hub + 0.12f) }, 24), brass, Vector3.zero));
+            Part(tripod, "Shade", MeshGen.Lathe("Lamp tall shade", new[] { new Vector2(0.21f, hub + 0.08f), new Vector2(0.18f, hub + 0.52f) }, 48), shade, Vector3.zero);
+            ContactShadow(tripod, new Vector3(0, 0.009f, 0), 0.3f, shadow, 0.6f);
+            Glow(tripod, hub + 0.3f);
+        }
+
+        static void BuildPlants(Transform furniture, Vector3 pos, Material ceramic, Material shadow)
+        {
+            // leafy: the CC0 potted plant (it has its own pot), at a natural floor-plant size by the glazing corner
+            var leafy = Piece(furniture, "plant", "leafy", pos, true);
+            var found = AssetDatabase.FindAssets("t:GameObject", new[] { $"{Art}/Models/plant" });
+            var asset = found.Length > 0 ? AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(found[0])) : null;
+            if (asset != null)
+            {
+                var plant = (GameObject)PrefabUtility.InstantiatePrefab(asset, leafy);
+                plant.name = "Plant";
+                plant.transform.localPosition = Vector3.zero;
+                plant.transform.localRotation = Quaternion.Euler(0, 35, 0);
+                var b = Bounds(plant);
+                if (b.size.y > 0.01f) plant.transform.localScale = Vector3.one * (0.95f / b.size.y);
+            }
+            ContactShadow(leafy, new Vector3(0, 0.009f, 0), 0.32f, shadow);
+
+            // snake plant: stiff upright blades in a cream pot
+            var snake = Piece(furniture, "plant", "snake", pos, false);
+            Part(snake, "Pot", MeshGen.Lathe("Snake plant pot", new[]
+            {
+                new Vector2(0, 0), new Vector2(0.12f, 0), new Vector2(0.135f, 0.03f), new Vector2(0.165f, 0.3f), new Vector2(0.17f, 0.32f),
+                new Vector2(0.155f, 0.32f), new Vector2(0.15f, 0.285f), new Vector2(0, 0.285f),
+            }, 40), ceramic, Vector3.zero);
+            var soil = Lit("Decor plant soil", new Color(0.13f, 0.1f, 0.08f), 0.05f, folder: DecorFolder);
+            Part(snake, "Soil", MeshGen.Lathe("Snake plant soil", new[] { new Vector2(0.15f, 0.286f), new Vector2(0, 0.29f) }, 32), soil, Vector3.zero, castShadows: false);
+            var leaf = Lit("Decor plant snake leaf", Color.white, 0.32f, SnakeLeafTexture(), folder: DecorFolder);
+            leaf.SetFloat("_Cull", 0f);   // a blade is seen from both sides
+            var random = new System.Random(11);
+            float Next(float a, float b) => a + (float)random.NextDouble() * (b - a);
+            for (var i = 0; i < 12; i++)
+            {
+                var height = i < 4 ? Next(0.62f, 0.78f) : Next(0.36f, 0.6f);     // a few tall blades in the middle, shorter ones around
+                var away = i < 4 ? Next(0.01f, 0.04f) : Next(0.05f, 0.1f);
+                var yaw = i * 137.5f + Next(-12f, 12f);
+                var blade = Part(snake, $"Leaf {i}", Save(Blade($"Snake plant leaf {i}", height, Next(0.06f, 0.085f), i < 4 ? Next(0.02f, 0.06f) : Next(0.08f, 0.16f), Next(-25f, 25f))),
+                    leaf, Quaternion.Euler(0, yaw, 0) * new Vector3(0, 0.28f, away));
+                blade.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+            }
+            ContactShadow(snake, new Vector3(0, 0.009f, 0), 0.26f, shadow);
+
+            Piece(furniture, "plant", "none", pos, false);
+        }
+
+        /// <summary>One sword-shaped leaf standing on its base: widest low down, tapering to a point, folded a little
+        /// along its middle, leaning outwards (+Z) as it rises and turning slightly.</summary>
+        static Mesh Blade(string name, float height, float width, float lean, float twistDeg)
+        {
+            const int rows = 12;
+            var v = new List<Vector3>();
+            var uv = new List<Vector2>();
+            var t = new List<int>();
+            for (var r = 0; r <= rows; r++)
+            {
+                var k = r / (float)rows;
+                var half = width / 2f * Mathf.Pow(Mathf.Sin(Mathf.PI * (0.13f + 0.87f * k)), 0.6f);
+                var turn = Quaternion.Euler(0, twistDeg * k, 0);
+                var centre = new Vector3(0, height * k, lean * k * k);
+                v.Add(centre + turn * new Vector3(-half, 0, half * 0.22f));
+                v.Add(centre);
+                v.Add(centre + turn * new Vector3(half, 0, half * 0.22f));
+                uv.Add(new Vector2(0, k));
+                uv.Add(new Vector2(0.5f, k));
+                uv.Add(new Vector2(1, k));
+            }
+            for (var r = 0; r < rows; r++)
+            {
+                var a = r * 3;
+                t.AddRange(new[] { a, a + 3, a + 1, a + 1, a + 3, a + 4, a + 1, a + 4, a + 2, a + 2, a + 4, a + 5 });
+            }
+            var m = new Mesh { name = name };
+            m.SetVertices(v);
+            m.SetUVs(0, uv);
+            m.SetTriangles(t, 0);
+            m.RecalculateNormals();
+            m.RecalculateTangents();
+            m.RecalculateBounds();
+            return m;
+        }
+
+        static void FinishWallsAndFloor(Transform geo, Material plaster, Material floor)
+        {
+            var relief = $"{Art}/Textures/clay_plaster/nor_gl.jpg";
+            Material Wall(string name, Color c) => Lit("Decor wall " + name, c, 0.08f, null, relief, new Vector2(2, 1), 0.3f, folder: DecorFolder);
+            var walls = new[]
+            {
+                ("ivory", plaster), ("sage", Wall("sage", new Color(0.8f, 0.84f, 0.76f))), ("sand", Wall("sand", new Color(0.9f, 0.84f, 0.74f))),
+                ("mist", Wall("mist", new Color(0.82f, 0.87f, 0.89f))), ("rose", Wall("rose", new Color(0.9f, 0.82f, 0.78f))),
+            };
+            // the walls take the colour; the ceiling stays ivory
+            foreach (var path in new[] { "Wall left", "Wall right", "Wall behind", "Alcove/Back", "Alcove/Side A", "Alcove/Side B", "Alcove/Vault" })
+            {
+                var wall = geo.Find(path);
+                if (wall != null) Finished(wall.gameObject, "walls", "plaster", walls);
+            }
+            var wood = $"{Art}/Textures/herringbone_parquet";
+            Material Parquet(string name, Color c) => Lit("Decor floor " + name, c, 0.3f, $"{wood}/Diffuse.jpg", $"{wood}/nor_gl.jpg", new Vector2(0.45f, 0.45f), 0.6f, folder: DecorFolder);
+            var floors = new[] { ("natural", floor), ("honey", Parquet("honey", new Color(0.98f, 0.8f, 0.58f))), ("smoked", Parquet("smoked", new Color(0.5f, 0.43f, 0.37f))) };
+            var ground = geo.Find("Floor");
+            if (ground != null) Finished(ground.gameObject, "floor", "parquet", floors);
+        }
+
+        // ------------------------------------------------------------ generated textures for the pieces
+
+        /// <summary>0 below e0, 1 above e1, smooth in between.</summary>
+        static float Step(float e0, float e1, float x) => Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(e0, e1, x));
+
+        /// <summary>A copy of a texture with its tones remapped between two colours (dark grain to light grain).</summary>
+        static string Retoned(string name, string sourcePath, Color dark, Color light)
+        {
+            Directory.CreateDirectory(DecorFolder);
+            var path = $"{DecorFolder}/{name}.jpg";
+            var src = new Texture2D(2, 2, TextureFormat.RGB24, false);
+            src.LoadImage(File.ReadAllBytes(sourcePath));
+            var px = src.GetPixels32();
+            var histogram = new int[256];
+            foreach (var c in px) histogram[(c.r * 77 + c.g * 150 + c.b * 29) >> 8]++;
+            int lo = 0, hi = 255, seen = 0;
+            for (var i = 0; i < 256; i++) { seen += histogram[i]; if (seen >= px.Length * 0.02f) { lo = i; break; } }
+            seen = 0;
+            for (var i = 255; i >= 0; i--) { seen += histogram[i]; if (seen >= px.Length * 0.02f) { hi = i; break; } }
+            var range = Mathf.Max(1, hi - lo);
+            for (var i = 0; i < px.Length; i++)
+            {
+                var l = Mathf.Clamp01((((px[i].r * 77 + px[i].g * 150 + px[i].b * 29) >> 8) - lo) / (float)range);
+                px[i] = Color.Lerp(dark, light, l);
+            }
+            src.SetPixels32(px);
+            src.Apply();
+            File.WriteAllBytes(path, src.EncodeToJPG(90));
+            Object.DestroyImmediate(src);
+            AssetDatabase.ImportAsset(path);
+            return path;
+        }
+
+        /// <summary>White marble with soft grey veins (generated: no source image).</summary>
+        static string MarbleTexture()
+        {
+            Directory.CreateDirectory(DecorFolder);
+            var path = $"{DecorFolder}/marble.png";
+            const int n = 1024;
+            float Fbm(float x, float y) => Mathf.PerlinNoise(x, y) * 0.55f + Mathf.PerlinNoise(x * 2.1f + 5.2f, y * 2.1f + 1.3f) * 0.3f + Mathf.PerlinNoise(x * 4.3f + 9.1f, y * 4.3f + 7.7f) * 0.15f;
+            var tex = new Texture2D(n, n, TextureFormat.RGB24, false);
+            var px = new Color[n * n];
+            Color white = new(0.94f, 0.93f, 0.91f), grey = new(0.55f, 0.55f, 0.57f);
+            for (var y = 0; y < n; y++)
+                for (var x = 0; x < n; x++)
+                {
+                    float u = x / (float)n, v = y / (float)n;
+                    // Veins run one way across the slab and only wander a little (the wander is kept gentler than
+                    // the run, so a vein never closes into a ring); each one fades in and out along its length.
+                    var run = u * 2.6f + v * 1.5f + (Fbm(u * 2.2f + 3f, v * 2.2f + 8f) - 0.5f) * 0.45f;
+                    var broad = Mathf.Pow(1f - Mathf.Abs(Mathf.Sin(run * Mathf.PI)), 7f) * Step(0.36f, 0.62f, Fbm(u * 3.1f + 20f, v * 3.1f + 5f));
+                    var cross = u * -1.2f + v * 3.1f + (Fbm(u * 4f + 1f, v * 4f + 13f) - 0.5f) * 0.4f;
+                    var fine = Mathf.Pow(1f - Mathf.Abs(Mathf.Sin(cross * Mathf.PI * 1.7f)), 20f) * 0.3f * Step(0.42f, 0.66f, Fbm(u * 5f + 7f, v * 5f + 40f));
+                    var cloud = 0.93f + 0.07f * Fbm(u * 1.6f + 31f, v * 1.6f + 17f);
+                    px[y * n + x] = Color.Lerp(white, grey, Mathf.Clamp01(broad * 0.62f + fine)) * cloud;
+                }
+            tex.SetPixels(px);
+            tex.Apply();
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path);
+            return path;
+        }
+
+        /// <summary>A snake plant's leaf: dark green with paler cross-bands and a yellow-green edge (generated).</summary>
+        static string SnakeLeafTexture()
+        {
+            Directory.CreateDirectory(DecorFolder);
+            var path = $"{DecorFolder}/snake-leaf.png";
+            const int w = 128, h = 512;
+            var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
+            var px = new Color[w * h];
+            Color deep = new(0.1f, 0.22f, 0.14f), mid = new(0.24f, 0.41f, 0.25f), edge = new(0.74f, 0.71f, 0.36f);
+            for (var y = 0; y < h; y++)
+                for (var x = 0; x < w; x++)
+                {
+                    float u = x / (float)(w - 1), v = y / (float)(h - 1);
+                    var band = Step(0.3f, 0.7f, 0.5f + 0.5f * Mathf.Sin(v * 70f + Mathf.PerlinNoise(u * 3f, v * 14f) * 7f));
+                    var c = Color.Lerp(deep, mid, band * (0.6f + 0.4f * Mathf.PerlinNoise(u * 6f + 3f, v * 30f)));
+                    var rim = Step(0.38f, 0.47f, Mathf.Abs(u - 0.5f));
+                    px[y * w + x] = Color.Lerp(c, edge, rim);
+                }
+            tex.SetPixels(px);
+            tex.Apply();
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path);
+            var ti = (TextureImporter)AssetImporter.GetAtPath(path);
+            if (ti.wrapMode != TextureWrapMode.Clamp) { ti.wrapMode = TextureWrapMode.Clamp; ti.SaveAndReimport(); }
+            return path;
         }
 
         // ------------------------------------------------------------ helpers
@@ -521,9 +945,12 @@ namespace SameSky.EditorTools
         }
 
         public static Material Lit(string name, Color color, float smoothness, string albedo = null, string normal = null, Vector2? tiling = null,
-            float normalStrength = 1f, float metallic = 0f, Color? emission = null)
+            float normalStrength = 1f, float metallic = 0f, Color? emission = null, string folder = null)
         {
-            var path = $"{Materials}/{name}.mat";
+            // the room's own materials are in Resources (the app loads a few by name); a piece's finishes are held
+            // by the piece itself, so they live with the generated art
+            if (folder != null) Directory.CreateDirectory(folder);
+            var path = $"{folder ?? Materials}/{name}.mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (m == null)
             {

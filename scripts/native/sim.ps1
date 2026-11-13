@@ -72,11 +72,20 @@ public static class SimInput {
   [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr h, int cmd);
   [DllImport("user32.dll")] static extern bool IsIconic(IntPtr h);
   [DllImport("user32.dll")] static extern bool PrintWindow(IntPtr h, IntPtr hdc, uint flags);
+  [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr h, out uint pid);
+  public static uint ProcessOf(IntPtr h) { uint pid; GetWindowThreadProcessId(h, out pid); return pid; }
+  // True when the foreground window is h or another window of the same process (a dialog or a floating panel it
+  // owns: Windows activates that one when asked for its owner).
+  public static bool HasForeground(IntPtr h) {
+    IntPtr fg = GetForegroundWindow();
+    return fg == h || (fg != IntPtr.Zero && ProcessOf(fg) == ProcessOf(h));
+  }
   public static Rectangle Focus(IntPtr h) {
     if (IsIconic(h)) ShowWindow(h, 9); // restore if minimised
-    if (GetForegroundWindow() != h) {
+    if (!HasForeground(h)) {
       // Windows only lets the process that sent the last input take the foreground: a tap of Alt makes that us.
-      // Only when needed: in the simulator an Alt tap is a keystroke too.
+      // Only when another application is in front: an Alt tap is a keystroke too (in the simulator, and in the
+      // Unity editor it opens and closes the menu bar, which swallows the keys that follow).
       keybd_event(0x12, 0, 0, UIntPtr.Zero); keybd_event(0x12, 0, 2, UIntPtr.Zero);
       SetForegroundWindow(h);
     }
@@ -84,6 +93,9 @@ public static class SimInput {
   }
   [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr h, IntPtr after, int x, int y, int w, int ht, uint flags);
   public static void Place(IntPtr h, int x, int y, int w, int ht) { SetWindowPos(h, IntPtr.Zero, x, y, w, ht, 0x0014u); } // no z-order change, no activation
+  // Keeps a window above every other one, or lets it go back (no move, no resize, no activation). A recording of
+  // the window's screen area then shows the window itself, whatever else comes to the foreground.
+  public static void Topmost(IntPtr h, bool on) { SetWindowPos(h, new IntPtr(on ? -1 : -2), 0, 0, 0, 0, 0x0013u); }
   [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(IntPtr h, int attr, out RECT r, int size);
   // The visible frame, without Windows 11's invisible resize borders (the window rectangle if DWM can't say).
   public static Rectangle Frame(IntPtr h) {
@@ -148,13 +160,15 @@ function Get-SimWindow {
   Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and ($_.ProcessName -match 'MetaXRSimulator|XRSimulator' -or $_.MainWindowTitle -match 'Simulator') } | Select-Object -First 1
 }
 
-# Brings a window to the front so keys reach it. Windows can refuse SetForegroundWindow to a background process;
-# WScript.Shell's AppActivate is the fallback. Returns the window rectangle.
+# Brings a window to the front so keys reach it, and returns the window rectangle. Windows can refuse
+# SetForegroundWindow to a background process, so it is tried a few times. "In front" means the application: when it
+# has a second window open (the Unity editor with a Preferences window, say), Windows activates that one instead of
+# the main window, and insisting on the main window is what went wrong on 12 November: the retries used
+# WScript.Shell's AppActivate, after which the editor acted on the script's keys only once the script had ended.
 function Focus-Window([System.Diagnostics.Process]$Process) {
   $rect = [SimInput]::Focus($Process.MainWindowHandle)
-  for ($i = 0; $i -lt 5 -and [SimInput]::GetForegroundWindow() -ne $Process.MainWindowHandle; $i++) {
-    try { [void](New-Object -ComObject WScript.Shell).AppActivate($Process.Id) } catch { }
-    Start-Sleep -Milliseconds 100
+  for ($i = 0; $i -lt 5 -and -not [SimInput]::HasForeground($Process.MainWindowHandle); $i++) {
+    Start-Sleep -Milliseconds 120
     $rect = [SimInput]::Focus($Process.MainWindowHandle)
   }
   return $rect

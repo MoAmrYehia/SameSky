@@ -1,0 +1,8 @@
+{"t":6.785,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":7.331,"kind":"pause","detail":"input","input":"None"}
+{"t":8.668,"kind":"pause","detail":"resume","input":"None"}
+{"t":8.942,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":8.965,"kind":"screen","detail":"launch","input":"hands"}
+{"t":37.496,"kind":"snap","detail":"hands","input":"hands"}
+{"t":38.297,"kind":"snap","detail":"palms","input":"hands"}
+{"t":39.597,"kind":"snap","detail":"hands-pinch","input":"hands"}

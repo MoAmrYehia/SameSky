@@ -1,0 +1,43 @@
+1
+00:00:02,350 --> 00:00:04,150
+[Maya, recorded message] Saved you a seat.
+
+2
+00:00:07,900 --> 00:00:15,199
+<i>Different cities. Different routines. Some days, we miss each other by hours.</i>
+
+3
+00:00:20,300 --> 00:00:25,140
+<i>In SameSky, a familiar object can hold a message for later.</i>
+
+4
+00:00:25,550 --> 00:00:27,400
+[Maya, recorded message] Saved you a seat.
+
+5
+00:00:27,600 --> 00:00:31,100
+[Maya, recorded message] The bench by the big oak, same as always.
+
+6
+00:00:31,450 --> 00:00:34,500
+[Maya, recorded message] Tell me about your sunset when you get home.
+
+7
+00:00:42,300 --> 00:00:45,886
+<i>A few moments become a day you can step into.</i>
+
+8
+00:01:13,133 --> 00:01:16,517
+<i>Leave an answer, and it waits on the table.</i>
+
+9
+00:01:21,533 --> 00:01:27,964
+<i>Share the little things, from your phone or your camera's footage, with the people you choose.</i>
+
+10
+00:01:36,633 --> 00:01:39,963
+<i>A place for the moments between visits.</i>
+
+11
+00:02:00,933 --> 00:02:06,144
+<i>SameSky. A place to be close, even when you're far.</i>

@@ -705,5 +705,106 @@
         }
       ]
     }
-  ]
+  ],
+  "sampleMedia": {
+    "retrieved": "2026-11-12",
+    "note": "Real photographs and footage for the fictional sample day, from Wikimedia Commons. The originals are fetched into .asset-cache/sample-media/ and are not in the repository; the app's copies are built from them by scripts/assets/build_real_sample_media.py.",
+    "items": [
+      {
+        "id": "park-path",
+        "title": "Autumn path, Dumitru Rascanu park",
+        "authors": [
+          "Iurie Nistor"
+        ],
+        "license": "CC0 1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "source": "https://commons.wikimedia.org/wiki/File:Autumn_path,_Dumitru_Rascanu_park.jpg",
+        "use": "web/public/assets/sample/maya-park.jpg",
+        "files": [
+          {
+            "file": ".asset-cache/sample-media/park-path/Autumn_path_Dumitru_Rascanu_park.jpg",
+            "url": "https://upload.wikimedia.org/wikipedia/commons/a/a7/Autumn_path%2C_Dumitru_Rascanu_park.jpg",
+            "bytes": 16645294,
+            "sha256": "73d46236670c5d79268926942e53d6be17176e8b01392e8290044876f30aee55"
+          }
+        ]
+      },
+      {
+        "id": "creek-dusk",
+        "title": "Deira Dubai Creek",
+        "authors": [
+          "kallerna"
+        ],
+        "license": "CC0 1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "source": "https://commons.wikimedia.org/wiki/File:Deira_Dubai_Creek.jpg",
+        "use": "web/public/assets/sample/adam-waterfront.jpg",
+        "files": [
+          {
+            "file": ".asset-cache/sample-media/creek-dusk/Deira_Dubai_Creek.jpg",
+            "url": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Deira_Dubai_Creek.jpg",
+            "bytes": 1464686,
+            "sha256": "e0450dde7d99bcbf8c5a9c32c63836e9b06b3e323a6cc7eefc8e4f4b83269175"
+          }
+        ]
+      },
+      {
+        "id": "desert-sunset",
+        "title": "Sharah Desert at sunset, UAE",
+        "authors": [
+          "Lxs"
+        ],
+        "license": "CC BY 4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+        "source": "https://commons.wikimedia.org/wiki/File:Sharah_Desert_at_sunset,_UAE.jpg",
+        "use": "web/public/assets/sample/adam-desert.jpg",
+        "files": [
+          {
+            "file": ".asset-cache/sample-media/desert-sunset/Sharah_Desert_at_sunset_UAE.jpg",
+            "url": "https://upload.wikimedia.org/wikipedia/commons/f/f1/Sharah_Desert_at_sunset%2C_UAE.jpg",
+            "bytes": 1783972,
+            "sha256": "2a4159c74621df33d53401ae615ad5bd3187f11f2f71f866bf367938cece3ecb"
+          }
+        ]
+      },
+      {
+        "id": "courtyard-night",
+        "title": "Tower block and courtyard in Dunedin Chinese Garden at night",
+        "authors": [
+          "Pseudopanax"
+        ],
+        "license": "Public domain (released by the author)",
+        "licenseUrl": "https://commons.wikimedia.org/wiki/File:Tower_block_and_courtyard_in_Dunedin_Chinese_Garden_at_night.jpg",
+        "source": "https://commons.wikimedia.org/wiki/File:Tower_block_and_courtyard_in_Dunedin_Chinese_Garden_at_night.jpg",
+        "use": "web/public/assets/sample/lina-courtyard.jpg",
+        "files": [
+          {
+            "file": ".asset-cache/sample-media/courtyard-night/Dunedin_Chinese_Garden_courtyard_at_night.jpg",
+            "url": "https://upload.wikimedia.org/wikipedia/commons/5/59/Tower_block_and_courtyard_in_Dunedin_Chinese_Garden_at_night.jpg",
+            "bytes": 5340970,
+            "sha256": "0fed8e747a3606d918665655d449ddbd38bcdda092e07349f8f3838ef0187644"
+          }
+        ]
+      },
+      {
+        "id": "creek-crossing",
+        "title": "Dubai Part I - Aug 10, 2012",
+        "authors": [
+          "54t4n0d"
+        ],
+        "license": "CC BY 3.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+        "source": "https://commons.wikimedia.org/wiki/File:Dubai_Part_I_-_Aug_10,_2012.webm",
+        "use": "web/public/assets/sample/adam-clip.mp4 (seconds 16 to 24.5, no audio from the source)",
+        "files": [
+          {
+            "file": ".asset-cache/sample-media/creek-crossing/Dubai_Part_I_Aug_10_2012.webm",
+            "url": "https://upload.wikimedia.org/wikipedia/commons/3/35/Dubai_Part_I_-_Aug_10%2C_2012.webm",
+            "bytes": 180890186,
+            "sha256": "00c546c9c681178c9e7ce9dd5d26b91401227209ce2b58faa4bc66c34b947a5a"
+          }
+        ]
+      }
+    ]
+  }
 }

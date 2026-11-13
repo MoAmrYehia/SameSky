@@ -97,6 +97,8 @@ namespace SameSky.Api
         public string SourceDevice;
         /// <summary>Sample media only: simulated | synthesized | stock. Never set by the API.</summary>
         public string Origin;
+        /// <summary>Sample media only: who made a stock photograph or stock footage, and its licence.</summary>
+        public string Credit;
         public string Projection;
         public int? DurationMs;
         public int? Width;
@@ -412,6 +414,16 @@ namespace SameSky.Api
     }
 
     [Serializable]
+    /// <summary>How a room is furnished (GET/PUT /v1/rooms/{id}/decor): slot id -> {item, finish}.</summary>
+    public sealed class DecorInfo
+    {
+        public string RoomId;
+        public int Version;
+        public JObject Choices;
+        public string UpdatedBy;
+        public string UpdatedAt;
+    }
+
     public sealed class ApiException : Exception
     {
         public readonly int Status;

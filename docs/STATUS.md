@@ -1,6 +1,7 @@
 # Status — implemented vs. verified
 
-Updated: 8 November 2026 (photo-derived avatars and visual QA pass 2; first written 6 November). This file keeps
+Updated: 13 November 2026 (test counts re-run; the last larger revision was 8 November, for photo-derived avatars
+and visual QA pass 2; first written 6 November). This file keeps
 the brief's distinction between *implemented*, *tested on a headset*, *tested in an emulator/desktop*, and *still
 unverified*. Nothing below is claimed beyond what was run.
 
@@ -25,9 +26,9 @@ Each row stands on its own evidence; none is proved by another (details in `docs
 
 | Check | Result | Where |
 |---|---|---|
-| API automated tests (65) | **pass** — privacy/authorization, withdrawal, removal, idempotency, plan validation, awards, availability/DST, Free now, call suggestions, restart persistence, media pipeline, realtime sync, avatar face preset validation, and for photo-derived avatars: the full job flow, cancellation blocking a late provider result, a new generation not replacing the approved one, revocation / member removal / deletion, invalid inputs and provider states (402, 429, bad credentials, not configured → 503), manual import validation, consent withdrawal and source retention, GLB inspector bounds, and the live `avatar_changed` notice (no likeness leaked, not sent to non-participants) | `api/tests`, local Windows 11, Python 3.13 |
+| API automated tests (82, re-run 13 November) | **pass** — short invite codes, the Ogg copy of a voice note for the native app, the furniture catalogue and each room's furniture choices (version check, realtime notice), privacy/authorization, withdrawal, removal, idempotency, plan validation, awards, availability/DST, Free now, call suggestions, restart persistence, media pipeline, realtime sync, avatar face preset validation, and for photo-derived avatars: the full job flow, cancellation blocking a late provider result, a new generation not replacing the approved one, revocation / member removal / deletion, invalid inputs and provider states (402, 429, bad credentials, not configured → 503), manual import validation, consent withdrawal and source retention, GLB inspector bounds, and the live `avatar_changed` notice (no likeness leaked, not sent to non-participants) | `api/tests`, local Windows 11, Python 3.13 |
 | Migrations | `alembic upgrade head` + `alembic check` (no drift) on SQLite; the avatar migration `1c9e35884ad2` also checked downgrade → re-upgrade, and upgraded the existing development database | local |
-| Web type check / unit tests / production build | **pass** (TS engine tests: 4) | local, Node 26 |
+| Web type check / unit tests / production build | **pass** (TS engine tests: 4; re-run 13 November) | local, Node 26 |
 | End-to-end smoke against the running stack (API + worker + Vite proxy) | **pass**: signup ×3, direct room + invite, phone photo upload → worker processing → explicit share confirmation, outsider 404, recap drafted → both approve → shared, reply + recap notifications in inbox (generic text), First Shared Day award, live session: play command reached the second participant in ~10 ms (same machine) and pose relay worked | `scripts/smoke_live.py` |
 | Companion, sample mode | Our day, story player (source chips, interpretation labels, chapter progress), Share, Together rendered and exercised | desktop Chromium (in-app browser), 1440×900 and 800 px |
 | Companion, live mode | Our day and Together against the real API (real overlap computed server-side) | desktop Chromium |
@@ -37,15 +38,20 @@ Each row stands on its own evidence; none is proved by another (details in `docs
 | New-user journey (`web/scripts/onboarding-e2e.mjs`) | **pass, 18 checks at 1440×900 and 390×844**: account → first-run setup (you, room, invite link with copy/share, avatar choice, usual times) → "waiting for someone" states on Our day, Together and Share → per-room settings → the invitee opens the link, creates an account and lands in the room → the owner sees them in Together; no page scrolls sideways | headless Chrome against the local API |
 | Visual QA pass 2 (8 Nov) | Neutral white balance, satin wood, cooler window plate, quieter dock/panels, demo avatars with human-sized irises and matte skin; honest sample-media labels (*Simulated camera pan*, *Synthesized voice note*, *Sample photo*); Settings fits 1440 px. See `docs/VISUAL_QA.md` | headless Chrome (SwiftShader) via `web/scripts/capture.mjs` |
 | Visual enhancement pass (room + companion) | Room safe area (screen header, primary action, presence badge, cup label, onboarding hint, dock fully visible and not overlapping) **passes at 1672×941, 1440×900, 1024×768 and 390×844**; 94–101 draw calls and 122k–136k triangles including the shadow pass; loading, asset-error and sign-in states; companion light/dark themes; populated Share with a circle selected (not published); pointer smoke test of the cup, dock Reply, Captions and Our day passes (`web/scripts/room-interactions.mjs`). See `docs/VISUAL_QA.md` | headless Chrome (SwiftShader) via `web/scripts/capture.mjs`; frame rates there are not meaningful |
+| Sample media (12 Nov) | The sample day's four photos and its clip are now real stock photographs and footage from Wikimedia Commons (CC0, public domain, CC BY), credited in the apps; captions and the recap's "looks like" lines rewritten to match what they show; labels *Sample photo* and *Sample clip* | type check, unit tests and production build pass; the room and companion captures were **not** re-taken |
 
 ## Not yet verified (needs hardware, credentials or deployment)
+
+- **Nothing is hosted.** There is no public URL for the web room, the companion or the API, so the hosted route of
+  the competition (a link judges open in the Quest Browser) isn't available yet; see
+  [REQUIREMENTS_MAP.md](REQUIREMENTS_MAP.md) for where each submission requirement stands.
 
 - **Photo-to-avatar generation** with the real MetaPerson service (needs Avatar SDK client credentials on the Pro
   plan), including MetaPerson’s actual bone and blendshape names in a real export.
 - **Likeness acceptance**: two distinct consenting adults, private front/three-quarter/side review, recorded
   approvals. Generic presets and the test mannequin do not count.
 - **A genuine phone photo and an independently recorded camera/action-camera clip** in the private end-to-end
-  import test (only generated fixtures and the labelled simulated sample clip were used).
+  import test (only generated fixtures and the sample clip were used).
 
 - **Quest 3/3S hardware**: immersive session, hand tracking (pinch select / pinch grab), poke on the dock,
   tracking-loss behaviour, recenter, spatial audio placement, and the 60 fps minimum — now also with the PMREM

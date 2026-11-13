@@ -129,10 +129,14 @@ your own, use a screen recorder, for example the Snipping Tool's video mode.
 
 ### Acceptance run
 
-`scripts/native/acceptance.ps1` runs the eight acceptance checks in the simulator:
+`scripts/native/acceptance.ps1` runs the nine acceptance checks in the simulator: the XR session, a dock button, the
+cup, the voice note within the first minute, a reply that survives restarts, recenter/pause/exit, tracking loss, an
+MP4 per session, and furniture chosen in the marketplace that is kept across a restart.
 
 - **Unity:** it opens Unity itself, with its own `acceptance` profile. Close any editor you opened yourself first.
-  It reuses an editor that an earlier run opened.
+  It reuses an editor that an earlier run opened, and asks it for Play mode through a small request file
+  (`native/quest/Temp/SameSkySim/request.txt`, answered by `Assets/SameSky/Editor/SimRun.cs`), so it doesn't matter
+  which editor window has the keyboard.
 - **Services:** it starts and seeds the local services.
 - **Driving:** it uses only the simulator's own keys (above). It steers the right index fingertip with the probe's
   positions, in a closed loop.
@@ -159,10 +163,12 @@ comparisons. The app's development probe can instead draw the room from the seat
 same framing every run:
 
 - Every acceptance run saves a few of these as `seat-*.png` (launch, the pick-up cue, the message card, the partner).
+- Check 1 also saves close-ups of the tracked hands, framed from the hand itself: backs, palms and a pinch
+  (`seat-hands.png`, `seat-palms.png`, `seat-hands-pinch.png`).
 - `-Renders` adds a tour of the other screens: Our day, Share, Together, Keepsakes and the shelf, the avatar preview,
   Settings, Pause, the story screen, the room selector, the family circle, the person opposite in close-up, the room
-  to the left and right, and the reply keyboard (`seat-tour-*.png`). Check 5 also saves the live room
-  (`seat-live-room.png`).
+  to the left and right, the reply keyboard, the marketplace (its tabs, and the room in two ready-made looks) and
+  the hand skin tones (`seat-tour-*.png`). Check 5 also saves the live room (`seat-live-room.png`).
 - In the Editor a shader draws as a cyan stand-in while it compiles in the background; these renders wait for the
   compiler first, so the first one after a lighting change can take a while.
 
@@ -173,7 +179,19 @@ powershell -ExecutionPolicy Bypass -File scripts/native/acceptance.ps1 -NonInter
 The tour opens each screen through the probe (`SameSkyApp.DevOpen`), not with hands: its pictures show what the app
 draws, and say nothing about interaction. The checks above are the interaction evidence. To take one view by hand
 while the app runs, write `snap-request.json` into the probe folder, for example
-`{"name":"room","yaw":0,"pitch":-12,"open":"day"}`; `snap-room.png` appears beside it. Development builds only.
+`{"name":"room","yaw":0,"pitch":-12,"open":"day"}`; `snap-room.png` appears beside it. `"open"` also takes
+`market`, `market:<tab>` (`table`, `chairs`, `rug`, `lamp`, `plant`, `walls`, `floor`, `looks`), `look:<id>` and
+`hands`; `"view":"hands"` or `"palms"` frames the tracked hands instead of the room. Development builds only.
+
+### Unit tests
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts/native/test.ps1
+```
+
+Runs the app's edit-mode tests in Unity batch mode (close the editor first): data contracts, the bundled sample and
+its labels and credits, configuration rules, recordings, shared-playback timing, the furniture catalogue's rules and
+the hand skin bundle. They need no simulator and no headset, and take about half a minute.
 
 ## 4. Build for the headset
 
@@ -187,12 +205,40 @@ powershell -ExecutionPolicy Bypass -File scripts/native/build.ps1 -Target Androi
 - **Output:** the APK, a `.build.json` record (Unity version, package id, size, SHA-256, commit) and the build log
   go to `native/quest/Builds/`.
 
-Release build: this needs `https` and a keystore from environment variables. No signing secrets are in the
-repository.
+- **Checked after building:** the script reads the APK back (`aapt2`, `apksigner`) and stops with an error if it
+  doesn't meet Meta's manifest rules: target API level 34, Quest 3 and 3S as the supported devices, 64-bit only,
+  and for a release build not debuggable and not signed with the debug key.
+- **Nothing of this PC in a release build:** a release APK is also searched, file by file, for this PC's network
+  addresses and for paths under its user folder, and the build stops if it finds one. Both got into builds before
+  (the SDK's developer tools write the address into a bundled settings file; Unity's IL2CPP sources carry their
+  install path); `Editor/ReleasePrivacy.cs` and `BuildScript.HomePathMap` keep them out. A development build still
+  has this PC's address in it, so don't pass one on.
+
+### Release build
+
+A release build is not debuggable and is signed with your own keystore. Run this yourself, in your own terminal:
+it asks for the keystore password at a hidden prompt. No signing secrets are in the repository.
 
 ```bash
-powershell -ExecutionPolicy Bypass -File scripts/native/build.ps1 -Target Android -Release -ApiUrl https://api.example.com
+powershell -ExecutionPolicy Bypass -File scripts/native/release.ps1 -SampleOnly
 ```
+
+- **`-SampleOnly`** makes a build with no server. Its welcome panel offers the sample day and has no *Sign in* or
+  *Create account*, and nothing in it needs the API. This is the build for the competition's judges while the API
+  isn't hosted. With a hosted API, give `-ApiUrl https://...` instead (plain HTTP is refused).
+- **The keystore** is made on the first run (`.samesky/samesky-release.keystore` in your user folder, outside the
+  repository) with a password you choose, and used again afterwards. Keep both: every later upload of the app has
+  to be signed with the same key, and neither can be recovered.
+- **The version code** comes from the date and time, so each release build's is higher than the last, as the
+  dashboard requires. `-VersionCode` sets one by hand.
+- **Where the password goes:** to `keytool` and Unity through environment variables of that one PowerShell
+  process. Unity writes it into the Gradle project it generates under `native/quest/Library` (on this PC only);
+  the build script takes it out again afterwards.
+- **A release build without a keystore, to look at:** `scripts/native/build.ps1 -Release -SampleOnly -DebugSigned`
+  signs with Android's debug key. It can't be uploaded.
+- **The sample-only app in the simulator:** `scripts/native/acceptance.ps1 -SampleOnly` runs the app the same way
+  (no API address), confirms that the welcome panel offers the sample day and no account buttons, and skips checks
+  5 and 9, which need the service.
 
 ## 5. Install on a Quest 3/3S (later, with a device)
 
@@ -215,9 +261,26 @@ powershell -ExecutionPolicy Bypass -File scripts/native/build.ps1 -Target Androi
 
 ## 6. Competition distribution
 
-A local simulator run doesn't give judges anything they can open. To submit:
+A local simulator run doesn't give judges anything they can open, and an APK file on its own isn't accepted: the
+entry needs the **link to a release channel named "Competition"** in the Meta developer dashboard (rules, section 4,
+and the FAQ, read again on 13 November 2026; entries close 18 November 2026 at 12:00 PM Pacific time).
 
-1. Upload a **release** APK to your app in the Meta developer dashboard, on a **Competition** release channel.
-2. Add the judges, and confirm the channel's **invite URL** opens on a test account.
-3. Keep that build unchanged through judging. The rules for the Start Developer Competition 2026 are on Devpost.
-   Re-check them, and confirm Start membership and Developer Access, before submitting.
+1. **Build a release APK** (section 4, *Release build*): `scripts/native/release.ps1 -SampleOnly`, run in your own
+   terminal. It is signed with your own keystore and not debuggable; a development build is debuggable, and Meta's
+   manifest rules don't allow that. The project is set up for the rest of those rules (target API level 34, 64-bit
+   only, `android.hardware.vr.headtracking` required, the VR launch category, Quest 3 and Quest 3S as the supported
+   devices), and the script checks the finished APK against them.
+2. In the Meta Horizon Developer Dashboard, create the app (**My Apps**), then **Distribution → Release Channels →
+   Create Release Channel** and name it `Competition`. A channel's name can't be changed afterwards.
+3. **Upload** the APK to that channel with Meta Quest Developer Hub or the Oculus Platform Utility. The package
+   name (`com.samesky.quest`) has to be unique among the apps on Meta's store, and each later upload needs a higher
+   version code (`PlayerSettings.Android.bundleVersionCode` in `Editor/ProjectSetup.cs`).
+4. Open the channel, **Channel Settings → Channel Invite → Grant access to users by URL**, choose automatic
+   approval and **Save Changes**. That URL is the link for the Devpost form. Open it once with another account to
+   confirm that it installs. Meta switches the link off 90 days after the channel's last upload.
+5. Leave that build as it is from the deadline until the winners are announced, and confirm Start membership and
+   Developer Access before submitting.
+
+The release build with the real keystore, and steps 2 to 5, have not been done yet. (The release path itself was
+run to the end with a test key on 13 November: see [NATIVE_STATUS.md](NATIVE_STATUS.md).) No build of the app has
+been installed on a headset.

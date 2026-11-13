@@ -6,15 +6,18 @@ chronological) recap turns the approved moments into a short shared story; and e
 same virtual table on Meta Quest — where a voice note waits inside a cup until you pick it up, and your
 reply waits beside it for the next visit.
 
-Built for the Meta VR Start Developer Competition 2026 (Entertainment · New Experience) as a hosted
-IWSDK/WebXR experience with a phone/desktop companion.
+Built for the Meta VR Start Developer Competition 2026 (Entertainment · New Experience): a native Quest app
+(Unity, Meta XR SDK), a WebXR room built with Meta's Immersive Web SDK, and a phone/desktop companion, all on one
+API. Hands only, seated. Checked in Meta XR Simulator and Meta's Immersive Web Emulator; **not yet run on a
+headset** ([docs/NATIVE_STATUS.md](docs/NATIVE_STATUS.md), [docs/STATUS.md](docs/STATUS.md)).
 
 | | |
 |---|---|
 | **XR room** (`web/room.html`) | Hands-first seated room on Quest 3/3S via Meta's Immersive Web SDK: pinch to pick up the cup (spatial voice note + captions), frames and postcards open on the shared screen, quick replies become persistent notes on the table, keepsake shelf, recenter / reset / captions / mute / exit within seated reach, each person's owner-approved photo-derived 3D avatar (or a labelled demo avatar), two-person live viewing with synchronized playback. Same page works on desktop/phone with click. |
 | **Companion** (`web/index.html`) | React phone/desktop app: Our day (side-by-side recap, source-linked story player, waiting voice note, reply), Share a moment (upload / camera / voice / text, trim, explicit 1:1 or 1:many audience with confirmation, AI consent separate), Together (live clocks, deterministic overlap, Free now, quiet hours, call suggestions), Keepsakes + daily archive, Inbox, Settings (time zone; *Your avatar*: create from your photos or import a model, review in neutral light, approve, choose who sees it, stop sharing or delete; availability, push, rooms & invites). |
-| **API** (`api/`) | FastAPI + SQLAlchemy (SQLite dev / Postgres prod). Explicit recipient grants bound to membership generations, audience snapshots, withdrawal/invalidation, recap generation + per-contributor approval, idempotent awards, time-zone engine, durable job outbox + worker, Web Push, app-owned realtime channel. |
-| **Sample day** | No login, no network calls to real rooms, no AI calls, no push. Fictional Adam (Dubai), Maya (Beijing) and Lina (London); original generated media; isolated local storage with a reset. |
+| **Native Quest app** (`native/quest/`) | Unity 6 with Meta's XR Core and Interaction SDK, on the same API as the companion: the seated lounge with the cup and its voice note, replies that stay on the table, Our day, Share, Together and Keepsakes. Tracked hands are drawn with skin (a tone you choose, nails, creases, their shadow on the table). In the **furniture marketplace** either person tries tables, chairs, rugs, lamps, plants, wall colours and floors on the real room, then keeps the look for both; every piece is included and nothing is sold. Checked in Meta XR Simulator with simulated hands and built as an APK; not yet run on a headset: [docs/NATIVE_STATUS.md](docs/NATIVE_STATUS.md). The build for the competition's judges is sample-only: it has no server behind it and offers the sample day, with no account buttons. |
+| **API** (`api/`) | FastAPI + SQLAlchemy (SQLite dev / Postgres prod). Explicit recipient grants bound to membership generations, audience snapshots, withdrawal/invalidation, recap generation + per-contributor approval, idempotent awards, time-zone engine, durable job outbox + worker, Web Push, app-owned realtime channel, and each room's furniture choices from one shared catalogue (versioned, so two people changing the room at once can't overwrite each other unnoticed). |
+| **Sample day** | No login, no network calls to real rooms, no AI calls, no push. Fictional Adam (Dubai), Maya (Beijing) and Lina (London); real stock photos and footage (credited) and a synthesized voice; isolated local storage with a reset. |
 
 ## Quick start (Windows/macOS/Linux)
 
@@ -85,7 +88,10 @@ cd web && node scripts/avatar-e2e.mjs           # photo-derived avatar import, a
 - [docs/AVATARS.md](docs/AVATARS.md) — photo-derived avatars: journey, provider setup, privacy, rig contract, results table
 - [docs/EMULATOR.md](docs/EMULATOR.md) — testing the room in Meta's Immersive Web Emulator (emulated Quest 3), what it found and fixed
 - [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) — testing instructions for the judged flow
-- [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — the under-three-minute video script
+- [docs/demo/README.md](docs/demo/README.md) — the demo video "I Saved You a Seat" (2:11): real footage of the native app in Meta XR Simulator and the companion, how it was filmed and cut, its script and shot list, what is sample and what it leaves out
+- [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) — the earlier plan for a recording on headsets with two accounts (not made)
+- [docs/trailer/README.md](docs/trailer/README.md) — the animated concept trailer "I Saved You a Seat": how it was made, its script and shot list (a concept film rendered for the purpose, not footage of the app)
+- [docs/cinematic/README.md](docs/cinematic/README.md) — "Wish You Were Here", a 75-second animated short that ends on the SameSky title: a film, not a demonstration (no app or interface in it); how it was made, its script, shot list and credits
 - [docs/REQUIREMENTS_MAP.md](docs/REQUIREMENTS_MAP.md) — competition and brief requirements → where they are demonstrated
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — components, decisions and tradeoffs
 - [docs/SHARING_MODEL.md](docs/SHARING_MODEL.md) — direct rooms, circles, recipient grants, recaps
@@ -101,14 +107,17 @@ cd web && node scripts/avatar-e2e.mjs           # photo-derived avatar import, a
 ```
 api/            FastAPI app (samesky/), worker, Alembic migrations, tests
 web/            Vite: companion (src/companion), XR room (src/xr), shared contracts/data (src/shared)
+native/quest/   Unity 6 project of the native Quest app (Meta XR Core and Interaction SDK, OpenXR, URP)
 contracts/      OpenAPI + RecapPlan JSON schema (generated by scripts/export_contracts.py)
-scripts/        asset pipeline (assets/), test fixtures (fixtures/), VAPID keys, contract export, smoke test
+scripts/        asset pipeline (assets/), the native app's setup, tests, simulator run and build (native/),
+                the videos (demo/), test fixtures (fixtures/), VAPID keys, contract export, smoke test
 docs/           design, status and submission documents
 ```
 
-All people in the sample are fictional. Sample photos are crops of public-domain (CC0) Poly Haven panoramas
-(labelled *Sample photo*); the sample clip is a camera pan simulated from one of those panoramas (labelled
-*Simulated camera pan*, never as a recording); the voice note uses the operating system's text-to-speech voice
+All people in the sample are fictional. Sample photos are real photographs from Wikimedia Commons under CC0,
+public-domain or CC BY terms (labelled *Sample photo*, with the photographer's credit); the sample clip is real
+footage of Dubai Creek under CC BY 3.0 (labelled *Sample clip* and credited, never as the fictional person's own
+recording); the voice note uses the operating system's text-to-speech voice
 (labelled *Synthesized voice note*). The room's furniture, textures and light probe are CC0 Poly Haven assets,
 and the window view is a CC0 photograph of a real river (the room makes no claim about where it is). The demo
 characters are original, sculpted by a script in this repository; no real person's photo or likeness is in the

@@ -1,0 +1,10 @@
+{
+  "note": "Every spoken line of the animated film 'Wish You Were Here'. The voices are synthesized with the text-to-speech voices that ship with Windows (no person's voice is recorded or imitated); scripts/demo/trailer_voices.ps1 -Lines wish_lines.json -Out demo-build/wish/voice renders each line with its mouth-shape timings for lip-sync. There is no narrator.",
+  "lines": [
+    { "id": "maya-good-part", "who": "Maya", "kind": "dialogue", "voice": "Microsoft Zira Desktop", "rate": "-10%", "pitch": "+0st", "text": "You're missing the good part." },
+    { "id": "adam-not-tonight", "who": "Adam", "kind": "dialogue", "voice": "Microsoft David Desktop", "rate": "-10%", "pitch": "+1st", "text": "Maybe not tonight." },
+    { "id": "maya-long-enough", "who": "Maya", "kind": "dialogue", "voice": "Microsoft Zira Desktop", "rate": "-8%", "pitch": "+0st", "text": "Took you long enough." },
+    { "id": "adam-traffic", "who": "Adam", "kind": "dialogue", "voice": "Microsoft David Desktop", "rate": "-14%", "pitch": "+1st", "text": "Traffic." },
+    { "id": "maya-tomorrow", "who": "Maya", "kind": "dialogue", "voice": "Microsoft Zira Desktop", "rate": "-10%", "pitch": "+0st", "text": "Same time tomorrow?" }
+  ]
+}

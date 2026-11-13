@@ -29,3 +29,10 @@ Thumbs.db
 
 # Illustrated test fixtures (scripts/fixtures/make_illustrated_media.py)
 scripts/fixtures/out/
+
+# Demo film working files: captures, generated sound, exports (scripts/demo; the film itself is uploaded, not committed)
+demo-build/
+
+# the animated film "Wish You Were Here": third-party motion clips and background characters (scripts/demo/wish_fetch.py and wish_cast.py restore them)
+native/quest/Assets/SameSky/Editor/Film/Cast/
+native/quest/Assets/SameSky/Editor/Film/Cast.meta

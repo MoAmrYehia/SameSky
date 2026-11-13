@@ -1,0 +1,30 @@
+{"t":10.067,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":10.55,"kind":"pause","detail":"input","input":"None"}
+{"t":11.744,"kind":"pause","detail":"resume","input":"None"}
+{"t":12.062,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":12.073,"kind":"screen","detail":"launch","input":"hands"}
+{"t":24.704,"kind":"snap","detail":"launch","input":"hands"}
+{"t":33.047,"kind":"press","detail":"launch:sample","input":"hands"}
+{"t":33.05,"kind":"screen","detail":"loading","input":"hands"}
+{"t":33.164,"kind":"mode","detail":"sample","input":"hands"}
+{"t":33.165,"kind":"screen","detail":"room","input":"hands"}
+{"t":33.186,"kind":"decor","detail":"shown v0","input":"hands"}
+{"t":33.245,"kind":"reply","detail":"restored:","input":"hands"}
+{"t":33.252,"kind":"presence","detail":"away","input":"hands"}
+{"t":33.261,"kind":"cue","detail":"pick-up-cup","input":"hands"}
+{"t":37.308,"kind":"snap","detail":"room-cue","input":"hands"}
+{"t":43.176,"kind":"grab","detail":"object:cup","input":"hands"}
+{"t":43.177,"kind":"cup","detail":"picked-up","input":"hands"}
+{"t":43.188,"kind":"voice","detail":"play","input":"hands"}
+{"t":43.189,"kind":"presence","detail":"recorded","input":"hands"}
+{"t":43.369,"kind":"avatar","detail":"portrait-rendered","input":"hands"}
+{"t":45.578,"kind":"snap","detail":"message","input":"hands"}
+{"t":52.689,"kind":"voice","detail":"finished","input":"hands"}
+{"t":52.724,"kind":"presence","detail":"simulated","input":"hands"}
+{"t":52.729,"kind":"toast","detail":"Leave a reply? Press Reply by the cup.","input":"hands"}
+{"t":54.566,"kind":"snap","detail":"room-partner","input":"hands"}
+{"t":55.105,"kind":"release","detail":"object:cup","input":"hands"}
+{"t":55.106,"kind":"cup","detail":"released","input":"hands"}
+{"t":66.786,"kind":"press","detail":"dock:day","input":"hands"}
+{"t":66.787,"kind":"screen","detail":"day","input":"hands"}
+{"t":66.791,"kind":"screen","detail":"day","input":"hands"}

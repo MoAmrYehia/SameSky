@@ -1,0 +1,17 @@
+{
+  "note": "Every spoken line of the animated concept trailer 'I Saved You a Seat'. The voices are synthesized with the text-to-speech voices that ship with Windows (no person's voice is recorded or imitated); scripts/demo/trailer_voices.ps1 renders each line to demo-build/film/voice with its mouth-shape timings for lip-sync.",
+  "lines": [
+    { "id": "maya-seat", "who": "Maya", "kind": "voice-over", "voice": "Microsoft Zira Desktop", "rate": "-12%", "pitch": "-1st", "text": "I saved you a seat." },
+    { "id": "maya-loved", "who": "Maya", "kind": "dialogue", "voice": "Microsoft Zira Desktop", "rate": "-16%", "pitch": "-2st", "text": "You would've loved this." },
+    { "id": "narr-little", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-10%", "pitch": "-1st", "text": "When you live far apart, it's the little things you miss." },
+    { "id": "narr-leave", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-10%", "pitch": "-1st", "text": "With SameSky, leave a little of your day for someone you love.", "say": "With Same Sky, leave a little of your day for someone you love." },
+    { "id": "maya-note", "who": "Maya", "kind": "recorded message", "voice": "Microsoft Zira Desktop", "rate": "-12%", "pitch": "-1st", "text": "I saw this and thought of you. Sit with me for a minute?" },
+    { "id": "narr-object", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-10%", "pitch": "-1st", "text": "A familiar object. A voice waiting just for you." },
+    { "id": "adam-wish", "who": "Adam", "kind": "dialogue", "voice": "Microsoft David Desktop", "rate": "-10%", "pitch": "+1st", "text": "I wish I'd been there. Tell me everything." },
+    { "id": "maya-made", "who": "Maya", "kind": "dialogue", "voice": "Microsoft Zira Desktop", "rate": "-10%", "pitch": "+0st", "text": "You made it." },
+    { "id": "adam-saved", "who": "Adam", "kind": "dialogue", "voice": "Microsoft David Desktop", "rate": "-12%", "pitch": "+1st", "text": "You saved me a seat." },
+    { "id": "narr-meet", "who": "Narrator", "kind": "narration", "voice": "Microsoft Mark", "fallback": "Microsoft David Desktop", "rate": "-10%", "pitch": "-1st", "text": "And when your days finally meet, share the same space." },
+    { "id": "maya-tomorrow", "who": "Maya", "kind": "dialogue", "voice": "Microsoft Zira Desktop", "rate": "-10%", "pitch": "+0st", "text": "Same time tomorrow?" },
+    { "id": "adam-seat", "who": "Adam", "kind": "dialogue", "voice": "Microsoft David Desktop", "rate": "-12%", "pitch": "+1st", "text": "Same seat." }
+  ]
+}

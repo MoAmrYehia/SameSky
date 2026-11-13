@@ -1,0 +1,2205 @@
+{
+    "schema":  "samesky-native-acceptance/1",
+    "run":  "acceptance-022557",
+    "evidenceKind":  "simulator-tested",
+    "startedAt":  "2026-11-13T02:25:57.9891205+04:00",
+    "finishedAt":  "2026-11-13T02:38:32.6511275+04:00",
+    "commit":  "6e510b8",
+    "workingTreeClean":  false,
+    "target":  "Unity Play mode (editor) in Meta XR Simulator",
+    "profile":  "acceptance",
+    "api":  "http://127.0.0.1:8000",
+    "options":  {
+                    "assist":  false,
+                    "nonInteractive":  true,
+                    "recording":  true,
+                    "firstMinuteSec":  60
+                },
+    "environment":  {
+                        "os":  "Microsoft Windows 11 Home 10.0.26300",
+                        "gpu":  "NVIDIA GeForce RTX 5060 Laptop GPU; Intel(R) Graphics",
+                        "unity":  "6000.3.28f1",
+                        "simulatorRuntime":  "%USERPROFILE%\\SameSkyTools\\MetaXRSimulator\\PFiles\\MetaXRSimulator\\v207.1\\meta_openxr_simulator.json",
+                        "metavr":  "metavr 1.10.0.30.10",
+                        "powershell":  "5.1.26100.9818"
+                    },
+    "simulatorKeys":  {
+                          "Forward":  "W",
+                          "Back":  "S",
+                          "Left":  "A",
+                          "Right":  "D",
+                          "Up":  "R",
+                          "Down":  "F",
+                          "YawLeft":  "Left",
+                          "YawRight":  "Right",
+                          "PitchUp":  "Up",
+                          "PitchDown":  "Down",
+                          "TiltLeft":  "Q",
+                          "TiltRight":  "E",
+                          "PoseDefault":  "D1",
+                          "PosePoke":  "D2",
+                          "PosePinch":  "D3",
+                          "PoseGrab":  "D4",
+                          "ResetPoses":  "Space"
+                      },
+    "setup":  [
+                  {
+                      "step":  "API and worker running (scripts/native/start.ps1)",
+                      "ok":  true,
+                      "at":  "2026-11-13T02:26:02.8737984+04:00",
+                      "detail":  {
+                                     "api":  "http://127.0.0.1:8000"
+                                 }
+                  },
+                  {
+                      "step":  "Development accounts and rooms, and a voice note from Sam to Nora (seed_dev.py --voice-note)",
+                      "ok":  true,
+                      "at":  "2026-11-13T02:26:04.3570904+04:00",
+                      "detail":  {
+                                     "command":  "python.exe \u003crepo\u003e\\scripts\\native\\seed_dev.py --api http://127.0.0.1:8000 --seed \u003crepo\u003e\\scripts\\native\\dev-seed.json --voice-note --json-out \u003crepo\u003e\\docs\\native\\evidence\\2026-11-13\\acceptance-022557\\seed.json",
+                                     "exit":  0,
+                                     "timedOut":  false,
+                                     "output":  "account nora: nora.native@example.com\r\naccount sam: sam.native@example.com\r\naccount outsider: outsider.native@example.com\r\naccount lina: lina.native@example.com\r\nroom pair: exists (2 members)\r\nroom circle: exists (3 members)\r\nvoice note: exists (be558801-0c90-48cd-82e7-2e3133b7416c)\r\n{\r\n  \"api\": \"http://127.0.0.1:8000\",\r\n  \"users\": {\r\n    \"nora\": \"31f0e0ec-aa02-4d55-b1ef-456f49636017\",\r\n    \"sam\": \"6b768d48-4232-4699-8dc3-fcbca88457e4\",\r\n    \"outsider\": \"ccbc0b01-0282-4aee-8660-44c0293d7dfc\",\r\n    \"lina\": \"46825995-8a43-4ff0-86fa-4e85416a4e2b\"\r\n  },\r\n  \"rooms\": {\r\n    \"pair\": \"037383ca-003b-48c9-9edd-a2550fa48540\",\r\n    \"circle\": \"82f161d9-9a40-4ecd-8630-a593d3effa56\"\r\n  },\r\n  \"voiceNote\": {\r\n    \"momentId\": \"be558801-0c90-48cd-82e7-2e3133b7416c\",\r\n    \"from\": \"sam\",\r\n    \"to\": \"nora\",\r\n    \"room\": \"pair\",\r\n    \"oggUrl\": true\r\n  }\r\n}"
+                                 }
+                  },
+                  {
+                      "step":  "Signed in as Nora (nora.native@example.com, development account) through POST /v1/auth/login; the token is never written to the evidence",
+                      "ok":  true,
+                      "at":  "2026-11-13T02:26:04.6123008+04:00",
+                      "detail":  null
+                  },
+                  {
+                      "step":  "Meta XR Simulator window found",
+                      "ok":  true,
+                      "at":  "2026-11-13T02:26:11.9455429+04:00",
+                      "detail":  {
+                                     "runtime":  "%USERPROFILE%\\SameSkyTools\\MetaXRSimulator\\PFiles\\MetaXRSimulator\\v207.1\\meta_openxr_simulator.json"
+                                 }
+                  },
+                  {
+                      "step":  "Simulator movement speed 0.3 (metavr xrsim input speed)",
+                      "ok":  true,
+                      "at":  "2026-11-13T02:27:29.1506617+04:00",
+                      "detail":  {
+                                     "command":  "metavr.cmd xrsim input speed --value 0.3",
+                                     "exit":  0,
+                                     "timedOut":  false,
+                                     "output":  "MOVEMENT SPEED\n--------------\n0.3"
+                                 }
+                  }
+              ],
+    "calibration":  {
+                        "ok":  true,
+                        "device":  "body",
+                        "speedsMetresPerSec":  {
+                                                   "Forward":  0.32,
+                                                   "Back":  0.307,
+                                                   "Right":  0.32,
+                                                   "Left":  0.294,
+                                                   "Up":  0.307,
+                                                   "Down":  0.32
+                                               },
+                        "resolution":  0.008,
+                        "fingertip":  [
+                                          -0.054,
+                                          0.008,
+                                          0.168
+                                      ],
+                        "fingertipSource":  "the app\u0027s right poke interactor (probe pokeAt), in the poke pose",
+                        "fingertipLog":  [
+
+                                         ],
+                        "headReset":  {
+                                          "yaw":  0,
+                                          "pitch":  0,
+                                          "seatError":  0.007
+                                      },
+                        "note":  ""
+                    },
+    "executionOrder":  [
+                           "Invoke-Check1",
+                           "Invoke-FirstMinute",
+                           "Invoke-Check2",
+                           "Invoke-RenderTour",
+                           "Invoke-Check5",
+                           "Invoke-Check9",
+                           "Invoke-Check6",
+                           "Invoke-Check7"
+                       ],
+    "checks":  [
+                   {
+                       "id":  1,
+                       "name":  "XR session active: simulated Meta Quest 3 with hand input",
+                       "status":  "pass",
+                       "driver":  "script (metavr)",
+                       "summary":  "XR active True, runtime \u0027Meta XR Simulator 207.1.0\u0027, hands L True R True, input hands; metavr device set exit 0, input sync exit 0/0",
+                       "startedAt":  "2026-11-13T02:26:11.9651446+04:00",
+                       "finishedAt":  "2026-11-13T02:28:23.8484285+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "command",
+                                            "label":  "simulated device",
+                                            "at":  "2026-11-13T02:27:24.5806744+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim device set --name \"Meta Quest 3\" --wait",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "DEVICE      \n------------\nMeta Quest 3"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "hand input",
+                                            "at":  "2026-11-13T02:27:26.0897257+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input sync --source hand",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HANDS        SOURCE\n-----------  ------\nleft, right  hand"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "MP4 recorder in this runtime",
+                                            "at":  "2026-11-13T02:27:27.5755721+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim record status",
+                                                         "exit":  1,
+                                                         "timedOut":  false,
+                                                         "output":  "Error: this XR Simulator runtime does not support native MP4 recording: its build doesn\u0027t include the recording service, so `record start`, `record stop` and `record status` keep failing against it; record the simulator window with your OS screen recorder instead"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "hand input after the restart",
+                                            "at":  "2026-11-13T02:28:22.8964494+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input sync --source hand",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HANDS        SOURCE\n-----------  ------\nleft, right  hand"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check1-xr",
+                                            "at":  "2026-11-13T02:28:22.9488544+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "xrDevice":  "OpenXR Display",
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "activeInput":  "hands",
+                                                                        "fps":  58.5,
+                                                                        "screen":  "launch",
+                                                                        "head":  [
+                                                                                     0.0,
+                                                                                     1.18,
+                                                                                     0.0
+                                                                                 ],
+                                                                        "handsAt":  {
+                                                                                        "left":  [
+                                                                                                     -0.295,
+                                                                                                     0.88,
+                                                                                                     0.503
+                                                                                                 ],
+                                                                                        "right":  [
+                                                                                                      0.305,
+                                                                                                      0.88,
+                                                                                                      0.497
+                                                                                                  ]
+                                                                                    }
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check1-xr.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "log",
+                                            "label":  "Unity log: OpenXR runtime used by Play mode",
+                                            "at":  "2026-11-13T02:28:22.9680815+04:00",
+                                            "data":  "[SameSky:sim] play mode; XR_RUNTIME_JSON=%USERPROFILE%\\SameSkyTools\\MetaXRSimulator\\PFiles\\MetaXRSimulator\\v207.1\\meta_openxr_simulator.json"
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+                                      {
+                                          "check":  1,
+                                          "step":  "Confirm the simulated headset is Meta Quest 3",
+                                          "how":  "The probe cannot see the headset model: check Device in the simulator Inputs panel (screenshot sim-check1-session.png).",
+                                          "status":  "to do"
+                                      }
+                                  ]
+                   },
+                   {
+                       "id":  2,
+                       "name":  "Dock button pressed by a simulated hand",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "pressed dock:day with input \u0027hands\u0027 (script); then screen day",
+                       "startedAt":  "2026-11-13T02:28:57.2647236+04:00",
+                       "finishedAt":  "2026-11-13T02:29:09.2667244+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "dock press",
+                                            "at":  "2026-11-13T02:29:09.1003471+04:00",
+                                            "data":  {
+                                                         "t":  65.923,
+                                                         "kind":  "press",
+                                                         "detail":  "dock:day",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:29:06.9076526+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "what the press did",
+                                            "at":  "2026-11-13T02:29:09.1028580+04:00",
+                                            "data":  {
+                                                         "t":  65.925,
+                                                         "kind":  "screen",
+                                                         "detail":  "day",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:29:06.9091709+04:00"
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  3,
+                       "name":  "Cup grabbed by a simulated hand",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "grab of object:cup with input \u0027hands\u0027 (script); picked-up True; released True; the cup moved 0.074 m with the hand",
+                       "startedAt":  "2026-11-13T02:28:23.8728875+04:00",
+                       "finishedAt":  "2026-11-13T02:28:57.2558542+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "grab",
+                                            "at":  "2026-11-13T02:28:42.8969550+04:00",
+                                            "data":  {
+                                                         "t":  42.619,
+                                                         "kind":  "grab",
+                                                         "detail":  "object:cup",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:42.8903986+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "cup picked up",
+                                            "at":  "2026-11-13T02:28:42.9075327+04:00",
+                                            "data":  {
+                                                         "t":  42.62,
+                                                         "kind":  "cup",
+                                                         "detail":  "picked-up",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:42.8913989+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check3-held",
+                                            "at":  "2026-11-13T02:28:42.9383289+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "cupHeld":  true,
+                                                                        "grabs":  1,
+                                                                        "lastGrab":  "object:cup",
+                                                                        "activeInput":  "hands",
+                                                                        "handsAt":  {
+                                                                                        "left":  [
+                                                                                                     -0.421,
+                                                                                                     0.83,
+                                                                                                     0.374
+                                                                                                 ],
+                                                                                        "right":  [
+                                                                                                      0.179,
+                                                                                                      0.83,
+                                                                                                      0.368
+                                                                                                  ]
+                                                                                    }
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check3-held.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "released",
+                                            "at":  "2026-11-13T02:28:54.8147177+04:00",
+                                            "data":  {
+                                                         "t":  54.532,
+                                                         "kind":  "release",
+                                                         "detail":  "object:cup",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:54.8127122+04:00"
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+                                     "Taken with a palm grab."
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  4,
+                       "name":  "Voice note heard within the first minute of a fresh start (sample day)",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "voice note playing 33.1 s after a fresh start (limit 60 s); captions shown True; finished True",
+                       "startedAt":  "2026-11-13T02:28:23.8713812+04:00",
+                       "finishedAt":  "2026-11-13T02:28:57.2627265+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "app start (fresh profile)",
+                                            "at":  "2026-11-13T02:28:23.8863842+04:00",
+                                            "data":  {
+                                                         "t":  9.519,
+                                                         "kind":  "start",
+                                                         "detail":  "0.9.0",
+                                                         "input":  "None",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:09.5152520+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "launch:sample pressed",
+                                            "at":  "2026-11-13T02:28:35.7347245+04:00",
+                                            "data":  {
+                                                         "t":  32.004,
+                                                         "kind":  "press",
+                                                         "detail":  "launch:sample",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:33.3425769+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "sample room open",
+                                            "at":  "2026-11-13T02:28:35.7382995+04:00",
+                                            "data":  {
+                                                         "t":  32.138,
+                                                         "kind":  "screen",
+                                                         "detail":  "room",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:33.3435774+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "voice note playing",
+                                            "at":  "2026-11-13T02:28:44.6108651+04:00",
+                                            "data":  {
+                                                         "t":  42.627,
+                                                         "kind":  "voice",
+                                                         "detail":  "play",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:42.8939333+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "what started the voice note",
+                                            "at":  "2026-11-13T02:28:44.6153757+04:00",
+                                            "data":  {
+                                                         "t":  42.619,
+                                                         "kind":  "grab",
+                                                         "detail":  "object:cup",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:42.8903986+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check4-captions",
+                                            "at":  "2026-11-13T02:28:44.6563564+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "voicePlaying":  true,
+                                                                        "audio":  "cup:m-maya-voice",
+                                                                        "captionsOn":  true,
+                                                                        "captions":  "The bench by the big oak, same as always.",
+                                                                        "presence":  "recorded",
+                                                                        "paused":  false
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check4-captions.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "voice note finished",
+                                            "at":  "2026-11-13T02:28:52.1383323+04:00",
+                                            "data":  {
+                                                         "t":  52.059,
+                                                         "kind":  "voice",
+                                                         "detail":  "finished",
+                                                         "input":  "hands",
+                                                         "session":  2,
+                                                         "seen":  "2026-11-13T02:28:52.1367466+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-timing",
+                                            "label":  "start -\u003e voice play (probe clock)",
+                                            "at":  "2026-11-13T02:28:57.2617253+04:00",
+                                            "data":  {
+                                                         "secondsFromStartToVoice":  33.1,
+                                                         "limit":  60
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+                                      {
+                                          "check":  4,
+                                          "step":  "Hear it",
+                                          "how":  "The probe shows playback state and caption text, not sound: listen in the simulator (or the MP4) for the voice note coming from the cup.",
+                                          "status":  "to do"
+                                      }
+                                  ]
+                   },
+                   {
+                       "id":  5,
+                       "name":  "Reply on the table survives an app restart and an API restart",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "reply 3cf37832-0491-4af0-abd4-d6af79952544 placed (new, typed \u0027r\u0027); server has it True (placed True); back on the table after app restart True; API went down True and up True; server still has it True; back after API restart True",
+                       "startedAt":  "2026-11-13T02:30:30.6976165+04:00",
+                       "finishedAt":  "2026-11-13T02:33:32.2029950+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "launch:continue (first visit)",
+                                            "at":  "2026-11-13T02:31:04.9004298+04:00",
+                                            "data":  {
+                                                         "t":  24.413,
+                                                         "kind":  "press",
+                                                         "detail":  "launch:continue",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:02.4611567+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "live mode (first visit)",
+                                            "at":  "2026-11-13T02:31:04.9020052+04:00",
+                                            "data":  {
+                                                         "t":  24.557,
+                                                         "kind":  "mode",
+                                                         "detail":  "live",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:02.4621592+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "room open (first visit)",
+                                            "at":  "2026-11-13T02:31:04.9030081+04:00",
+                                            "data":  {
+                                                         "t":  24.56,
+                                                         "kind":  "screen",
+                                                         "detail":  "room",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:02.4637131+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "notes on the table before replying",
+                                            "at":  "2026-11-13T02:31:04.9035107+04:00",
+                                            "data":  {
+                                                         "t":  24.819,
+                                                         "kind":  "reply",
+                                                         "detail":  "restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:02.4657568+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "cup:reply pressed",
+                                            "at":  "2026-11-13T02:31:16.2769072+04:00",
+                                            "data":  {
+                                                         "t":  34.912,
+                                                         "kind":  "press",
+                                                         "detail":  "cup:reply",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:13.8613391+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "a character typed",
+                                            "at":  "2026-11-13T02:31:30.3599556+04:00",
+                                            "data":  {
+                                                         "t":  49.234,
+                                                         "kind":  "press",
+                                                         "detail":  "key:r",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:26.9649189+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "Done pressed",
+                                            "at":  "2026-11-13T02:32:04.0142277+04:00",
+                                            "data":  {
+                                                         "t":  72.345,
+                                                         "kind":  "press",
+                                                         "detail":  "key:done",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:51.3477249+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "reply placed on the table",
+                                            "at":  "2026-11-13T02:32:04.0152286+04:00",
+                                            "data":  {
+                                                         "t":  72.526,
+                                                         "kind":  "reply",
+                                                         "detail":  "placed:3cf37832-0491-4af0-abd4-d6af79952544",
+                                                         "input":  "hands",
+                                                         "session":  3,
+                                                         "seen":  "2026-11-13T02:31:51.3487243+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "reply",
+                                            "label":  "the reply placed in this run",
+                                            "at":  "2026-11-13T02:32:04.0310123+04:00",
+                                            "data":  {
+                                                         "replyId":  "3cf37832-0491-4af0-abd4-d6af79952544",
+                                                         "typed":  "r",
+                                                         "newThisRun":  true,
+                                                         "noraRepliesBefore":  10
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "api",
+                                            "label":  "server after placing",
+                                            "at":  "2026-11-13T02:32:04.1309347+04:00",
+                                            "data":  {
+                                                         "replyId":  "3cf37832-0491-4af0-abd4-d6af79952544",
+                                                         "replyStored":  true,
+                                                         "byNora":  true,
+                                                         "placementStored":  true,
+                                                         "placement":  {
+                                                                           "x":  -0.297,
+                                                                           "y":  0.25,
+                                                                           "z":  0.35,
+                                                                           "yaw":  0.0
+                                                                       }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "launch:continue (after an app restart)",
+                                            "at":  "2026-11-13T02:32:39.9222484+04:00",
+                                            "data":  {
+                                                         "t":  24.772,
+                                                         "kind":  "press",
+                                                         "detail":  "launch:continue",
+                                                         "input":  "hands",
+                                                         "session":  4,
+                                                         "seen":  "2026-11-13T02:32:37.9932231+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "live mode (after an app restart)",
+                                            "at":  "2026-11-13T02:32:39.9227677+04:00",
+                                            "data":  {
+                                                         "t":  24.856,
+                                                         "kind":  "mode",
+                                                         "detail":  "live",
+                                                         "input":  "hands",
+                                                         "session":  4,
+                                                         "seen":  "2026-11-13T02:32:37.9947291+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "room open (after an app restart)",
+                                            "at":  "2026-11-13T02:32:39.9257959+04:00",
+                                            "data":  {
+                                                         "t":  24.858,
+                                                         "kind":  "screen",
+                                                         "detail":  "room",
+                                                         "input":  "hands",
+                                                         "session":  4,
+                                                         "seen":  "2026-11-13T02:32:37.9947291+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "notes restored after an app restart",
+                                            "at":  "2026-11-13T02:32:39.9273054+04:00",
+                                            "data":  {
+                                                         "t":  25.067,
+                                                         "kind":  "reply",
+                                                         "detail":  "restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8,3cf37832-0491-4af0-abd4-d6af79952544",
+                                                         "input":  "hands",
+                                                         "session":  4,
+                                                         "seen":  "2026-11-13T02:32:37.9962592+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "service",
+                                            "label":  "API and worker restarted (stop.ps1, start.ps1)",
+                                            "at":  "2026-11-13T02:33:03.7635695+04:00",
+                                            "data":  {
+                                                         "apiDownAfterStop":  true,
+                                                         "apiUpAfterStart":  true,
+                                                         "apiPidBefore":  62368,
+                                                         "apiPidAfter":  52692,
+                                                         "workerPidBefore":  52164,
+                                                         "workerPidAfter":  83404
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "api",
+                                            "label":  "server after its restart",
+                                            "at":  "2026-11-13T02:33:03.9494486+04:00",
+                                            "data":  {
+                                                         "replyId":  "3cf37832-0491-4af0-abd4-d6af79952544",
+                                                         "replyStored":  true,
+                                                         "byNora":  true,
+                                                         "placementStored":  true,
+                                                         "placement":  {
+                                                                           "x":  -0.297,
+                                                                           "y":  0.25,
+                                                                           "z":  0.35,
+                                                                           "yaw":  0.0
+                                                                       }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "launch:continue (after an API restart)",
+                                            "at":  "2026-11-13T02:33:32.0286349+04:00",
+                                            "data":  {
+                                                         "t":  23.853,
+                                                         "kind":  "press",
+                                                         "detail":  "launch:continue",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:33:29.9019608+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "live mode (after an API restart)",
+                                            "at":  "2026-11-13T02:33:32.0327591+04:00",
+                                            "data":  {
+                                                         "t":  23.941,
+                                                         "kind":  "mode",
+                                                         "detail":  "live",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:33:29.9036160+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "room open (after an API restart)",
+                                            "at":  "2026-11-13T02:33:32.0357300+04:00",
+                                            "data":  {
+                                                         "t":  23.944,
+                                                         "kind":  "screen",
+                                                         "detail":  "room",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:33:29.9036160+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "notes restored after an API restart",
+                                            "at":  "2026-11-13T02:33:32.0392422+04:00",
+                                            "data":  {
+                                                         "t":  24.153,
+                                                         "kind":  "reply",
+                                                         "detail":  "restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8,3cf37832-0491-4af0-abd4-d6af79952544",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:33:29.9046204+04:00"
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+                                     "Nora is signed in by the session file the script wrote (typing the email and password on the spatial keyboard is not automated)."
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  6,
+                       "name":  "Recenter, pause and exit",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "recenter: pressed True, event True, yaw -35.5 -\u003e 0 deg; pause and resume True; exit: event True, app ended True",
+                       "startedAt":  "2026-11-13T02:35:11.0983403+04:00",
+                       "finishedAt":  "2026-11-13T02:37:49.4506111+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check6-turned",
+                                            "at":  "2026-11-13T02:35:12.4743086+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "head":  [
+                                                                                     -0.158,
+                                                                                     1.247,
+                                                                                     -0.317
+                                                                                 ],
+                                                                        "headForward":  [
+                                                                                            -0.581,
+                                                                                            0.0,
+                                                                                            0.814
+                                                                                        ]
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-turned.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "dock:recenter pressed",
+                                            "at":  "2026-11-13T02:35:37.3234499+04:00",
+                                            "data":  {
+                                                         "t":  44.921,
+                                                         "kind":  "press",
+                                                         "detail":  "dock:recenter",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:35:29.4375051+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "recenter",
+                                            "at":  "2026-11-13T02:35:37.3244528+04:00",
+                                            "data":  {
+                                                         "t":  44.922,
+                                                         "kind":  "recenter",
+                                                         "detail":  "1.18",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:35:29.4385488+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check6-recentered",
+                                            "at":  "2026-11-13T02:35:38.2014343+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "head":  [
+                                                                                     -0.467,
+                                                                                     1.293,
+                                                                                     -0.629
+                                                                                 ],
+                                                                        "headForward":  [
+                                                                                            0.0,
+                                                                                            0.0,
+                                                                                            1.0
+                                                                                        ]
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-recentered.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "dock:pause pressed",
+                                            "at":  "2026-11-13T02:36:13.2297304+04:00",
+                                            "data":  {
+                                                         "t":  76.24,
+                                                         "kind":  "press",
+                                                         "detail":  "dock:pause",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:36:00.7730924+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "pause screen",
+                                            "at":  "2026-11-13T02:36:13.2322419+04:00",
+                                            "data":  {
+                                                         "t":  76.242,
+                                                         "kind":  "screen",
+                                                         "detail":  "pause",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:36:00.7746060+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check6-paused",
+                                            "at":  "2026-11-13T02:36:13.2859999+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "paused":  true,
+                                                                        "screen":  "pause",
+                                                                        "audio":  "",
+                                                                        "voicePlaying":  false
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-paused.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "pause:resume pressed",
+                                            "at":  "2026-11-13T02:36:30.5144919+04:00",
+                                            "data":  {
+                                                         "t":  101.211,
+                                                         "kind":  "press",
+                                                         "detail":  "pause:resume",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:36:25.5548154+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "resumed",
+                                            "at":  "2026-11-13T02:36:30.5144919+04:00",
+                                            "data":  {
+                                                         "t":  101.212,
+                                                         "kind":  "pause",
+                                                         "detail":  "resume",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:36:25.5563173+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "back in the room",
+                                            "at":  "2026-11-13T02:36:30.5171033+04:00",
+                                            "data":  {
+                                                         "t":  101.213,
+                                                         "kind":  "screen",
+                                                         "detail":  "room",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:36:25.5563173+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check6-resumed",
+                                            "at":  "2026-11-13T02:36:30.5422232+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "paused":  false,
+                                                                        "screen":  "room"
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-resumed.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "leave confirmation",
+                                            "at":  "2026-11-13T02:37:28.4617980+04:00",
+                                            "data":  {
+                                                         "t":  156.646,
+                                                         "kind":  "screen",
+                                                         "detail":  "exit",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:37:21.2614238+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "exit",
+                                            "at":  "2026-11-13T02:37:48.3875369+04:00",
+                                            "data":  {
+                                                         "t":  180.062,
+                                                         "kind":  "exit",
+                                                         "detail":  "quit",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:37:44.3262305+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-stopped",
+                                            "label":  "the app ended (its probe stopped updating)",
+                                            "at":  "2026-11-13T02:37:49.4496046+04:00",
+                                            "data":  {
+                                                         "probeStoppedUpdating":  true
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+                                      {
+                                          "check":  6,
+                                          "step":  "System pause",
+                                          "how":  "Headset removed or the Meta button: the probe should log \u0027pause system\u0027 or \u0027pause focus\u0027 and sound should stop. Needs a headset, or the simulator\u0027s own control for it.",
+                                          "status":  "to do"
+                                      }
+                                  ]
+                   },
+                   {
+                       "id":  7,
+                       "name":  "Hand tracking lost mid-press and found again: no ghost press",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "right hand lost True and back True; presses during and after: 0 (count 0 -\u003e 0); cancels: 1",
+                       "startedAt":  "2026-11-13T02:37:49.4566951+04:00",
+                       "finishedAt":  "2026-11-13T02:38:26.3732152+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check7-before",
+                                            "at":  "2026-11-13T02:38:13.5128257+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "activeInput":  "hands",
+                                                                        "presses":  0,
+                                                                        "lastPress":  "",
+                                                                        "handsAt":  {
+                                                                                        "left":  [
+                                                                                                     -0.629,
+                                                                                                     0.888,
+                                                                                                     0.258
+                                                                                                 ],
+                                                                                        "right":  [
+                                                                                                      -0.029,
+                                                                                                      0.888,
+                                                                                                      0.258
+                                                                                                  ]
+                                                                                    }
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check7-before.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-target",
+                                            "label":  "was the button held down when tracking was dropped",
+                                            "at":  "2026-11-13T02:38:13.5148682+04:00",
+                                            "data":  {
+                                                         "target":  "launch:recenter",
+                                                         "downBeforeTrackingLoss":  true
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "right-hand tracking off",
+                                            "at":  "2026-11-13T02:38:16.3447356+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input source --hand right --source none",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HAND   SOURCE\n-----  ------\nright  none"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check7-lost",
+                                            "at":  "2026-11-13T02:38:16.3819589+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "hands":  {
+                                                                                      "left":  false,
+                                                                                      "right":  false
+                                                                                  },
+                                                                        "activeInput":  "None",
+                                                                        "presses":  0,
+                                                                        "lastPress":  ""
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check7-lost.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "command",
+                                            "label":  "hand tracking back",
+                                            "at":  "2026-11-13T02:38:22.4956035+04:00",
+                                            "data":  {
+                                                         "command":  "metavr.cmd xrsim input sync --source hand",
+                                                         "exit":  0,
+                                                         "timedOut":  false,
+                                                         "output":  "HANDS        SOURCE\n-----------  ------\nleft, right  hand"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check7-after",
+                                            "at":  "2026-11-13T02:38:25.6630829+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "activeInput":  "hands",
+                                                                        "presses":  0,
+                                                                        "lastPress":  ""
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check7-after.json"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "press cancelled by the tracking loss",
+                                            "at":  "2026-11-13T02:38:25.7025026+04:00",
+                                            "data":  {
+                                                         "t":  25.056,
+                                                         "kind":  "cancel",
+                                                         "detail":  "launch:recenter",
+                                                         "input":  "None",
+                                                         "session":  7,
+                                                         "seen":  "2026-11-13T02:38:25.5314830+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-count",
+                                            "label":  "presses counted by the probe",
+                                            "at":  "2026-11-13T02:38:25.7025026+04:00",
+                                            "data":  {
+                                                         "pressesBefore":  0,
+                                                         "pressesAfter":  0,
+                                                         "pressEvents":  0,
+                                                         "cancelEvents":  1
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   },
+                   {
+                       "id":  8,
+                       "name":  "MP4 of the simulator for every app session",
+                       "status":  "pass",
+                       "driver":  "script (FFmpeg window capture)",
+                       "summary":  "6 of 6 recordings saved",
+                       "startedAt":  "2026-11-13T02:38:32.4328340+04:00",
+                       "finishedAt":  "2026-11-13T02:38:32.6331381+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session2-sample",
+                                            "at":  "2026-11-13T02:38:32.6070542+04:00",
+                                            "data":  {
+                                                         "label":  "session2-sample",
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session2-sample.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  2724170,
+                                                         "durationSec":  129.5,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session2-sample.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session2-sample.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-13T02:28:20.7366237+04:00",
+                                                         "stoppedAt":  "2026-11-13T02:30:31.6853219+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  20.74
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "room",
+                                                                             "mode":  "sample",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  150.68
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session2-sample started",
+                                            "at":  "2026-11-13T02:38:32.6090605+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  20.74
+                                                                    }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session3-live",
+                                            "at":  "2026-11-13T02:38:32.6090605+04:00",
+                                            "data":  {
+                                                         "label":  "session3-live",
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session3-live.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  3289251,
+                                                         "durationSec":  72.3,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session3-live.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session3-live.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-13T02:30:53.1637302+04:00",
+                                                         "stoppedAt":  "2026-11-13T02:32:06.3960756+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  15.77
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "room",
+                                                                             "mode":  "live",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  87.73
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session3-live started",
+                                            "at":  "2026-11-13T02:38:32.6114832+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  15.77
+                                                                    }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session4-live-restarted",
+                                            "at":  "2026-11-13T02:38:32.6114832+04:00",
+                                            "data":  {
+                                                         "label":  "session4-live-restarted",
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session4-live-restarted.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  587527,
+                                                         "durationSec":  11.9,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session4-live-restarted.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session4-live-restarted.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-13T02:32:28.3680007+04:00",
+                                                         "stoppedAt":  "2026-11-13T02:32:41.3174920+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  16.14
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "room",
+                                                                             "mode":  "live",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  27.73
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session4-live-restarted started",
+                                            "at":  "2026-11-13T02:38:32.6124839+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  16.14
+                                                                    }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session5-live-api-restarted",
+                                            "at":  "2026-11-13T02:38:32.6124839+04:00",
+                                            "data":  {
+                                                         "label":  "session5-live-api-restarted",
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session5-live-api-restarted.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  4079931,
+                                                         "durationSec":  76.4,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session5-live-api-restarted.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session5-live-api-restarted.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-13T02:33:20.3736360+04:00",
+                                                         "stoppedAt":  "2026-11-13T02:34:37.8243518+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  15.39
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "room",
+                                                                             "mode":  "live",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  91.67
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session5-live-api-restarted started",
+                                            "at":  "2026-11-13T02:38:32.6124839+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  15.39
+                                                                    }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session6-live-market-restarted",
+                                            "at":  "2026-11-13T02:38:32.6124839+04:00",
+                                            "data":  {
+                                                         "label":  "session6-live-market-restarted",
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session6-live-market-restarted.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  7476693,
+                                                         "durationSec":  168.7,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session6-live-market-restarted.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session6-live-market-restarted.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-13T02:34:59.7141278+04:00",
+                                                         "stoppedAt":  "2026-11-13T02:37:49.4242864+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  16.38
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "exit",
+                                                                             "mode":  "live",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  179.86
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session6-live-market-restarted started",
+                                            "at":  "2026-11-13T02:38:32.6124839+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  16.38
+                                                                    }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "recording",
+                                            "label":  "session7-tracking",
+                                            "at":  "2026-11-13T02:38:32.6124839+04:00",
+                                            "data":  {
+                                                         "label":  "session7-tracking",
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session7-tracking.mp4",
+                                                         "method":  "window",
+                                                         "bytes":  569692,
+                                                         "durationSec":  20.1,
+                                                         "ok":  true,
+                                                         "startCommand":  {
+                                                                              "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session7-tracking.mp4",
+                                                                              "exit":  0,
+                                                                              "timedOut":  false,
+                                                                              "output":  ""
+                                                                          },
+                                                         "stopCommand":  {
+                                                                             "command":  "ffmpeg -f gdigrab (simulator window, 1582x1190 at 15 fps) -c:v libx264 session7-tracking.mp4",
+                                                                             "exit":  0,
+                                                                             "timedOut":  false,
+                                                                             "output":  ""
+                                                                         },
+                                                         "metavrRefused":  null,
+                                                         "startedAt":  "2026-11-13T02:38:06.3144422+04:00",
+                                                         "stoppedAt":  "2026-11-13T02:38:27.5564799+04:00",
+                                                         "probeAtStart":  {
+                                                                              "xrDeviceActive":  true,
+                                                                              "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                              "screen":  "launch",
+                                                                              "mode":  "none",
+                                                                              "activeInput":  "hands",
+                                                                              "hands":  {
+                                                                                            "left":  true,
+                                                                                            "right":  true
+                                                                                        },
+                                                                              "time":  16.11
+                                                                          },
+                                                         "probeAtStop":  {
+                                                                             "xrDeviceActive":  true,
+                                                                             "screen":  "launch",
+                                                                             "mode":  "none",
+                                                                             "activeInput":  "hands",
+                                                                             "time":  36.09
+                                                                         }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "app state when session7-tracking started",
+                                            "at":  "2026-11-13T02:38:32.6139892+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "xrDeviceActive":  true,
+                                                                        "openxrRuntime":  "Meta XR Simulator 207.1.0",
+                                                                        "screen":  "launch",
+                                                                        "mode":  "none",
+                                                                        "activeInput":  "hands",
+                                                                        "hands":  {
+                                                                                      "left":  true,
+                                                                                      "right":  true
+                                                                                  },
+                                                                        "time":  16.11
+                                                                    }
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+                                     "The simulator runtime has no MP4 recorder (metavr xrsim record says its build doesn\u0027t include the recording service), so FFmpeg recorded the simulator window: the 3D view as the simulator showed it, plus its side panel."
+                                 ],
+                       "manual":  [
+                                      {
+                                          "check":  8,
+                                          "step":  "Watch the recordings",
+                                          "how":  "Check each MP4 shows the steps above (the script only checks the files exist and have a length).",
+                                          "status":  "to do"
+                                      }
+                                  ]
+                   },
+                   {
+                       "id":  9,
+                       "name":  "Furniture chosen in the marketplace by a simulated hand is kept across an app restart",
+                       "status":  "pass",
+                       "driver":  "script",
+                       "summary":  "chairs changed from \u0027sage\u0027 to \u0027charcoal\u0027 by hand in the marketplace and kept; server version 5 -\u003e 6; after an app restart the room shows: chairs=tub/charcoal floor=parquet/natural lamp=drum/brass plant=leafy rug=round/oatmeal table=pedestal/walnut walls=plaster/ivory",
+                       "startedAt":  "2026-11-13T02:33:32.2117135+04:00",
+                       "finishedAt":  "2026-11-13T02:35:11.0872899+04:00",
+                       "evidence":  [
+                                        {
+                                            "kind":  "api",
+                                            "label":  "the room on the server before",
+                                            "at":  "2026-11-13T02:33:32.2478494+04:00",
+                                            "data":  {
+                                                         "version":  5,
+                                                         "chairs":  {
+                                                                        "item":  "tub",
+                                                                        "finish":  "sage"
+                                                                    }
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "dock:market pressed",
+                                            "at":  "2026-11-13T02:33:43.3699231+04:00",
+                                            "data":  {
+                                                         "t":  35.484,
+                                                         "kind":  "press",
+                                                         "detail":  "dock:market",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:33:41.8022342+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "market:tab-chairs pressed",
+                                            "at":  "2026-11-13T02:33:58.4993266+04:00",
+                                            "data":  {
+                                                         "t":  48.173,
+                                                         "kind":  "press",
+                                                         "detail":  "market:tab-chairs",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:33:54.4539323+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "market:finish-chairs-charcoal pressed",
+                                            "at":  "2026-11-13T02:34:16.7690416+04:00",
+                                            "data":  {
+                                                         "t":  65.062,
+                                                         "kind":  "press",
+                                                         "detail":  "market:finish-chairs-charcoal",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:34:11.3225531+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "market:keep pressed",
+                                            "at":  "2026-11-13T02:34:36.0384670+04:00",
+                                            "data":  {
+                                                         "t":  84.471,
+                                                         "kind":  "press",
+                                                         "detail":  "market:keep",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:34:30.8389084+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "the fabric tried in the room (not kept yet)",
+                                            "at":  "2026-11-13T02:34:36.0389788+04:00",
+                                            "data":  {
+                                                         "t":  65.064,
+                                                         "kind":  "decor",
+                                                         "detail":  "try chairs=tub/charcoal",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:34:11.3235593+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "kept",
+                                            "at":  "2026-11-13T02:34:36.0528844+04:00",
+                                            "data":  {
+                                                         "t":  84.502,
+                                                         "kind":  "decor",
+                                                         "detail":  "kept v6 chairs=tub/charcoal floor=parquet/natural lamp=drum/brass plant=leafy rug=round/oatmeal table=pedestal/walnut walls=plaster/ivory",
+                                                         "input":  "hands",
+                                                         "session":  5,
+                                                         "seen":  "2026-11-13T02:34:30.8404152+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "api",
+                                            "label":  "the room on the server after Keep",
+                                            "at":  "2026-11-13T02:34:36.0594141+04:00",
+                                            "data":  {
+                                                         "version":  6,
+                                                         "chairs":  {
+                                                                        "item":  "tub",
+                                                                        "finish":  "charcoal"
+                                                                    },
+                                                         "updatedByNora":  true
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "launch:continue (after an app restart)",
+                                            "at":  "2026-11-13T02:35:10.8240528+04:00",
+                                            "data":  {
+                                                         "t":  24.35,
+                                                         "kind":  "press",
+                                                         "detail":  "launch:continue",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:35:08.9672034+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "live mode (after an app restart)",
+                                            "at":  "2026-11-13T02:35:10.8279339+04:00",
+                                            "data":  {
+                                                         "t":  24.421,
+                                                         "kind":  "mode",
+                                                         "detail":  "live",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:35:08.9698399+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "room open (after an app restart)",
+                                            "at":  "2026-11-13T02:35:10.8304566+04:00",
+                                            "data":  {
+                                                         "t":  24.423,
+                                                         "kind":  "screen",
+                                                         "detail":  "room",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:35:08.9714682+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-event",
+                                            "label":  "furniture shown after the restart",
+                                            "at":  "2026-11-13T02:35:10.8717480+04:00",
+                                            "data":  {
+                                                         "t":  24.459,
+                                                         "kind":  "decor",
+                                                         "detail":  "shown v6",
+                                                         "input":  "hands",
+                                                         "session":  6,
+                                                         "seen":  "2026-11-13T02:35:08.9724999+04:00"
+                                                     }
+                                        },
+                                        {
+                                            "kind":  "probe-state",
+                                            "label":  "check9-restarted",
+                                            "at":  "2026-11-13T02:35:10.8897802+04:00",
+                                            "data":  {
+                                                         "fields":  {
+                                                                        "screen":  "room",
+                                                                        "mode":  "live",
+                                                                        "room":  "Nora + Sam",
+                                                                        "decor":  "chairs=tub/charcoal floor=parquet/natural lamp=drum/brass plant=leafy rug=round/oatmeal table=pedestal/walnut walls=plaster/ivory",
+                                                                        "decorVersion":  6,
+                                                                        "decorUnsaved":  false
+                                                                    },
+                                                         "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check9-restarted.json"
+                                                     }
+                                        }
+                                    ],
+                       "notes":  [
+
+                                 ],
+                       "manual":  [
+
+                                  ]
+                   }
+               ],
+    "manual":  [
+                   {
+                       "check":  1,
+                       "step":  "Confirm the simulated headset is Meta Quest 3",
+                       "how":  "The probe cannot see the headset model: check Device in the simulator Inputs panel (screenshot sim-check1-session.png).",
+                       "status":  "to do"
+                   },
+                   {
+                       "check":  4,
+                       "step":  "Hear it",
+                       "how":  "The probe shows playback state and caption text, not sound: listen in the simulator (or the MP4) for the voice note coming from the cup.",
+                       "status":  "to do"
+                   },
+                   {
+                       "check":  6,
+                       "step":  "System pause",
+                       "how":  "Headset removed or the Meta button: the probe should log \u0027pause system\u0027 or \u0027pause focus\u0027 and sound should stop. Needs a headset, or the simulator\u0027s own control for it.",
+                       "status":  "to do"
+                   },
+                   {
+                       "check":  8,
+                       "step":  "Watch the recordings",
+                       "how":  "Check each MP4 shows the steps above (the script only checks the files exist and have a length).",
+                       "status":  "to do"
+                   }
+               ],
+    "artifacts":  [
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seed.json",
+                          "what":  "seeded ids (development data)",
+                          "bytes":  560,
+                          "sha256":  "0efe88d686dd008da6169f3a7a93b718d29c42891d382e38cb8d82c20d5720d3"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-hands.png",
+                          "what":  "seated view (fixed camera): the tracked hands from where the head is: skin tone, nails, knuckles, their shadow",
+                          "bytes":  1460114,
+                          "sha256":  "37f6f1c67ab79e77936796bbc56813b792a2e8a89a4393023336c5c56b7dadd1"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-palms.png",
+                          "what":  "seated view (fixed camera): the tracked hands from the other side: palms, creases, finger pads",
+                          "bytes":  382495,
+                          "sha256":  "a9c9a2c8176eeb6e54d96643bd8f62f15c3f790cfb795572e3d40c4d2775fb99"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-hands-pinch.png",
+                          "what":  "seated view (fixed camera): the tracked hands pinching",
+                          "bytes":  1470366,
+                          "sha256":  "70e8e7ff7a754e0792677cbc2b95a7a0ffeb184e131f6b1cb1b092272f5c2a0d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/events-session1.jsonl",
+                          "what":  "probe events, app session 1",
+                          "bytes":  492,
+                          "sha256":  "b36fa7405253760de55a333cf966b2159564d71b7db1f447e2333864a335a23b"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check1-xr.json",
+                          "what":  "probe state: check1-xr",
+                          "bytes":  3314,
+                          "sha256":  "401bcf46b0ee55ab7aa7941042eb10597ce918ee41a711605dbfb86c011b631f"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check1-session.png",
+                          "what":  "simulator view: check1-session",
+                          "bytes":  978027,
+                          "sha256":  "c32059cc5d63f2074afb28ab022610a087cfee7baf856c4b5c24f89faf582cfc"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-launch.png",
+                          "what":  "seated view (fixed camera): the launch screen in the room (reference 10)",
+                          "bytes":  1108442,
+                          "sha256":  "f8de1c64fe89cde8bb12453b5f88c889a32825dc4b16a388b83f5cb990145c7c"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-room-cue.png",
+                          "what":  "seated view (fixed camera): the sample room with the pick-up cue (references 02 and 10)",
+                          "bytes":  1344075,
+                          "sha256":  "5715cdf7e8d988785ad52b5e210902539a649fbd8b22d1b1f5cea97ed7020d27"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check3-held.json",
+                          "what":  "probe state: check3-held",
+                          "bytes":  5911,
+                          "sha256":  "fa9bd8728cebaf2afef103c9d471917e0ad10922932437f130b0b4c0f75a6eca"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check3-cup-held.png",
+                          "what":  "simulator view: check3-cup-held",
+                          "bytes":  989246,
+                          "sha256":  "893174b2a23ceece2e1edcb6aecb4c5c11c6f8112a5b33089dfee77557ab619d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check4-captions.json",
+                          "what":  "probe state: check4-captions",
+                          "bytes":  5942,
+                          "sha256":  "e65d39a6d2fa2e1960e8ef6d0914389abe4bad7af099e9d933abc04e1b8f32c0"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check4-captions.png",
+                          "what":  "simulator view: check4-captions",
+                          "bytes":  989247,
+                          "sha256":  "2f754b2ca07d30381f5f0778fae4ee5f31824a57a18a2fcf36621ee20e9bd410"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-message.png",
+                          "what":  "seated view (fixed camera): the cup lifted, its message card playing with captions (reference 03)",
+                          "bytes":  1304563,
+                          "sha256":  "2ccbf9e5c259233eefb28d55891e11db6ca0be4777d44fa045a46388c978f5eb"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-room-partner.png",
+                          "what":  "seated view (fixed camera): after the message: the sample\u0027s partner as labelled simulated presence (reference 02)",
+                          "bytes":  1313256,
+                          "sha256":  "b006e23d82a118294fe69e2dc5c36ec1b58308795be3dc031cc7c9e4cc663917"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check2-dock.png",
+                          "what":  "simulator view: check2-dock",
+                          "bytes":  976381,
+                          "sha256":  "41281112386d310d59d0c53a974e5c21346c3dedd98d93403fb5f2a9fa00ad74"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-day.png",
+                          "what":  "seated view (fixed camera): Our day (reference 05)",
+                          "bytes":  1338054,
+                          "sha256":  "ba0bc61e761a5ea9325ab24734a182e053a377f0efcb63e71f44957eae0d57b2"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-share.png",
+                          "what":  "seated view (fixed camera): Share: who receives it, and the AI permission (reference 06)",
+                          "bytes":  1190972,
+                          "sha256":  "891d23d3bba70e1607a9fad1227f8b977fb7ab7052d6a791b17531bc8b2bfeb8"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-together.png",
+                          "what":  "seated view (fixed camera): Together: places, times and the next overlap (reference 08)",
+                          "bytes":  1217905,
+                          "sha256":  "9ee409a91d91a99c7e056979c92dccea747f94219b169ccf8eb8eba0b396735f"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-keepsakes.png",
+                          "what":  "seated view (fixed camera): Keepsakes (reference 09)",
+                          "bytes":  1177148,
+                          "sha256":  "e163d07a50ecbd34123ecbbf35a47eeda7cd17e7aa0a35f17de95a4819660cd0"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-shelf.png",
+                          "what":  "seated view (fixed camera): the keepsake shelf in the alcove (reference 09)",
+                          "bytes":  908284,
+                          "sha256":  "83bad3e80dbb66440749f012de6a32d00e24fc3e9e88eaf2af566619bf35dcc4"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-avatar.png",
+                          "what":  "seated view (fixed camera): the avatar preview, front, three-quarter and side (references 01 and 13)",
+                          "bytes":  1212451,
+                          "sha256":  "9c52918b8facefda305650fe9a1c1062ad562c87c97c5a4ae630b29a37fe01a8"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-settings.png",
+                          "what":  "seated view (fixed camera): Settings: captions, text size, sound, recenter (reference 12)",
+                          "bytes":  1161132,
+                          "sha256":  "c191c41062c2efdb36ec6de94c3f927dc066ac4d74150718b8253c7cbd22976f"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-pause.png",
+                          "what":  "seated view (fixed camera): Paused (reference 12)",
+                          "bytes":  1201119,
+                          "sha256":  "bf949e7ccbb834ed2eb244370a416aaad1b5a5f5323407ca81ccec8b79522c03"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-story.png",
+                          "what":  "seated view (fixed camera): the story on the screen beside the partner (references 04 and 05)",
+                          "bytes":  1215129,
+                          "sha256":  "9196897b70be3a161a6a63aa4e1e9803cdd991b602b3e0a3970c36fa72679893"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-rooms.png",
+                          "what":  "seated view (fixed camera): the room selector (reference 07)",
+                          "bytes":  1345840,
+                          "sha256":  "d5edc7915100c39dd518e1e417f2ae9b92397928084434ff74a359466fcb4c31"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-circle.png",
+                          "what":  "seated view (fixed camera): the family circle room (reference 07)",
+                          "bytes":  1273038,
+                          "sha256":  "dd9699463d41be012f4a0fe56477fb20dcfc3e2e6a7ecc3265d7e213e707439d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-direct.png",
+                          "what":  "seated view (fixed camera): back in the direct room (reference 02)",
+                          "bytes":  1395966,
+                          "sha256":  "b68021a4e8f4593e60af57956913b7359399da6d82ae4f57fa382f12685697d1"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-partner.png",
+                          "what":  "seated view (fixed camera): the partner\u0027s face, close (natural proportions, eyes, expression: reference 01)",
+                          "bytes":  1064057,
+                          "sha256":  "a7980ceb252ed1bfdac96064f96687ef4eb962c80386db088daa855beeca0908"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-left.png",
+                          "what":  "seated view (fixed camera): the room to the left: window light and shadows on the wall and floor",
+                          "bytes":  1314204,
+                          "sha256":  "9d7f921d20cc2ccba1d47ef5c5526ca68b9da7cb3fb8ef1ea6f3dc22c08eda85"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-right.png",
+                          "what":  "seated view (fixed camera): the room to the right: the lamp and side table",
+                          "bytes":  1153473,
+                          "sha256":  "1cac380bbdcbdf89d7d84461b50741f137c9e9be117a3cbc9ebf59613ca3e046"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-reply.png",
+                          "what":  "seated view (fixed camera): replying on the keyboard at the table edge (reference 03)",
+                          "bytes":  1304636,
+                          "sha256":  "ab74546b7d40c4ea01ecb5531eb9d1f12d90781a54c0c8ad33f1b0465edbabcb"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-market.png",
+                          "what":  "seated view (fixed camera): Marketplace: ready-made looks",
+                          "bytes":  1086728,
+                          "sha256":  "c4d7a94ddb1686398f5bc4fda78d0a2bb88fc2caaf3b5828adab56ea7fdc23b0"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-market-table.png",
+                          "what":  "seated view (fixed camera): Marketplace: tables and their finishes",
+                          "bytes":  1119053,
+                          "sha256":  "d7548ef9fa3aa05c8be847e1e79b98934c81fab1683ce5e8488f59cbfcc1944a"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-market-chairs.png",
+                          "what":  "seated view (fixed camera): Marketplace: chair fabrics",
+                          "bytes":  1118436,
+                          "sha256":  "63fd1e040eb186137d167dcd4f04316c9801fa58bc449ee0c277c6a9f41e9b7e"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-market-lamp.png",
+                          "what":  "seated view (fixed camera): Marketplace: lamps",
+                          "bytes":  1097498,
+                          "sha256":  "0134f2f11bb26097b70931d279510e59c77abf1b0d7eff740ea55fd53ddedf06"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-market-walls.png",
+                          "what":  "seated view (fixed camera): Marketplace: wall colours",
+                          "bytes":  1071813,
+                          "sha256":  "60f5b1bb5ad8638735a7770e63d040e3417384f99bd803bcbb12f628e2a02bd1"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-look-coastal.png",
+                          "what":  "seated view (fixed camera): the room in the Coastal oak look",
+                          "bytes":  1493531,
+                          "sha256":  "9109aba44d25f98121f575c0b24d988521945b977a6fd07a85c73c6bdeb43b5a"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-look-coastal-left.png",
+                          "what":  "seated view (fixed camera): Coastal oak: the wall, rug and plant to the left",
+                          "bytes":  1370758,
+                          "sha256":  "83a30ada60d2df005fbd30c83bac5eb1c0669b19dbfd8ed36944088c248d39b7"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-look-coastal-right.png",
+                          "what":  "seated view (fixed camera): Coastal oak: the tripod lamp to the right",
+                          "bytes":  1224427,
+                          "sha256":  "4d48afde704e3307e42335d944af3ada7a56eb2b06ef10dce233565dc6a2100d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-look-evening.png",
+                          "what":  "seated view (fixed camera): the room in the Evening study look",
+                          "bytes":  1377075,
+                          "sha256":  "80ab8826a75ba2370b85925e66b650ed4463ccadb3590e5212026a0401924fad"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-look-evening-right.png",
+                          "what":  "seated view (fixed camera): Evening study: the globe lamp to the right",
+                          "bytes":  1141028,
+                          "sha256":  "3d271099e66706efe64a9395e795b4f3d137d5b6d48e507a7ac55dc066375b19"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-hands-panel.png",
+                          "what":  "seated view (fixed camera): Your hands: the skin tone choice",
+                          "bytes":  1290877,
+                          "sha256":  "cf0fe12b28afc6d002332f416ff5596d41acd2404922230666caf5a8ac6f76ca"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-tour-direct-again.png",
+                          "what":  "seated view (fixed camera): back in the room as it is kept",
+                          "bytes":  1395782,
+                          "sha256":  "855c99198d350c678645dfd958ba541db44f6135059f175837a9efc34265546d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session2-sample.mp4",
+                          "what":  "simulator window recording (FFmpeg): session2-sample",
+                          "bytes":  2724170,
+                          "sha256":  "f125124c245c110b006da5bed0122077b47367af7cb5307153066bd36bedcc19"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/events-session2.jsonl",
+                          "what":  "probe events, app session 2",
+                          "bytes":  7926,
+                          "sha256":  "964d544032d00fe347695caf0ee991c8cbb5b11be2739ba3fc969996e82e4cf2"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check5-placed.png",
+                          "what":  "simulator view: check5-placed",
+                          "bytes":  921751,
+                          "sha256":  "29ac8591e6038ef1464734ac587cbe96b8cf4d5b179e453e74f01735cb1e8518"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-live-room.png",
+                          "what":  "seated view (fixed camera): the live room: the reply standing on the table as a folded card (reference 03)",
+                          "bytes":  1255588,
+                          "sha256":  "9f8adb2ecf139f263e389e1f9305ccf7da501385a4758f7c08448826d1f7f696"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session3-live.mp4",
+                          "what":  "simulator window recording (FFmpeg): session3-live",
+                          "bytes":  3289251,
+                          "sha256":  "453ef4b5cd0c161f19345e2ebb919746c9559767fb8138b5d58f264bc442ca33"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/events-session3.jsonl",
+                          "what":  "probe events, app session 3",
+                          "bytes":  1644,
+                          "sha256":  "b49806b7a670976f6a9a59646bfbad46996eadf3e54ed625edcd56e77ba7fb12"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check5-after-app-restart.png",
+                          "what":  "simulator view: check5-after-app-restart",
+                          "bytes":  985025,
+                          "sha256":  "8402c687e111e1faf03a811b65b591cbf6e0b8ab38793bd488f9125bb2ee54f5"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session4-live-restarted.mp4",
+                          "what":  "simulator window recording (FFmpeg): session4-live-restarted",
+                          "bytes":  587527,
+                          "sha256":  "43bb012b4dd11852545df92fc456ae8e20e6af8872429b057ff2f0a54cb844f9"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/events-session4.jsonl",
+                          "what":  "probe events, app session 4",
+                          "bytes":  1158,
+                          "sha256":  "920cfb42768b64e94549d41f0f30e88234b1b60ef81f82e8d6e44c4352a7b41d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check5-after-api-restart.png",
+                          "what":  "simulator view: check5-after-api-restart",
+                          "bytes":  986467,
+                          "sha256":  "c588de6d32f17013eb02af02f87e5fc64c5bff2887081aeec93b21eedfaa35d6"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check9-trying.png",
+                          "what":  "simulator view: check9-trying",
+                          "bytes":  911620,
+                          "sha256":  "d6028802431bd0061729c411fca64db56ec13f7511a6f57c14d0e69694c25659"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-market-trying.png",
+                          "what":  "seated view (fixed camera): the marketplace open, the chairs tried in charcoal",
+                          "bytes":  948684,
+                          "sha256":  "35635954e08486e33dc2eaa807f20603ed4132b893fd40bc715342285e8c1131"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/seat-market-kept.png",
+                          "what":  "seated view (fixed camera): the live room with the chairs in charcoal, kept from the marketplace",
+                          "bytes":  1201150,
+                          "sha256":  "f8576b7cc1d6acdd71a382901611cd9c57d3a09beec2306ee0f543627df41b98"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session5-live-api-restarted.mp4",
+                          "what":  "simulator window recording (FFmpeg): session5-live-api-restarted",
+                          "bytes":  4079931,
+                          "sha256":  "f6195d161e359166a56157b11e938a25720eb13dcfce5913a9ef1d2609d472e5"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/events-session5.jsonl",
+                          "what":  "probe events, app session 5",
+                          "bytes":  2798,
+                          "sha256":  "7086b80e98a8827070d1babc124011ba3d99cd967c639fab5bb673956e3c35b6"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check9-restarted.json",
+                          "what":  "probe state: check9-restarted",
+                          "bytes":  4684,
+                          "sha256":  "638f26c2f21b3294f2f6b6e8203fc15ac9826d34e170b8f520443924b2186896"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check9-after-app-restart.png",
+                          "what":  "simulator view: check9-after-app-restart",
+                          "bytes":  979623,
+                          "sha256":  "10ba38248d3eb92e11fac75b82dd5af6e5f42d6f82b66ebeb1da679bad417701"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-turned.json",
+                          "what":  "probe state: check6-turned",
+                          "bytes":  4737,
+                          "sha256":  "221437e3c1e0c11e70ba1647c3020894a8e6cf9306e50b57e1c6c0a92c16871a"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-recentered.json",
+                          "what":  "probe state: check6-recentered",
+                          "bytes":  4732,
+                          "sha256":  "e7c1f96e185e980dd4e0e0fe096552c016e7ca7d280532c533cca3f4e02c98de"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-paused.json",
+                          "what":  "probe state: check6-paused",
+                          "bytes":  3820,
+                          "sha256":  "1add5c35dfc9f73801c77c19cb10042775a469b3e2edd56e6904fa4734f84de4"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check6-paused.png",
+                          "what":  "simulator view: check6-paused",
+                          "bytes":  955232,
+                          "sha256":  "b71072b761831ddbfdde5056b886094c3a051ad7b8e9dd0eda4bf20bff6f5900"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check6-resumed.json",
+                          "what":  "probe state: check6-resumed",
+                          "bytes":  4734,
+                          "sha256":  "e8cae961691272b731d85ab8a4c89becd9c6f7159875bbde9f7f8668a3ef2060"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session6-live-market-restarted.mp4",
+                          "what":  "simulator window recording (FFmpeg): session6-live-market-restarted",
+                          "bytes":  7476693,
+                          "sha256":  "e23f21c86ddfc1bf67721a1b21be10f4b65947c8fad5908b0c0e3f717e975fa1"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/events-session6.jsonl",
+                          "what":  "probe events, app session 6",
+                          "bytes":  2952,
+                          "sha256":  "cc3695f582146472f61596bacb016ea5916080fff1ac24d7f3dc846166f049ce"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check7-before.json",
+                          "what":  "probe state: check7-before",
+                          "bytes":  3633,
+                          "sha256":  "3124f2ad63e82dfdb1c4ff1c7d9c31b07aabf464cac025eb64ba288a391ff4bb"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check7-lost.json",
+                          "what":  "probe state: check7-lost",
+                          "bytes":  3535,
+                          "sha256":  "2f32a48715b6a5359537cc299102f707b224dfcba6f346474b91ccd2fd654884"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/state-check7-after.json",
+                          "what":  "probe state: check7-after",
+                          "bytes":  3631,
+                          "sha256":  "87187fd6d8d362cf2d9aafc825372094d97865c5112b695ab819f62966538e1d"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/sim-check7-after.png",
+                          "what":  "simulator view: check7-after",
+                          "bytes":  957288,
+                          "sha256":  "66eed4015e0a9c642288c33140789aaae090c974cd72b5ced1b6136fecad218f"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/session7-tracking.mp4",
+                          "what":  "simulator window recording (FFmpeg): session7-tracking",
+                          "bytes":  569692,
+                          "sha256":  "69153ec31f83c13fa2bde265cd05e009041fe81166a82d3f7c420d98160c9542"
+                      },
+                      {
+                          "file":  "docs/native/evidence/2026-11-13/acceptance-022557/events-session7.jsonl",
+                          "what":  "probe events, app session 7",
+                          "bytes":  377,
+                          "sha256":  "9b0072ee0471e70e622b5876eb3d6332e7da23a22b5670b96849341ee426e8dc"
+                      }
+                  ],
+    "notes":  [
+                  "metavr xrsim record: Error: this XR Simulator runtime does not support native MP4 recording: its build doesn\u0027t include the recording service, so `record start`, `record stop` and `record status` keep failing against it; record the simulator window with your OS screen recorder instead The recordings are FFmpeg captures of the simulator window instead.",
+                  "For key:done the head was turned -26 degrees during the press and back afterwards: the simulator moves both hands together, and the left index would have come down on key:cancel.",
+                  "For dock:pause the head was turned -24 degrees during the press and back afterwards: the simulator moves both hands together, and the left index would have come down on dock:day.",
+                  "For dock:pause the head was turned -23 degrees during the press and back afterwards: the simulator moves both hands together, and the left index would have come down on dock:day."
+              ]
+}

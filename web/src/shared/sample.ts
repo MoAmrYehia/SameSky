@@ -46,25 +46,25 @@ interface SeedMoment {
   caption: string;
   at: string;
   audience: string[];
-  media?: { url: string; kind: 'image' | 'video' | 'audio'; device: SourceDevice; origin: 'simulated' | 'synthesized' | 'stock'; durationMs?: number; thumbUrl?: string; posterUrl?: string; captionsUrl?: string; width?: number; height?: number };
+  media?: { url: string; kind: 'image' | 'video' | 'audio'; device: SourceDevice; origin: 'simulated' | 'synthesized' | 'stock'; credit?: string; durationMs?: number; thumbUrl?: string; posterUrl?: string; captionsUrl?: string; width?: number; height?: number };
   transcript?: string;
 }
 
 const SEED: SeedMoment[] = [
   { id: 'm-maya-park', roomId: 'sample-direct', owner: 'sample-maya', kind: 'photo', caption: 'A quiet walk after work.', at: '2026-11-06T10:40:00Z', audience: ['sample-adam'],
-    media: { url: '/assets/sample/maya-park.jpg', thumbUrl: '/assets/sample/maya-park-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', width: 1600, height: 1000 } },
+    media: { url: '/assets/sample/maya-park.jpg', thumbUrl: '/assets/sample/maya-park-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: Iurie Nistor · CC0 · Wikimedia Commons', width: 1600, height: 1000 } },
   { id: 'm-maya-voice', roomId: 'sample-direct', owner: 'sample-maya', kind: 'voice', caption: 'Saved you a seat.', at: '2026-11-06T12:55:00Z', audience: ['sample-adam'],
     media: { url: '/assets/sample/maya-voice.m4a', kind: 'audio', device: 'phone', origin: 'synthesized', durationMs: 9300, captionsUrl: '/assets/sample/maya-voice.vtt' },
     transcript: 'Saved you a seat. The bench by the big oak, same as always. Tell me about your sunset when you get home.' },
   { id: 'm-adam-waterfront', roomId: 'sample-direct', owner: 'sample-adam', kind: 'photo', caption: 'An evening walk by the harbour.', at: '2026-11-06T13:20:00Z', audience: ['sample-maya'],
-    media: { url: '/assets/sample/adam-waterfront.jpg', thumbUrl: '/assets/sample/adam-waterfront-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', width: 1600, height: 1000 } },
-  { id: 'm-adam-ride', roomId: 'sample-direct', owner: 'sample-adam', kind: 'clip', caption: 'Evening lights along the promenade.', at: '2026-11-06T13:35:00Z', audience: ['sample-maya'],
-    media: { url: '/assets/sample/adam-clip.mp4', kind: 'video', device: 'camera', origin: 'simulated', durationMs: 8000, thumbUrl: '/assets/sample/adam-clip-thumb.jpg', posterUrl: '/assets/sample/adam-clip-poster.jpg', width: 1280, height: 720 } },
+    media: { url: '/assets/sample/adam-waterfront.jpg', thumbUrl: '/assets/sample/adam-waterfront-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: kallerna · CC0 · Wikimedia Commons', width: 1600, height: 1000 } },
+  { id: 'm-adam-ride', roomId: 'sample-direct', owner: 'sample-adam', kind: 'clip', caption: 'Crossing the creek this afternoon.', at: '2026-11-06T11:10:00Z', audience: ['sample-maya'],
+    media: { url: '/assets/sample/adam-clip.mp4', kind: 'video', device: 'camera', origin: 'stock', credit: 'Footage: 54t4n0d · CC BY 3.0 · Wikimedia Commons', durationMs: 8500, thumbUrl: '/assets/sample/adam-clip-thumb.jpg', posterUrl: '/assets/sample/adam-clip-poster.jpg', width: 1280, height: 720 } },
   { id: 'f-maya-text', roomId: 'sample-family', owner: 'sample-maya', kind: 'text', caption: 'Made dumplings for the whole office. Saving the recipe for our next family dinner.', at: '2026-11-06T04:30:00Z', audience: ['sample-adam', 'sample-lina'] },
   { id: 'f-adam-dunes', roomId: 'sample-family', owner: 'sample-adam', kind: 'photo', caption: 'Desert hills before sunset — thinking of you all.', at: '2026-11-06T11:50:00Z', audience: ['sample-maya', 'sample-lina'],
-    media: { url: '/assets/sample/adam-desert.jpg', thumbUrl: '/assets/sample/adam-desert-thumb.jpg', kind: 'image', device: 'camera', origin: 'stock', width: 1600, height: 1000 } },
-  { id: 'f-lina-lanterns', roomId: 'sample-family', owner: 'sample-lina', kind: 'photo', caption: 'A quiet evening at home in the courtyard.', at: '2026-11-06T18:30:00Z', audience: ['sample-adam', 'sample-maya'],
-    media: { url: '/assets/sample/lina-courtyard.jpg', thumbUrl: '/assets/sample/lina-courtyard-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', width: 1600, height: 1000 } },
+    media: { url: '/assets/sample/adam-desert.jpg', thumbUrl: '/assets/sample/adam-desert-thumb.jpg', kind: 'image', device: 'camera', origin: 'stock', credit: 'Photo: Lxs · CC BY 4.0 · Wikimedia Commons', width: 1600, height: 1000 } },
+  { id: 'f-lina-lanterns', roomId: 'sample-family', owner: 'sample-lina', kind: 'photo', caption: 'A quiet evening in the courtyard garden.', at: '2026-11-06T18:30:00Z', audience: ['sample-adam', 'sample-maya'],
+    media: { url: '/assets/sample/lina-courtyard.jpg', thumbUrl: '/assets/sample/lina-courtyard-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: Pseudopanax · public domain · Wikimedia Commons', width: 1600, height: 1000 } },
 ];
 
 export function seedMoments(): Moment[] {
@@ -76,7 +76,7 @@ export function seedMoments(): Moment[] {
       audience: s.audience.map((id) => ({ userId: id, displayName: SAMPLE_PEOPLE[id].name })), isMine: s.owner === ME,
       aiAllowed: true, transcript: s.transcript, recordedGesture: s.kind === 'voice' ? 'wave' : null, reactions: [],
       media: s.media
-        ? { id: `asset-${s.id}`, kind: s.media.kind, processingState: 'ready', sourceDevice: s.media.device, origin: s.media.origin, projection: 'flat', durationMs: s.media.durationMs ?? null,
+        ? { id: `asset-${s.id}`, kind: s.media.kind, processingState: 'ready', sourceDevice: s.media.device, origin: s.media.origin, credit: s.media.credit, projection: 'flat', durationMs: s.media.durationMs ?? null,
             width: s.media.width ?? null, height: s.media.height ?? null, url: s.media.url, thumbUrl: s.media.thumbUrl ?? (s.media.kind === 'image' ? s.media.url : undefined), posterUrl: s.media.posterUrl, captionsUrl: s.media.captionsUrl }
         : null,
     };
@@ -100,13 +100,13 @@ export function seedRecaps(moments: Moment[]): Recap[] {
         chapters: [
           { contributorId: 'sample-maya', objectType: 'frame', durationSeconds: 45, playbackMomentIds: ['m-maya-park', 'm-maya-voice'], segments: [
             { text: 'Maya took a quiet walk after work.', kind: 'stated', sources: [ref('m-maya-park')] },
-            { text: 'The path looks lit by low, golden sun through the trees.', kind: 'visual_interpretation', sources: [ref('m-maya-park')] },
+            { text: 'The path looks covered in fallen leaves, under a long row of autumn trees.', kind: 'visual_interpretation', sources: [ref('m-maya-park')] },
             { text: '“Saved you a seat. The bench by the big oak, same as always.”', kind: 'quote', sources: [{ ...ref('m-maya-voice'), transcriptStartMs: 0, transcriptEndMs: 5200 }] },
           ] },
           { contributorId: 'sample-adam', objectType: 'postcard', durationSeconds: 40, playbackMomentIds: ['m-adam-waterfront', 'm-adam-ride'], segments: [
             { text: 'Adam took an evening walk by the harbour.', kind: 'stated', sources: [ref('m-adam-waterfront')] },
-            { text: 'He filmed the evening lights along the promenade.', kind: 'stated', sources: [ref('m-adam-ride')] },
-            { text: 'The water looks still enough to mirror the lights.', kind: 'visual_interpretation', sources: [ref('m-adam-ride')] },
+            { text: 'He filmed the creek from the water on his way across.', kind: 'stated', sources: [ref('m-adam-ride')] },
+            { text: 'The water looks choppy under a pale, hazy sky, with a wooden dhow going by.', kind: 'visual_interpretation', sources: [ref('m-adam-ride')] },
           ] },
         ],
       },
@@ -128,8 +128,8 @@ export function seedRecaps(moments: Moment[]): Recap[] {
             { text: 'Adam saw desert hills before sunset and was thinking of everyone.', kind: 'stated', sources: [ref('f-adam-dunes')] },
           ] },
           { contributorId: 'sample-lina', objectType: 'frame', durationSeconds: 25, playbackMomentIds: ['f-lina-lanterns'], segments: [
-            { text: 'Lina spent a quiet evening at home in the courtyard.', kind: 'stated', sources: [ref('f-lina-lanterns')] },
-            { text: 'The walls look lit by warm porch lamps at dusk.', kind: 'visual_interpretation', sources: [ref('f-lina-lanterns')] },
+            { text: 'Lina spent a quiet evening in the courtyard garden.', kind: 'stated', sources: [ref('f-lina-lanterns')] },
+            { text: 'The walls look lit by warm lanterns after dark.', kind: 'visual_interpretation', sources: [ref('f-lina-lanterns')] },
           ] },
         ],
       },
@@ -139,7 +139,7 @@ export function seedRecaps(moments: Moment[]): Recap[] {
 }
 
 export const SEED_REPLIES: Reply[] = [
-  { id: 'reply-seed-1', momentId: 'm-adam-waterfront', authorId: 'sample-maya', authorName: 'Maya', text: 'Those reflections! Save me a spot on that bench.', createdAt: '2026-11-06T14:02:00Z', label: 'Recorded message' },
+  { id: 'reply-seed-1', momentId: 'm-adam-waterfront', authorId: 'sample-maya', authorName: 'Maya', text: 'Those reflections! Take me there next time.', createdAt: '2026-11-06T14:02:00Z', label: 'Recorded message' },
 ];
 
 export const SEED_AWARDS: Record<string, Award[]> = {

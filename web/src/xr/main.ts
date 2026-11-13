@@ -526,7 +526,7 @@ function showMoment(m: Moment, opts: { together?: boolean; segment?: string } = 
   const owner = room.members.find((x) => x.id === m.ownerId);
   // sample media names how it was made (a simulated pan, a synthesized voice, a stock photo), never passing as a recording
   const origin = m.media?.origin;
-  const kind = m.kind === 'clip' ? (origin === 'simulated' ? 'simulated camera pan' : 'clip')
+  const kind = m.kind === 'clip' ? (origin === 'simulated' ? 'simulated camera pan' : origin === 'stock' ? 'sample clip' : 'clip')
     : m.kind === 'voice' ? (origin === 'synthesized' ? 'synthesized voice note' : 'voice note')
     : m.kind === 'text' ? 'note' : origin === 'stock' ? 'sample photo' : 'photo';
   if (screen.together) drawHeader(`${owner?.displayName ?? m.ownerName}'s ${kind}`, live ? 'Watching together' : 'Watching together · simulated', 'users', COLORS.greenBright);

@@ -161,13 +161,33 @@ namespace SameSky.UI
             r.SetPropertyBlock(b);
         }
 
+        /// <summary>Shows a picture on a panel; null takes the picture off (the panel shows its own colour again).</summary>
         public static void SetImage(Renderer r, Texture tex)
         {
             var b = new MaterialPropertyBlock();
             r.GetPropertyBlock(b);
-            b.SetTexture(MainTexId, tex);
+            // a property block refuses a null texture (it throws), so "no picture" is the white texture, switched off
+            b.SetTexture(MainTexId, tex != null ? tex : Texture2D.whiteTexture);
             b.SetFloat(UseTexId, tex != null ? 1 : 0);
             r.SetPropertyBlock(b);
+        }
+
+        static Texture2D _blank;
+
+        /// <summary>A plain dark picture, for a screen that has nothing of its own to show.</summary>
+        public static Texture Blank
+        {
+            get
+            {
+                if (_blank == null)
+                {
+                    _blank = new Texture2D(2, 2, TextureFormat.RGBA32, false) { name = "Blank screen", hideFlags = HideFlags.HideAndDontSave };
+                    var c = new Color(0.08f, 0.08f, 0.09f, 1f);
+                    _blank.SetPixels(new[] { c, c, c, c });
+                    _blank.Apply();
+                }
+                return _blank;
+            }
         }
 
         /// <summary>An image with rounded corners (photo, poster, thumbnail).</summary>

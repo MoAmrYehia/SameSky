@@ -28,7 +28,9 @@ namespace SameSky.Tests
             Assert.That(voice.Media.Captions, Is.Not.Empty, "the voice note needs timed captions");
             Assert.AreEqual("Maya", voice.Media.Captions[0].Speaker);
             var clip = data.FindMoment("m-adam-ride");
-            Assert.AreEqual("simulated", clip.Media.Origin, "the sample clip must say it is a simulated camera pan");
+            Assert.AreEqual("stock", clip.Media.Origin, "the sample clip must say it is stock footage, not the fictional person's own");
+            Assert.AreEqual("Stock footage (sample)", SameSkyApp.OriginLabel(clip.Media));
+            StringAssert.Contains("CC BY", clip.Media.Credit, "stock footage under an attribution licence must carry its credit");
             var recaps = data.Recaps(SampleData.DirectRoom).Result;
             Assert.AreEqual("sample", recaps[0].Generator);
             StringAssert.Contains("no AI call", recaps[0].GeneratorLabel);
@@ -95,6 +97,32 @@ namespace SameSky.Tests
             Assert.IsFalse(AppConfig.IsAllowed("ftp://example.com"));
             Assert.IsFalse(AppConfig.IsAllowed(""));
             Assert.IsTrue(AppConfig.IsAllowed("http://127.0.0.1:8000"), "the Editor is a development context");
+        }
+
+        [Test]
+        public void A_build_without_a_server_is_sample_only()
+        {
+            // the build given to judges is made with no API address: the app must then offer the sample day alone
+            var baked = AppConfig.Data.apiUrl;
+            var developerOverride = Prefs.Current.apiUrlOverride;
+            try
+            {
+                Prefs.Current.apiUrlOverride = null;
+                AppConfig.Data.apiUrl = "";
+                Assert.AreEqual("", AppConfig.ApiUrl);
+                Assert.IsTrue(AppConfig.SampleOnly);
+                StringAssert.Contains("sample day only", AppConfig.Describe());
+                AppConfig.Data.apiUrl = "ftp://example.com";
+                Assert.IsTrue(AppConfig.SampleOnly, "an address the build may not use counts as no server");
+                AppConfig.Data.apiUrl = "https://api.example.com/";
+                Assert.IsFalse(AppConfig.SampleOnly);
+                Assert.AreEqual("https://api.example.com", AppConfig.ApiUrl);
+            }
+            finally
+            {
+                AppConfig.Data.apiUrl = baked;
+                Prefs.Current.apiUrlOverride = developerOverride;
+            }
         }
 
         [Test]

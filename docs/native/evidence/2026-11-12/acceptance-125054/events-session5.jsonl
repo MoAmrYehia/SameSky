@@ -1,0 +1,28 @@
+{"t":10.355,"kind":"start","detail":"0.9.0","input":"None"}
+{"t":10.743,"kind":"pause","detail":"input","input":"None"}
+{"t":12.021,"kind":"pause","detail":"resume","input":"None"}
+{"t":12.304,"kind":"recenter","detail":"1.18","input":"hands"}
+{"t":12.32,"kind":"screen","detail":"launch","input":"hands"}
+{"t":23.697,"kind":"press","detail":"launch:continue","input":"hands"}
+{"t":23.699,"kind":"screen","detail":"loading","input":"hands"}
+{"t":23.78,"kind":"mode","detail":"live","input":"hands"}
+{"t":23.782,"kind":"screen","detail":"room","input":"hands"}
+{"t":23.816,"kind":"decor","detail":"shown v4","input":"hands"}
+{"t":23.98,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8","input":"hands"}
+{"t":24.015,"kind":"presence","detail":"away","input":"hands"}
+{"t":35.762,"kind":"press","detail":"dock:market","input":"hands"}
+{"t":35.766,"kind":"screen","detail":"market","input":"hands"}
+{"t":48.372,"kind":"press","detail":"market:tab-chairs","input":"hands"}
+{"t":48.373,"kind":"screen","detail":"market","input":"hands"}
+{"t":64.873,"kind":"press","detail":"market:finish-chairs-sage","input":"hands"}
+{"t":64.874,"kind":"decor","detail":"try chairs=tub/sage","input":"hands"}
+{"t":64.875,"kind":"screen","detail":"market","input":"hands"}
+{"t":71.949,"kind":"snap","detail":"market-trying","input":"hands"}
+{"t":84.795,"kind":"press","detail":"market:keep","input":"hands"}
+{"t":84.828,"kind":"decor","detail":"kept v5 chairs=tub/sage floor=parquet/natural lamp=drum/brass plant=leafy rug=round/oatmeal table=pedestal/walnut walls=plaster/ivory","input":"hands"}
+{"t":84.829,"kind":"toast","detail":"Kept. Sam will find the room this way.","input":"hands"}
+{"t":84.83,"kind":"screen","detail":"room","input":"hands"}
+{"t":84.857,"kind":"decor","detail":"shown v5","input":"hands"}
+{"t":84.969,"kind":"reply","detail":"restored:3b49b61f-77d1-4a8e-96ef-9127f70c4eda,39a8de9c-bb02-488f-a09c-7933120e9283,2b77d9c8-0946-4728-86ed-100037f9cf4c,b45a4769-e2c5-46e0-a1a8-848a3d868724,5cf7d8f1-42f3-4b57-bec0-be627acf4396,d4b88319-640b-4df9-a502-605471033bf7,b8ee6dd1-795e-4cfa-9f98-38bc6e31749e,8b98c4d0-7a11-47b6-a28c-fbeffd167629,fe3bb850-7501-4159-ad1c-52759d859259,501eebfe-8c18-4f90-8609-d1f6b8ad00b8","input":"hands"}
+{"t":84.98,"kind":"presence","detail":"away","input":"hands"}
+{"t":92.136,"kind":"snap","detail":"market-kept","input":"hands"}

@@ -40,6 +40,7 @@ namespace SameSky.Api
         public event Action<PlaybackState> PlaybackChanged;
         public event Action<string, string> Reaction;            // userId, kind
         public event Action<string> AvatarChanged;               // userId
+        public event Action DecorChanged;                        // someone refurnished the room: ask for it again
         public event Action<string> Ended;                       // reason
         public event Action<Link> LinkChanged;
 
@@ -167,6 +168,9 @@ namespace SameSky.Api
                     break;
                 case "avatar_changed":
                     AvatarChanged?.Invoke((string)m["userId"]);
+                    break;
+                case "decor_changed":
+                    DecorChanged?.Invoke();
                     break;
                 case "removed":
                 case "session_ended":

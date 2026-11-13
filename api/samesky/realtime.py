@@ -70,6 +70,11 @@ class Hub:
         private likeness is never revealed and a revoked one stops rendering without a reload."""
         self._threadsafe(self._avatar_changed(user_id))
 
+    def decor_changed(self, room_id: str, by_user_id: str) -> None:
+        """Someone refurnished the room. People sitting in it together are told to look again; each then
+        asks GET /v1/rooms/{id}/decor with their own authorization."""
+        self._threadsafe(self._decor_changed(room_id, by_user_id))
+
     def _threadsafe(self, coro) -> None:
         if self.loop is None or self.loop.is_closed():
             coro.close()
@@ -96,6 +101,11 @@ class Hub:
         for live in list(self.sessions.values()):
             if user_id in live.participants:
                 await self.broadcast(live, {"type": "avatar_changed", "userId": user_id}, exclude=user_id)
+
+    async def _decor_changed(self, room_id: str, by_user_id: str) -> None:
+        for live in list(self.sessions.values()):
+            if live.room_id == room_id:
+                await self.broadcast(live, {"type": "decor_changed", "roomId": room_id}, exclude=by_user_id)
 
     async def _end(self, session_id: str, reason: str) -> None:
         live = self.sessions.pop(session_id, None)

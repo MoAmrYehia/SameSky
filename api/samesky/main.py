@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from .config import get_settings
 from .db import create_all
 from .errors import ApiError, api_error_handler
-from .routers import avatars, content, core, time
+from .routers import avatars, content, core, furniture, time
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 
@@ -51,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(core.router)
     app.include_router(avatars.router)
     app.include_router(content.router)
+    app.include_router(furniture.router)
     app.include_router(time.router)
     return app
 
