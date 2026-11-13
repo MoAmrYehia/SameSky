@@ -7,6 +7,10 @@
 #   -SkipRecording           no MP4s (check 8 is then skipped)
 #   -FingertipOffset "x,y,z" metres from the right-hand anchor to the index fingertip in the poke pose (world axes)
 #   -Only 5,7                run only these checks (check 1 always runs: it calibrates the hand controls)
+#   -SampleOnly              run the app as a build with no server (build.ps1 -SampleOnly, the build for the
+#                            competition's judges): no API is started, check 1 also confirms that the welcome panel
+#                            offers the sample day and no account buttons, and checks 5 and 9, which need the
+#                            service, are skipped
 #   -Renders                 also save fixed seated views of the other screens (Our day, Share, Together, Keepsakes,
 #                            Settings, the story, the family circle, the marketplace and the room in two of its
 #                            ready-made looks), opened through the development probe rather
@@ -47,6 +51,7 @@ param(
   [switch]$SkipRecording,
   [string]$FingertipOffset = '',
   [string]$Only = '',   # e.g. 5 or 2,3,4 (a string: powershell -File passes it as one)
+  [switch]$SampleOnly,
   [switch]$Renders,
   [int]$UnityStartTimeoutSec = 600,
   [int]$FirstMinuteSec = 60,
@@ -72,6 +77,9 @@ $SimSpeed = 0.3          # movement speed multiplier (metavr xrsim input speed):
 $TurnDegPerSec = 80.0    # the arrow keys' turn rate (measured: 81 deg/s); loops below correct for the difference
 
 $OnlyIds = @($Only -split '[,\s]+' | Where-Object { $_ } | ForEach-Object { [int]$_ })
+# a profile of its own, so a sample-only run never attaches to an editor that was started with a server (or the reverse)
+if ($SampleOnly -and -not $PSBoundParameters.ContainsKey('AppProfile')) { $AppProfile = 'acceptance-sampleonly' }
+if ($SampleOnly -and $Target -ne 'PlayMode') { throw '-SampleOnly runs in Unity Play mode.' }
 $ProbeDirectory = Get-ProbeDir $AppProfile
 $ProfileRoot = if ($AppProfile) { Join-Path $PlayerData "profile-$AppProfile" } else { $PlayerData }
 $RunStamp = Get-Date
@@ -512,6 +520,7 @@ function Start-UnityEditor {
   $env:XR_RUNTIME_JSON = $XrsimRuntimeJson   # the simulator for this editor process only
   $unityArgs = @('-projectPath', "`"$Project`"", '-executeMethod', 'SameSky.EditorTools.SimRun.Play', '-logFile', "`"$UnityLog`"", "-sameskyApi=$ApiUrl")
   if ($AppProfile) { $unityArgs += "-sameskyProfile=$AppProfile" }
+  if ($SampleOnly) { $unityArgs += '-sameskySampleOnly' }   # AppConfig: no API address, as in a build made with -SampleOnly
   Start-Process -FilePath $Unity -ArgumentList $unityArgs | Out-Null
 }
 
@@ -1325,6 +1334,10 @@ function Initialize-Run {
 }
 
 function Initialize-Services {
+  if ($SampleOnly) {
+    Add-SetupStep 'No API or worker: the app runs as a build with no server (-SampleOnly)' $true $null
+    return
+  }
   Write-Step 'Local API, worker and development data'
   if ((Test-Api) -and -not (Test-Path $PidFile)) { throw "An API answers at $ApiUrl, but scripts/native/start.ps1 didn't start it, so check 5 can't restart it. Stop that API and run this again." }
   if (-not (Test-Api)) { & "$PSScriptRoot/start.ps1" }
@@ -1462,10 +1475,22 @@ function Invoke-Check1 {
   $s = $w.state
   $simRuntime = ("$($s.openxrRuntime)" -match 'simulator') -or ("$runtimeLine" -match 'meta_openxr_simulator\.json')
   $ok = $w.ok -and $simRuntime -and $dev.exit -eq 0 -and $sync.exit -eq 0 -and $sync2.exit -eq 0
+  $sampleOnlyText = ''
+  if ($SampleOnly) {
+    # a build with no server: the welcome panel must offer the sample day, and nothing that needs an account
+    $ids = @($s.targets | ForEach-Object { $_.id })
+    $account = @($ids | Where-Object { $_ -in 'launch:signin', 'launch:signup', 'launch:continue' })
+    $welcome = [ordered]@{ sampleOnly = [bool]$s.sampleOnly; pressable = @($ids | Sort-Object); accountButtons = $account }
+    Add-Evidence $c 'probe-welcome' $welcome 'what can be pressed on the welcome panel of a build with no server'
+    $sampleOk = [bool]$s.sampleOnly -and ($ids -contains 'launch:sample') -and $account.Count -eq 0
+    if (-not $sampleOk) { Add-Note $c "The welcome panel isn't the sample-only one (sampleOnly $($s.sampleOnly); account buttons: $($account -join ', '))." }
+    $ok = $ok -and $sampleOk
+    $sampleOnlyText = "; build with no server: sample day offered $($ids -contains 'launch:sample'), account buttons $($account.Count)"
+  }
   $c.driver = 'script (metavr)'
   Add-Manual $c 'Confirm the simulated headset is Meta Quest 3' 'The probe cannot see the headset model: check Device in the simulator Inputs panel (screenshot sim-check1-session.png).'
   if (-not $simRuntime) { Add-Note $c "The OpenXR runtime isn't shown as the simulator (probe: '$($s.openxrRuntime)')." }
-  $summary = "XR active $($s.xrDeviceActive), runtime '$($s.openxrRuntime)', hands L $($s.hands.left) R $($s.hands.right), input $($s.activeInput); metavr device set exit $($dev.exit), input sync exit $($sync.exit)/$($sync2.exit)"
+  $summary = "XR active $($s.xrDeviceActive), runtime '$($s.openxrRuntime)', hands L $($s.hands.left) R $($s.hands.right), input $($s.activeInput); metavr device set exit $($dev.exit), input sync exit $($sync.exit)/$($sync2.exit)$sampleOnlyText"
   if ($ok) { Complete-Check $c 'pass' $summary } else { Complete-Check $c 'fail' $summary }
 }
 
@@ -1900,7 +1925,9 @@ function Write-ResultsMarkdown($Doc, [string]$Path) {
   $L.Add('')
   $clean = 'clean working tree'
   if (-not $Doc.workingTreeClean) { $clean = 'with uncommitted changes' }
-  $L.Add("$($RunStamp.ToString('d MMMM yyyy HH:mm', [Globalization.CultureInfo]::InvariantCulture)), commit ``$($Doc.commit)`` ($clean). $($Doc.target), profile ``$AppProfile``, API $ApiUrl.")
+  $apiText = "API $ApiUrl"
+  if ($SampleOnly) { $apiText = 'run as a build with no server (`-SampleOnly`): the sample day only, no API' }
+  $L.Add("$($RunStamp.ToString('d MMMM yyyy HH:mm', [Globalization.CultureInfo]::InvariantCulture)), commit ``$($Doc.commit)`` ($clean). $($Doc.target), profile ``$AppProfile``, $apiText.")
   $L.Add('')
   $L.Add('Evidence kind: **simulator-tested**. Meta XR Simulator with a simulated Meta Quest 3 and simulated hands. It is not a headset result, and says nothing about frame rate, comfort, spatial audio or real hand tracking on a Quest.')
   $L.Add('')
@@ -1970,7 +1997,7 @@ function Save-Results {
     schema = 'samesky-native-acceptance/1'; run = $RunName; evidenceKind = 'simulator-tested'
     startedAt = $script:StartedAt; finishedAt = (Get-Date).ToString('o')
     commit = $script:Commit; workingTreeClean = $script:Clean
-    target = $targetText; profile = $AppProfile; api = $ApiUrl
+    target = $targetText; profile = $AppProfile; api = $(if ($SampleOnly) { '' } else { $ApiUrl }); sampleOnly = [bool]$SampleOnly
     options = [ordered]@{ assist = [bool]$Assist; nonInteractive = [bool]$NonInteractive; recording = (-not $SkipRecording); firstMinuteSec = $FirstMinuteSec }
     environment = $script:Environment
     simulatorKeys = $SimKeys
@@ -2005,6 +2032,7 @@ try {
   Initialize-Services
   Initialize-Simulator
   $steps = @('Invoke-Check1', 'Invoke-FirstMinute', 'Invoke-Check2', 'Invoke-Check5', 'Invoke-Check9', 'Invoke-Check6', 'Invoke-Check7')
+  if ($SampleOnly) { $steps = @($steps | Where-Object { $_ -notin 'Invoke-Check5', 'Invoke-Check9' }) }   # both need the service
   if ($OnlyIds.Count) {
     $covers = @{ 'Invoke-FirstMinute' = @(3, 4); 'Invoke-Check2' = @(2); 'Invoke-Check5' = @(5); 'Invoke-Check9' = @(9); 'Invoke-Check6' = @(6); 'Invoke-Check7' = @(7) }
     $steps = @('Invoke-Check1') + @($steps | Where-Object { $covers.ContainsKey($_) -and @($covers[$_] | Where-Object { $OnlyIds -contains $_ }).Count -gt 0 })
@@ -2037,7 +2065,8 @@ try {
   foreach ($id in @(1..7) + 9) {
     if (-not $script:Checks.Contains("$id")) {
       $c = New-Check $id $names[$id]
-      if ($OnlyIds.Count -and $OnlyIds -notcontains $id -and $id -ne 1) { Complete-Check $c 'skipped' 'not selected (-Only)' }
+      if ($SampleOnly -and $id -in 5, 9) { Complete-Check $c 'skipped' 'needs the SameSky service: not part of a build with no server (-SampleOnly)' }
+      elseif ($OnlyIds.Count -and $OnlyIds -notcontains $id -and $id -ne 1) { Complete-Check $c 'skipped' 'not selected (-Only)' }
       else { Complete-Check $c 'blocked' 'not run: the run stopped before this check' }
     }
   }

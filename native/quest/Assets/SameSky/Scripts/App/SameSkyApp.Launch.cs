@@ -26,11 +26,20 @@ namespace SameSky.App
             l.Title("A little closer, wherever you are");
             l.Underline();
             l.Button("launch:sample", Icons.With(Icons.Play, "Try a sample day"), () => _ = EnterSample(), PressStyle.Primary);
-            l.Muted("Works offline. Fictional people, stock photos and footage, and a synthesized voice, all labelled.");
-            var stored = StoredSession.Load();
-            if (!string.IsNullOrEmpty(stored.token) && stored.apiUrl == AppConfig.ApiUrl)
-                l.Button("launch:continue", Icons.With(Icons.SignIn, $"Continue as {stored.email}"), () => _ = ResumeLive(stored), PressStyle.Secondary);
-            l.Row(("launch:signin", "Sign in", ShowSignIn, PressStyle.Secondary), ("launch:signup", "Create account", ShowSignUp, PressStyle.Secondary));
+            if (AppConfig.SampleOnly)
+            {
+                // a build with no server (the one given to judges): no button that could only fail, and why
+                l.Muted("Fictional people, stock photos and footage, and a synthesized voice, all labelled.");
+                l.Muted("This build runs the sample day only. Accounts and live sessions with another person need the SameSky service.");
+            }
+            else
+            {
+                l.Muted("Works offline. Fictional people, stock photos and footage, and a synthesized voice, all labelled.");
+                var stored = StoredSession.Load();
+                if (!string.IsNullOrEmpty(stored.token) && stored.apiUrl == AppConfig.ApiUrl)
+                    l.Button("launch:continue", Icons.With(Icons.SignIn, $"Continue as {stored.email}"), () => _ = ResumeLive(stored), PressStyle.Secondary);
+                l.Row(("launch:signin", "Sign in", ShowSignIn, PressStyle.Secondary), ("launch:signup", "Create account", ShowSignUp, PressStyle.Secondary));
+            }
             // captions and sound: two chips that say their state (green when on)
             Pressable captions = null, sound = null;
             static string CaptionsLabel() => Icons.With(Icons.Captions, Prefs.Current.captionsOn ? "Captions on" : "Captions off");
@@ -92,8 +101,18 @@ namespace SameSky.App
 
         string _email = "", _password = "", _name = "";
 
+        /// <summary>A build with no server has nothing to sign in to: back to the welcome panel, with the reason.</summary>
+        bool AccountsUnavailable()
+        {
+            if (!AppConfig.SampleOnly) return false;
+            ShowLaunch();
+            Toast("This build runs the sample day only.");
+            return true;
+        }
+
         public void ShowSignIn()
         {
+            if (AccountsUnavailable()) return;
             SetDock();
             var l = NewPanel("signin");
             l.Title("Sign in");
@@ -109,6 +128,7 @@ namespace SameSky.App
 
         public void ShowSignUp()
         {
+            if (AccountsUnavailable()) return;
             SetDock();
             var l = NewPanel("signup");
             l.Title("Create an account");

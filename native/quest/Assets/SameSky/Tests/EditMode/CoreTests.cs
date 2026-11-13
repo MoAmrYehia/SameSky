@@ -100,6 +100,32 @@ namespace SameSky.Tests
         }
 
         [Test]
+        public void A_build_without_a_server_is_sample_only()
+        {
+            // the build given to judges is made with no API address: the app must then offer the sample day alone
+            var baked = AppConfig.Data.apiUrl;
+            var developerOverride = Prefs.Current.apiUrlOverride;
+            try
+            {
+                Prefs.Current.apiUrlOverride = null;
+                AppConfig.Data.apiUrl = "";
+                Assert.AreEqual("", AppConfig.ApiUrl);
+                Assert.IsTrue(AppConfig.SampleOnly);
+                StringAssert.Contains("sample day only", AppConfig.Describe());
+                AppConfig.Data.apiUrl = "ftp://example.com";
+                Assert.IsTrue(AppConfig.SampleOnly, "an address the build may not use counts as no server");
+                AppConfig.Data.apiUrl = "https://api.example.com/";
+                Assert.IsFalse(AppConfig.SampleOnly);
+                Assert.AreEqual("https://api.example.com", AppConfig.ApiUrl);
+            }
+            finally
+            {
+                AppConfig.Data.apiUrl = baked;
+                Prefs.Current.apiUrlOverride = developerOverride;
+            }
+        }
+
+        [Test]
         public void Wav_recordings_have_a_valid_pcm_header()
         {
             var samples = Enumerable.Range(0, 2400).Select(i => Mathf.Sin(i * 0.1f) * 0.5f).ToArray();

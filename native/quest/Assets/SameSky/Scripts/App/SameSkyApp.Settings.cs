@@ -183,9 +183,13 @@ namespace SameSky.App
             else
             {
                 l.Muted("Sample · fictional people, nothing leaves this device");
-                l.Row(("settings:avatar", "Your avatar", () => ShowAvatarSettings(ShowSettings), PressStyle.Secondary),
-                      ("settings:hands", "Your hands", () => ShowHandsSettings(ShowSettings), PressStyle.Secondary),
-                      ("settings:account", "Use my account", () => { Data = null; ShowLaunch(); }, PressStyle.Secondary));
+                if (AppConfig.SampleOnly)   // a build with no server has no account to switch to
+                    l.Row(("settings:avatar", "Your avatar", () => ShowAvatarSettings(ShowSettings), PressStyle.Secondary),
+                          ("settings:hands", "Your hands", () => ShowHandsSettings(ShowSettings), PressStyle.Secondary));
+                else
+                    l.Row(("settings:avatar", "Your avatar", () => ShowAvatarSettings(ShowSettings), PressStyle.Secondary),
+                          ("settings:hands", "Your hands", () => ShowHandsSettings(ShowSettings), PressStyle.Secondary),
+                          ("settings:account", "Use my account", () => { Data = null; ShowLaunch(); }, PressStyle.Secondary));
                 l.Row(("settings:reset-sample", "Reset the sample", () => { SampleState.Reset(); _sampleTogether = false; Prefs.Current.sampleIntroDone = false; Prefs.Save(); Toast("The sample is fresh again."); EnterRoom(); }, PressStyle.Quiet),
                       ("settings:exit", Icons.With(Icons.Leave, "Leave SameSky"), ConfirmExit, PressStyle.Quiet));
             }

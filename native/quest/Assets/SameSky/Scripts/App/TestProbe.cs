@@ -98,6 +98,7 @@ namespace SameSky.App
                 ["fps"] = _frameTime > 0 ? Math.Round(_frames / _frameTime, 1) : 0,
                 ["screen"] = app != null ? app.Screen : "none",
                 ["mode"] = app?.Data == null ? "none" : app.Data.IsSample ? "sample" : "live",
+                ["sampleOnly"] = AppConfig.SampleOnly,   // a build with no server: the sample day is all it offers
                 ["room"] = app?.CurrentRoom?.Name ?? "",
                 ["paused"] = app != null && app.Paused,
                 ["presses"] = Presses,
