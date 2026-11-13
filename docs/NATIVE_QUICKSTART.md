@@ -205,12 +205,40 @@ powershell -ExecutionPolicy Bypass -File scripts/native/build.ps1 -Target Androi
 - **Output:** the APK, a `.build.json` record (Unity version, package id, size, SHA-256, commit) and the build log
   go to `native/quest/Builds/`.
 
-Release build: this needs `https` and a keystore from environment variables. No signing secrets are in the
-repository.
+- **Checked after building:** the script reads the APK back (`aapt2`, `apksigner`) and stops with an error if it
+  doesn't meet Meta's manifest rules: target API level 34, Quest 3 and 3S as the supported devices, 64-bit only,
+  and for a release build not debuggable and not signed with the debug key.
+- **Nothing of this PC in a release build:** a release APK is also searched, file by file, for this PC's network
+  addresses and for paths under its user folder, and the build stops if it finds one. Both got into builds before
+  (the SDK's developer tools write the address into a bundled settings file; Unity's IL2CPP sources carry their
+  install path); `Editor/ReleasePrivacy.cs` and `BuildScript.HomePathMap` keep them out. A development build still
+  has this PC's address in it, so don't pass one on.
+
+### Release build
+
+A release build is not debuggable and is signed with your own keystore. Run this yourself, in your own terminal:
+it asks for the keystore password at a hidden prompt. No signing secrets are in the repository.
 
 ```bash
-powershell -ExecutionPolicy Bypass -File scripts/native/build.ps1 -Target Android -Release -ApiUrl https://api.example.com
+powershell -ExecutionPolicy Bypass -File scripts/native/release.ps1 -SampleOnly
 ```
+
+- **`-SampleOnly`** makes a build with no server. Its welcome panel offers the sample day and has no *Sign in* or
+  *Create account*, and nothing in it needs the API. This is the build for the competition's judges while the API
+  isn't hosted. With a hosted API, give `-ApiUrl https://...` instead (plain HTTP is refused).
+- **The keystore** is made on the first run (`.samesky/samesky-release.keystore` in your user folder, outside the
+  repository) with a password you choose, and used again afterwards. Keep both: every later upload of the app has
+  to be signed with the same key, and neither can be recovered.
+- **The version code** comes from the date and time, so each release build's is higher than the last, as the
+  dashboard requires. `-VersionCode` sets one by hand.
+- **Where the password goes:** to `keytool` and Unity through environment variables of that one PowerShell
+  process. Unity writes it into the Gradle project it generates under `native/quest/Library` (on this PC only);
+  the build script takes it out again afterwards.
+- **A release build without a keystore, to look at:** `scripts/native/build.ps1 -Release -SampleOnly -DebugSigned`
+  signs with Android's debug key. It can't be uploaded.
+- **The sample-only app in the simulator:** `scripts/native/acceptance.ps1 -SampleOnly` runs the app the same way
+  (no API address), confirms that the welcome panel offers the sample day and no account buttons, and skips checks
+  5 and 9, which need the service.
 
 ## 5. Install on a Quest 3/3S (later, with a device)
 
@@ -237,10 +265,11 @@ A local simulator run doesn't give judges anything they can open, and an APK fil
 entry needs the **link to a release channel named "Competition"** in the Meta developer dashboard (rules, section 4,
 and the FAQ, read again on 13 November 2026; entries close 18 November 2026 at 12:00 PM Pacific time).
 
-1. **Build a release APK** (section 4): signed with your own keystore and not debuggable. A development build is
-   debuggable, and Meta's manifest rules don't allow that. The project is set up for the rest of those rules:
-   target API level 34, 64-bit only, `android.hardware.vr.headtracking` required, the VR launch category, and
-   Quest 3 and Quest 3S as the supported devices.
+1. **Build a release APK** (section 4, *Release build*): `scripts/native/release.ps1 -SampleOnly`, run in your own
+   terminal. It is signed with your own keystore and not debuggable; a development build is debuggable, and Meta's
+   manifest rules don't allow that. The project is set up for the rest of those rules (target API level 34, 64-bit
+   only, `android.hardware.vr.headtracking` required, the VR launch category, Quest 3 and Quest 3S as the supported
+   devices), and the script checks the finished APK against them.
 2. In the Meta Horizon Developer Dashboard, create the app (**My Apps**), then **Distribution → Release Channels →
    Create Release Channel** and name it `Competition`. A channel's name can't be changed afterwards.
 3. **Upload** the APK to that channel with Meta Quest Developer Hub or the Oculus Platform Utility. The package
@@ -252,4 +281,6 @@ and the FAQ, read again on 13 November 2026; entries close 18 November 2026 at 1
 5. Leave that build as it is from the deadline until the winners are announced, and confirm Start membership and
    Developer Access before submitting.
 
-None of this has been done yet, and no build of the app has been installed on a headset.
+The release build with the real keystore, and steps 2 to 5, have not been done yet. (The release path itself was
+run to the end with a test key on 13 November: see [NATIVE_STATUS.md](NATIVE_STATUS.md).) No build of the app has
+been installed on a headset.

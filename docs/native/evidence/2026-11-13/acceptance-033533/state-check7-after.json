@@ -1,0 +1,169 @@
+{
+  "time": 37.67,
+  "xrDeviceActive": true,
+  "xrDevice": "OpenXR Display",
+  "openxrRuntime": "Meta XR Simulator 207.1.0",
+  "hands": {
+    "left": true,
+    "right": true
+  },
+  "activeInput": "hands",
+  "fps": 67.2,
+  "screen": "launch",
+  "mode": "none",
+  "sampleOnly": true,
+  "room": "",
+  "paused": false,
+  "presses": 0,
+  "lastPress": "",
+  "grabs": 0,
+  "lastGrab": "",
+  "hovers": 4,
+  "audio": "",
+  "captionsOn": true,
+  "captions": "",
+  "head": [
+    -0.332,
+    1.217,
+    -0.326
+  ],
+  "headForward": [
+    0.01,
+    0.0,
+    1.0
+  ],
+  "handsAt": {
+    "left": [
+      -0.627,
+      0.917,
+      0.177
+    ],
+    "right": [
+      -0.028,
+      0.917,
+      0.171
+    ]
+  },
+  "pokeAt": {
+    "left": [
+      -0.566,
+      0.913,
+      0.337
+    ],
+    "right": [
+      -0.08,
+      0.926,
+      0.339
+    ]
+  },
+  "presence": "away",
+  "cupHeld": false,
+  "voicePlaying": false,
+  "story": "none",
+  "live": "none",
+  "driftMs": 0.0,
+  "decor": "chairs=tub/cream floor=parquet/natural lamp=drum/brass plant=leafy rug=round/oatmeal table=pedestal/walnut walls=plaster/ivory",
+  "decorVersion": 0,
+  "decorUnsaved": false,
+  "handSkin": {
+    "dressed": 6,
+    "tone": "#C79C7E"
+  },
+  "targets": [
+    {
+      "id": "launch:exit",
+      "at": [
+        0.081,
+        0.903,
+        0.409
+      ],
+      "normal": [
+        -0.034,
+        0.222,
+        -0.975
+      ],
+      "size": [
+        0.15,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:recenter",
+      "at": [
+        -0.083,
+        0.902,
+        0.414
+      ],
+      "normal": [
+        -0.034,
+        0.222,
+        -0.975
+      ],
+      "size": [
+        0.15,
+        0.046
+      ],
+      "hover": true,
+      "down": false
+    },
+    {
+      "id": "launch:captions",
+      "at": [
+        -0.085,
+        1.0,
+        0.437
+      ],
+      "normal": [
+        -0.034,
+        0.222,
+        -0.975
+      ],
+      "size": [
+        0.157,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:sample",
+      "at": [
+        0.0,
+        1.129,
+        0.463
+      ],
+      "normal": [
+        -0.034,
+        0.222,
+        -0.975
+      ],
+      "size": [
+        0.326,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "launch:sound",
+      "at": [
+        0.084,
+        1.0,
+        0.431
+      ],
+      "normal": [
+        -0.034,
+        0.222,
+        -0.975
+      ],
+      "size": [
+        0.157,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    }
+  ]
+}

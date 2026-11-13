@@ -46,7 +46,9 @@ Install SameSky from the release channel link and start it from your library. Pu
     seated as if present. Taking your hands out of view mid-press cancels the press; nothing fires.
 11. **Leave:** Pause → **Leave SameSky**, or **Leave** on the welcome panel.
 
-Signing in and creating an account need the SameSky service; the sample day needs nothing and is the judged flow.
+The build in the release channel has no server behind it, so its welcome panel has no *Sign in* or *Create
+account*, and says so: the sample day is the judged flow. Accounts, sharing with real people and live two-person
+sessions are in the app and were tested against a local server in the simulator ([NATIVE_STATUS.md](NATIVE_STATUS.md)).
 
 ## B. The WebXR room and the companion (a hosted URL)
 

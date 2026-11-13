@@ -1,0 +1,239 @@
+{
+  "time": 90.18,
+  "xrDeviceActive": true,
+  "xrDevice": "OpenXR Display",
+  "openxrRuntime": "Meta XR Simulator 207.1.0",
+  "hands": {
+    "left": true,
+    "right": true
+  },
+  "activeInput": "hands",
+  "fps": 62.4,
+  "screen": "pause",
+  "mode": "live",
+  "sampleOnly": false,
+  "room": "Nora + Sam",
+  "paused": true,
+  "presses": 3,
+  "lastPress": "dock:pause",
+  "grabs": 0,
+  "lastGrab": "",
+  "hovers": 27,
+  "audio": "",
+  "captionsOn": true,
+  "captions": "",
+  "head": [
+    -0.357,
+    1.33,
+    -1.032
+  ],
+  "headForward": [
+    -0.019,
+    0.0,
+    1.0
+  ],
+  "handsAt": {
+    "left": [
+      -0.667,
+      1.03,
+      -0.538
+    ],
+    "right": [
+      -0.066,
+      1.03,
+      -0.526
+    ]
+  },
+  "pokeAt": {
+    "left": [
+      -0.61,
+      1.025,
+      -0.376
+    ],
+    "right": null
+  },
+  "presence": "away",
+  "cupHeld": false,
+  "voicePlaying": false,
+  "story": "none",
+  "live": "none",
+  "driftMs": 0.0,
+  "decor": "chairs=tub/sage floor=parquet/natural lamp=drum/brass plant=leafy rug=round/oatmeal table=pedestal/walnut walls=plaster/ivory",
+  "decorVersion": 7,
+  "decorUnsaved": false,
+  "handSkin": {
+    "dressed": 6,
+    "tone": "#E8B896"
+  },
+  "targets": [
+    {
+      "id": "cup:reply",
+      "at": [
+        0.269,
+        0.801,
+        0.382
+      ],
+      "normal": [
+        -0.607,
+        0.309,
+        -0.732
+      ],
+      "size": [
+        0.11,
+        0.046
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "pause:sound",
+      "at": [
+        0.107,
+        0.962,
+        0.402
+      ],
+      "normal": [
+        0.0,
+        0.643,
+        -0.766
+      ],
+      "size": [
+        0.202,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "pause:exit",
+      "at": [
+        -0.107,
+        0.867,
+        0.323
+      ],
+      "normal": [
+        0.0,
+        0.643,
+        -0.766
+      ],
+      "size": [
+        0.202,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "pause:resume",
+      "at": [
+        0.107,
+        0.867,
+        0.323
+      ],
+      "normal": [
+        0.0,
+        0.643,
+        -0.766
+      ],
+      "size": [
+        0.202,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "pause:recenter",
+      "at": [
+        -0.107,
+        0.915,
+        0.362
+      ],
+      "normal": [
+        0.0,
+        0.643,
+        -0.766
+      ],
+      "size": [
+        0.202,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "pause:settings",
+      "at": [
+        0.107,
+        0.915,
+        0.362
+      ],
+      "normal": [
+        0.0,
+        0.643,
+        -0.766
+      ],
+      "size": [
+        0.202,
+        0.05
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "cup:play",
+      "at": [
+        0.011,
+        0.804,
+        0.455
+      ],
+      "normal": [
+        -0.331,
+        0.309,
+        -0.892
+      ],
+      "size": [
+        0.1,
+        0.052
+      ],
+      "hover": false,
+      "down": false
+    },
+    {
+      "id": "pause:captions",
+      "at": [
+        -0.107,
+        0.962,
+        0.402
+      ],
+      "normal": [
+        0.0,
+        0.643,
+        -0.766
+      ],
+      "size": [
+        0.202,
+        0.05
+      ],
+      "hover": true,
+      "down": false
+    },
+    {
+      "id": "object:cup",
+      "at": [
+        0.15,
+        0.832,
+        0.45
+      ],
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        0.09,
+        0.1
+      ]
+    }
+  ]
+}
