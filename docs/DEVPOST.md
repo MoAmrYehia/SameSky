@@ -7,15 +7,16 @@ has the evidence behind each claim.
 
 ## Before you paste
 
-Four things in the text are yours to settle. They are marked **[in bold brackets]**.
+The text is complete. Three things are worth a look first:
 
-1. **The first sentence of *Inspiration*.** One or two sentences, in your own words, about who you had in mind.
-   Don't name anyone: the rules don't allow an identifiable person other than the entrant.
-2. **The target launch date** at the end of *What's next*. The rules ask for one.
-3. **How it was built, the last bullet.** It says the app was built with an AI coding agent from your brief. That
-   is what the repository's history shows; word your own part as you see it.
-4. **Anything that has changed by the day you submit.** The text says nothing has run on a headset and the service
-   isn't hosted. If you run it on a Quest before then, change those lines to what you measured.
+1. **The target launch date** at the end of *What's next* says March 2027. That date was picked for you; change it if
+   you plan otherwise.
+2. **How it was built, the last bullet,** says the app was built with Claude Code as the coding agent, directed by
+   your brief and visual references. That is what the repository's history shows; word your own part as you see it.
+3. **Anything that changes before you submit.** The text says nothing has run on a headset and the service isn't
+   hosted. If you run it on a Quest first, change those lines to what you measured.
+
+The two links (release channel and video) are the only blanks, marked **[in bold brackets]**.
 
 ## Form fields
 
@@ -37,8 +38,7 @@ Paste from here to the next horizontal line.
 
 ## Inspiration
 
-**[One or two sentences of your own about who you had in mind.]** SameSky began with a couple in Dubai, one of them
-often away for work. A call needs both people free in the same hour, and across time zones that hour is hard to find.
+SameSky began with a couple in Dubai, one of them often away for work. A call needs both people free in the same hour, and across time zones that hour is hard to find.
 Messages get through, but they scroll away. What goes missing is the feeling of having been in the same place.
 
 I wanted a room that keeps things for you. You sit down and something from the other person is waiting. What you
@@ -84,8 +84,8 @@ because the service isn't hosted yet.
 - **Assets:** characters from Microsoft's Rocketbox library (MIT); sample photos and footage from Wikimedia Commons
   (credited in the app); textures, the room's light and a few props from Poly Haven (CC0); the Figtree typeface (OFL)
   and Lucide icons (ISC). The room and its furniture are generated in code from those textures.
-- **Tools:** **[I wrote the product brief and the visual references, and built the app with Claude Code as the
-  coding agent, reviewing and merging each round.]**
+- **Tools:** I directed the work with a written product brief and visual references, and built the app with Claude
+  Code as the coding agent, merging each round after its tests and simulator checks passed.
 
 ## Challenges
 
@@ -110,7 +110,7 @@ because the service isn't hosted yet.
 - Host the service, so the release build can sign in: live two-person sessions, and sharing from the phone.
 - Mixed reality: the shared table placed on your own table.
 - Voice in live sessions, and English and Arabic.
-- **Target launch: [month and year], as an early-access release on Meta's store.**
+- **Target launch: March 2027, as an early-access release on Meta's store.**
 
 ---
 
@@ -130,6 +130,57 @@ For the form's testing field. The full version is [JUDGE_GUIDE.md](JUDGE_GUIDE.m
 >
 > If the headset asks for microphone access at first start, either answer works. Everything in this build is the
 > sample day: fictional people, stock photos and footage and a synthesized voice, all labelled in the app.
+
+## The video on YouTube
+
+Upload `demo-build/SameSky_I_Saved_You_A_Seat_Demo.mp4` (2:11, 1080p; a 22 MB copy is
+`..._Demo_share_1080p.mp4`). The rules want it **public** on YouTube or Vimeo. *Made for kids*: no. The English
+subtitles are burned in; [demo/SameSky_I_Saved_You_A_Seat_Demo.srt](demo/SameSky_I_Saved_You_A_Seat_Demo.srt) can be
+added as a caption track too. The credits below are required: two of the stock items are CC BY.
+
+**Title**
+
+> SameSky: I Saved You a Seat (Meta VR Start Developer Competition 2026)
+
+**Description**
+
+> SameSky is a shared room on Meta Quest for people who live apart. A cup on the table holds a voice note from
+> someone far away; pick it up with your hand to hear it, and leave a reply that waits on the table for them.
+>
+> This is real footage of the native Quest app running in Meta XR Simulator with simulated hand tracking, in its
+> offline sample day, plus a short insert of the phone companion. Adam and Maya are fictional, Maya's voice note and
+> the narration are synthesized voices, and her presence in the chair is simulated. Waits between key presses while
+> typing are cut.
+>
+> Code: https://github.com/MoAmrYehia/SameSky
+>
+> Sample photos and footage (Wikimedia Commons):
+> "Autumn path, Dumitru Rascanu park" by Iurie Nistor, CC0 1.0.
+> "Deira Dubai Creek" by kallerna, CC0 1.0.
+> "Sharah Desert at sunset, UAE" by Lxs, CC BY 4.0.
+> "Tower block and courtyard in Dunedin Chinese Garden at night" by Pseudopanax, public domain.
+> "Dubai Part I - Aug 10, 2012" by 54t4n0d, CC BY 3.0 (an 8.5-second excerpt, cropped to 16:9).
+> Characters: Microsoft Rocketbox (MIT). Room textures and props: Poly Haven (CC0).
+
+## Putting the build in the release channel
+
+The command-line route, after `scripts/native/release.ps1 -SampleOnly` has made the APK
+(`native/quest/Builds/Android/SameSky-release-sampleonly-<date>.apk`):
+
+1. [Meta Horizon Developer Dashboard](https://developers.meta.com/horizon/manage/): **My Apps**, create the app
+   (name SameSky, Meta Quest) if it isn't there.
+2. **Distribution → Release Channels → Create Release Channel**, named `Competition`.
+3. **Development → API**: copy the **App ID** and the **App Secret**. Treat the secret like a password.
+4. Download the Platform Utility for Windows (`ovr-platform-util.exe`, linked from Meta's *Platform Command Line
+   Utility* page) and run, in your own terminal:
+
+   ```
+   ovr-platform-util upload-quest-build --app-id <App ID> --app-secret <App Secret> --apk <path to the APK> --channel Competition --age-group TEENS_AND_ADULTS
+   ```
+
+   (Meta Quest Developer Hub's *Upload build to release channel* does the same without the command line.)
+5. Back in **Release Channels**, open `Competition` → **Channel Settings** → **Channel Invite** → **Grant access to
+   users by URL**, automatic approval, **Save Changes**. That URL goes in the Devpost form.
 
 ## Built with
 
