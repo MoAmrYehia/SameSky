@@ -234,6 +234,13 @@ powershell -ExecutionPolicy Bypass -File scripts/native/release.ps1 -SampleOnly
 - **Where the password goes:** to `keytool` and Unity through environment variables of that one PowerShell
   process. Unity writes it into the Gradle project it generates under `native/quest/Library` (on this PC only);
   the build script takes it out again afterwards.
+- **When Unity can't build on this PC: `release.ps1 -Resign`.** Windows Smart App Control (state 1, on) began blocking the
+  unsigned helper libraries of Unity's Android build on 16 November 2026 (`NiceIO.dll`: *An Application Control policy
+  has blocked this file*), and Unity's OpenXR plugin, so neither a build nor a simulator run starts. The APK itself is not
+  affected: the sample-only release build of 13 November (SHA-256 `a25f3841…8ed8`, not debuggable, API level 34, nothing
+  of the build PC inside) is still among Unity's intermediate files, and a copy is kept in `native/quest/Builds/Android`.
+  `scripts/native/release.ps1 -Resign` checks it again (`check_apk.ps1`), signs a copy with your keystore using Android's
+  apksigner (which runs on Java, not blocked), and checks the copy. It builds nothing: the app code has not changed since.
 - **A release build without a keystore, to look at:** `scripts/native/build.ps1 -Release -SampleOnly -DebugSigned`
   signs with Android's debug key. It can't be uploaded.
 - **The sample-only app in the simulator:** `scripts/native/acceptance.ps1 -SampleOnly` runs the app the same way
