@@ -162,9 +162,36 @@ added as a caption track too. The credits below are required: two of the stock i
 > "Dubai Part I - Aug 10, 2012" by 54t4n0d, CC BY 3.0 (an 8.5-second excerpt, cropped to 16:9).
 > Characters: Microsoft Rocketbox (MIT). Room textures and props: Poly Haven (CC0).
 
+**If you use the screen recording instead** (`demo-build/SameSky_Simulator_Screen_Recording_Demo.mp4`, 2:14, made on
+16 November; see [demo/SCREEN_RECORDING.md](demo/SCREEN_RECORDING.md)). Same visibility and *not made for kids*; same
+credits at the end of the description.
+
+Title
+
+> SameSky: screen recording of the native Quest app in Meta XR Simulator (Meta VR Start Developer Competition 2026)
+
+Description
+
+> SameSky is a shared room on Meta Quest for people who live apart. A cup on the table holds a voice note from
+> someone far away; pick it up with your hand to hear it, and leave a reply that waits on the table for them.
+>
+> This is a screen recording of the native Quest app running in Meta XR Simulator (a simulated Meta Quest 3, simulated
+> hand tracking, no controllers), recorded on 13 November 2026 and shown as it was. The text beside the window says what
+> you are looking at: stretches where the simulator moves a hand slowly are time-lapsed and marked ×N, and screens tagged
+> "test hook" were opened by the app's test hook, not by hand. The last chapter, tagged live mode, is the same app
+> signed in to a local server; it is not part of the build for judges, which has no server and runs the sample day
+> only. Adam and Maya are fictional, Maya's voice note is a synthesized voice, and her presence in the chair is
+> simulated.
+>
+> Code: https://github.com/MoAmrYehia/SameSky
+>
+> Sample photos and footage (Wikimedia Commons): [the same five credits as above]
+> Characters: Microsoft Rocketbox (MIT). Room textures and props: Poly Haven (CC0).
+
 ## Putting the build in the release channel
 
-The command-line route, after `scripts/native/release.ps1 -SampleOnly` has made the APK
+The command-line route, after `scripts/native/release.ps1 -Resign` has signed the APK (it asks for a keystore password;
+`-Resign` because Windows Smart App Control now stops Unity from building on this PC; see NATIVE_QUICKSTART.md)
 (`native/quest/Builds/Android/SameSky-release-sampleonly-<date>.apk`):
 
 1. [Meta Horizon Developer Dashboard](https://developers.meta.com/horizon/manage/): **My Apps**, create the app
