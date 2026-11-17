@@ -6,6 +6,7 @@
 // Rig: pelvis (root, sits on the seat) > chest > neck pivot > head; chest > shoulder > upper arm > elbow >
 // forearm > wrist > hand. Arms use analytic two-bone IK toward hand targets, so hands never detach.
 
+import { publicUrl } from './paths';
 import {
   BufferAttribute, BufferGeometry, CanvasTexture, Color, Group, LoadingManager, Matrix4, Mesh, MeshBasicMaterial, MeshPhysicalMaterial,
   MeshStandardMaterial, Object3D, Quaternion, RepeatWrapping, SphereGeometry, SRGBColorSpace, Texture, TextureLoader,
@@ -16,7 +17,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import type { AvatarDefinition } from './contracts';
 import type { Figure } from './figure';
 
-export const KIT_URL = '/assets/models/avatars/characters.glb';
+export const KIT_URL = publicUrl('assets/models/avatars/characters.glb');
 export const KIT_VERSION = 'kit-4';
 
 export interface KitExtras {
@@ -52,7 +53,7 @@ export function loadCharacterKit(manager?: LoadingManager): Promise<CharacterKit
         if (m.isMesh) geometries.set(m.name || m.parent?.name || '', bakeToFloat(m));
       });
       const extras = (gltf.parser.json.asset?.extras ?? {}) as KitExtras;
-      const knitNormal = await new TextureLoader(manager).loadAsync('/assets/textures/knit/normal.webp');
+      const knitNormal = await new TextureLoader(manager).loadAsync(publicUrl('assets/textures/knit/normal.webp'));
       knitNormal.wrapS = knitNormal.wrapT = RepeatWrapping;
       knitNormal.repeat.set(3, 3);
       return { geometries, extras, knitNormal };

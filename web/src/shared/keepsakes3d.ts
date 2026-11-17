@@ -1,6 +1,7 @@
 // The three shared-milestone keepsakes as real 3D objects. Used on the room's keepsake shelf and rendered
 // (same models, consistent light rig) into the companion's keepsake cards by src/shared/portrait.ts.
 
+import { publicUrl } from './paths';
 import {
   BoxGeometry, type BufferGeometry, CatmullRomCurve3, Color, CylinderGeometry, Group, IcosahedronGeometry, InstancedMesh, LatheGeometry, Matrix4,
   Mesh, MeshPhysicalMaterial, MeshStandardMaterial, PlaneGeometry, Quaternion, RepeatWrapping, SRGBColorSpace, type Texture, TextureLoader,
@@ -58,9 +59,9 @@ function untouchable(mesh: InstancedMesh) {
 export function walnutMaterial(repeat = 1) {
   return new MeshPhysicalMaterial({
     color: WALNUT_TINT,
-    map: tex('/assets/textures/walnut/color.webp', true, repeat),
-    normalMap: tex('/assets/textures/walnut/normal.webp', false, repeat),
-    roughnessMap: tex('/assets/textures/walnut/rough.webp', false, repeat),
+    map: tex(publicUrl('assets/textures/walnut/color.webp'), true, repeat),
+    normalMap: tex(publicUrl('assets/textures/walnut/normal.webp'), false, repeat),
+    roughnessMap: tex(publicUrl('assets/textures/walnut/rough.webp'), false, repeat),
     roughness: 1,
     clearcoat: 0.12,
     clearcoatRoughness: 0.6,
@@ -95,7 +96,7 @@ export function buildKeepsake(kind: KeepsakeKind | string, progress = 1, target 
     wood.castShadow = true;
     const mat = new Mesh(new PlaneGeometry(w - border * 2, h - border * 2), new MeshStandardMaterial({ color: '#f4ede0', roughness: 0.9 }));
     mat.position.z = 0.002;
-    const print = new Mesh(new PlaneGeometry(w - border * 2 - 0.016, h - border * 2 - 0.016), new MeshStandardMaterial({ map: tex('/assets/sample/adam-waterfront-thumb.jpg'), roughness: 0.45 }));
+    const print = new Mesh(new PlaneGeometry(w - border * 2 - 0.016, h - border * 2 - 0.016), new MeshStandardMaterial({ map: tex(publicUrl('assets/sample/adam-waterfront-thumb.jpg')), roughness: 0.45 }));
     print.position.z = 0.003;
     frame.add(mat, print);
     frame.position.y = h / 2 + 0.02;

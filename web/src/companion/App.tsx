@@ -1,3 +1,4 @@
+import { publicUrl } from '../shared/paths';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { Me, Room } from '../shared/contracts';
 import { ApiError, currentMode, dataSource, setMode, storeToken, type DataSource } from '../shared/data';
@@ -152,7 +153,7 @@ function Signed({ mode, route, navigate, onExit }: { mode: 'sample' | 'live'; ro
               <Icon name={n.icon} />{n.label}
             </a>
           ))}
-          <a className="nav-item" href="/room.html"><Icon name="headset" />Enter our room</a>
+          <a className="nav-item" href={publicUrl('room.html')}><Icon name="headset" />Enter our room</a>
           <div className="nav-spacer" />
           <p className="mode-badge">
             {mode === 'sample' ? <><strong>Sample day</strong> · nothing leaves this browser</> : <>Signed in as {me.displayName}</>}

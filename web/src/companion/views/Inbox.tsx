@@ -1,3 +1,4 @@
+import { publicUrl } from '../../shared/paths';
 import { useEffect, useState } from 'react';
 import type { InboxItem } from '../../shared/contracts';
 import { useApp } from '../App';
@@ -28,7 +29,7 @@ export function Inbox() {
       if (r.handoffLink) {
         toast('Opening your calling app. SameSky doesn’t place the call itself.');
         window.open(r.handoffLink, '_blank', 'noopener');
-      } else location.href = `/room.html?room=${n.roomId}`;
+      } else location.href = publicUrl(`room.html?room=${n.roomId}`);
     } else if (action === 'pause') toast('Suggestions paused for 7 days.');
     load();
   };

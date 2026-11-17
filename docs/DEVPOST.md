@@ -26,7 +26,7 @@ The two links (release channel and video) are the only blanks, marked **[in bold
 | Tagline (Devpost allows 200 characters; this is 155) | Your day, side by side. A shared room where a cup holds a voice note from someone far away, and your reply waits on the table for them. Hands only, seated. |
 | Track | Entertainment |
 | Division | New Experience (built from scratch; the repository's first commit is from 6 November 2026) |
-| Link to the project | **[the Competition release channel's invite URL, from the Meta developer dashboard]** |
+| Link to the project | https://moamryehia.github.io/SameSky/room.html (the WebXR room on GitHub Pages; the form asks WebXR projects for the hosted URL. If you submit the native app instead, use the Competition release channel's invite URL) |
 | Video | **[the YouTube or Vimeo link of the 2:11 demo, "I Saved You a Seat"]** |
 | Repository (optional) | https://github.com/MoAmrYehia/SameSky |
 
@@ -117,6 +117,24 @@ because the service isn't hosted yet.
 ## Testing instructions
 
 For the form's testing field. The full version is [JUDGE_GUIDE.md](JUDGE_GUIDE.md).
+
+**If the project link is the hosted WebXR room** (https://moamryehia.github.io/SameSky/room.html):
+
+> Meta Quest 3 or 3S, Quest Browser, seated, hands only. About three minutes. No account is needed.
+>
+> 1. Open https://moamryehia.github.io/SameSky/room.html and press **Enter in VR**.
+> 2. A cup on the table is glowing: reach out and pinch-grab it, or point at it and pinch. Maya's voice note plays
+>    from the cup, with captions.
+> 3. Pinch **Reply** on the dock and choose a phrase. A folded note appears beside the cup, and is still there the
+>    next time you open the room.
+> 4. Pinch a photo frame or the postcard to open it on the shared screen; pinch **Our day** for the recap; pinch a
+>    keepsake on the shelf.
+> 5. On the dock: **Captions**, **Sound**, **Recenter**, **Reset**, **Exit**.
+>
+> On a desktop or phone the same page works with clicks. Everything in this build is the sample day: fictional
+> people, stock photos and footage and a synthesized voice, all labelled in the room.
+
+**If the project link is the native app's release channel:**
 
 > Meta Quest 3 or 3S, seated, hands only. About three minutes. No account or network is needed.
 >

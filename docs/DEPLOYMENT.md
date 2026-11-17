@@ -60,6 +60,25 @@ Serve `web/dist` over HTTPS (WebXR, camera/microphone and push all require a sec
 served from the same origin under `/v1`, leave `VITE_API_URL` empty. `room.html` is the WebXR entry;
 `index.html` is the companion. Keep the judged build at a fixed URL and do not change it during judging.
 
+### The judged WebXR build on GitHub Pages
+
+`.github/workflows/pages.yml` builds `web/` on every push to `main` that touches `web/` (or by hand from the
+Actions tab) and publishes it to GitHub Pages:
+
+- Room (WebXR, the judged link): https://moamryehia.github.io/SameSky/room.html
+- Companion: https://moamryehia.github.io/SameSky/
+
+One-time setup: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+The build sets two variables. `SAMESKY_BASE=/SameSky/` serves the site under the repository's path; code reaches
+`web/public` files and the two pages through `src/shared/paths.ts`, so they follow it. `VITE_SAMPLE_ONLY=1` makes it
+the sample day only (Pages is static, with no API): the companion shows no sign-in, and the room never starts a
+signed-in session. To reproduce it locally:
+
+```bash
+cd web && SAMESKY_BASE=/SameSky/ VITE_SAMPLE_ONLY=1 npm run build
+```
+
 ## 5. Web Push
 
 ```bash

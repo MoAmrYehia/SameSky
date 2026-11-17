@@ -11,6 +11,11 @@ Built for the Meta VR Start Developer Competition 2026 (Entertainment · New Exp
 API. Hands only, seated. Checked in Meta XR Simulator and Meta's Immersive Web Emulator; **not yet run on a
 headset** ([docs/NATIVE_STATUS.md](docs/NATIVE_STATUS.md), [docs/STATUS.md](docs/STATUS.md)).
 
+**Try it:** the WebXR room is hosted at https://moamryehia.github.io/SameSky/room.html (open it in Quest Browser
+and press **Enter in VR**; on a desktop or phone it works with clicks), and the companion at
+https://moamryehia.github.io/SameSky/. Both run the fictional sample day only, with no account and no server
+([docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#the-judged-webxr-build-on-github-pages)).
+
 | | |
 |---|---|
 | **XR room** (`web/room.html`) | Hands-first seated room on Quest 3/3S via Meta's Immersive Web SDK: pinch to pick up the cup (spatial voice note + captions), frames and postcards open on the shared screen, quick replies become persistent notes on the table, keepsake shelf, recenter / reset / captions / mute / exit within seated reach, each person's owner-approved photo-derived 3D avatar (or a labelled demo avatar), two-person live viewing with synchronized playback. Same page works on desktop/phone with click. |

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ApiError, apiFetch, dataSource, storeToken } from '../../shared/data';
+import { publicUrl, SAMPLE_ONLY } from '../../shared/paths';
 import { COMMON_ZONES, detectZone } from '../../shared/tz';
 import { useApp } from '../App';
 import { Icon, Logo, Notice } from '../ui';
@@ -42,11 +43,30 @@ export function Welcome({ onSample, onSignedIn, joinToken }: { onSample: () => v
           <p>Share a few chosen moments. Meet around the same table, even when you're in different cities and different hours.</p>
           <div className="row wrap">
             <button className="btn btn-primary btn-lg" onClick={onSample}><Icon name="play" />Try a sample day</button>
-            <a className="btn btn-lg" style={{ background: 'rgba(255,255,255,.14)', color: '#fff' }} href="/room.html?mode=sample"><Icon name="headset" />Enter the room in VR</a>
+            <a className="btn btn-lg" style={{ background: 'rgba(255,255,255,.14)', color: '#fff' }} href={publicUrl('room.html?mode=sample')}><Icon name="headset" />Enter the room in VR</a>
           </div>
           <p className="small" style={{ color: '#d9cfbf' }}>The sample needs no account, no headset pairing and no notifications. Everyone in it is fictional.</p>
         </div>
       </section>
+      {SAMPLE_ONLY ? (
+        <section className="welcome-panel">
+          <div className="card stack">
+            <h2 className="section-title">This build is the sample day</h2>
+            <p>
+              It runs entirely in this browser: no account, no server, and nothing you do here leaves the device. Everyone in it
+              is fictional; its photos and clip are stock and its voice note is synthesized, each labelled where it appears.
+            </p>
+            <p className="muted small">
+              Accounts, sharing with real people and live two-person sessions need the SameSky service, which this hosted build
+              doesn't have.
+            </p>
+          </div>
+          <div className="split-photo" aria-hidden>
+            <div style={{ backgroundImage: `url(${publicUrl('assets/sample/maya-park-thumb.jpg')})` }} />
+            <div style={{ backgroundImage: `url(${publicUrl('assets/sample/adam-waterfront-thumb.jpg')})` }} />
+          </div>
+        </section>
+      ) : (
       <section className="welcome-panel">
         {joinToken ? <Notice>You've been invited to a SameSky room. Create an account or sign in to join. Only adults can be invited.</Notice> : null}
         <div className="tabs" role="tablist" aria-label="Account">
@@ -72,10 +92,11 @@ export function Welcome({ onSample, onSignedIn, joinToken }: { onSample: () => v
           <button className="btn btn-primary btn-lg" disabled={busy}>{tab === 'signin' ? 'Sign in' : 'Create account'}</button>
         </form>
         <div className="split-photo" aria-hidden>
-          <div style={{ backgroundImage: 'url(/assets/sample/maya-park-thumb.jpg)' }} />
-          <div style={{ backgroundImage: 'url(/assets/sample/adam-waterfront-thumb.jpg)' }} />
+          <div style={{ backgroundImage: `url(${publicUrl('assets/sample/maya-park-thumb.jpg')})` }} />
+          <div style={{ backgroundImage: `url(${publicUrl('assets/sample/adam-waterfront-thumb.jpg')})` }} />
         </div>
       </section>
+      )}
     </div>
   );
 }

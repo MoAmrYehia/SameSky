@@ -3,6 +3,7 @@
 // product shots (keepsakes3d.ts). Loaded lazily by the companion, so the companion's main bundle stays free
 // of three.js. One renderer, one light rig, one camera language; a neutral rig for the owner's likeness review.
 
+import { publicUrl } from './paths';
 import {
   Box3, Color, DirectionalLight, Group, HemisphereLight, NeutralToneMapping, PerspectiveCamera, PMREMGenerator, Quaternion,
   Scene, SRGBColorSpace, Vector3, WebGLRenderer, type Texture,
@@ -46,7 +47,7 @@ async function setup() {
     renderer.setPixelRatio(1);
   }
   if (!env) {
-    const hdr = await new HDRLoader().loadAsync('/assets/env/lounge_1k.hdr');
+    const hdr = await new HDRLoader().loadAsync(publicUrl('assets/env/lounge_1k.hdr'));
     const pmrem = new PMREMGenerator(renderer);
     env = pmrem.fromEquirectangular(hdr).texture;
     hdr.dispose();

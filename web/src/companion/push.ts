@@ -1,4 +1,5 @@
 // Opt-in Web Push. Permission is requested only after the user presses "Enable notifications".
+import { publicUrl } from '../shared/paths';
 import { apiFetch } from '../shared/data';
 
 export type PushStatus = 'unsupported' | 'insecure' | 'server-disabled' | 'denied' | 'default' | 'enabled';
@@ -15,7 +16,7 @@ export async function pushStatus(): Promise<PushStatus> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return 'unsupported';
   if (!window.isSecureContext) return 'insecure';
   if (Notification.permission === 'denied') return 'denied';
-  const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+  const reg = await navigator.serviceWorker.getRegistration(publicUrl('sw.js'));
   const sub = await reg?.pushManager.getSubscription();
   if (sub && Notification.permission === 'granted') return 'enabled';
   return 'default';
@@ -28,7 +29,7 @@ export async function enablePush(): Promise<PushStatus> {
   if (!enabled || !publicKey) return 'server-disabled';
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return permission === 'denied' ? 'denied' : 'default';
-  const reg = await navigator.serviceWorker.register('/sw.js');
+  const reg = await navigator.serviceWorker.register(publicUrl('sw.js'));
   await navigator.serviceWorker.ready;
   const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) }));
   const json = sub.toJSON();
@@ -39,7 +40,7 @@ export async function enablePush(): Promise<PushStatus> {
 }
 
 export async function disablePush(): Promise<void> {
-  const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+  const reg = await navigator.serviceWorker.getRegistration(publicUrl('sw.js'));
   const sub = await reg?.pushManager.getSubscription();
   if (sub) {
     await apiFetch('/v1/push/subscriptions/delete', { method: 'POST', body: JSON.stringify({ endpoint: sub.endpoint }) }).catch(() => undefined);

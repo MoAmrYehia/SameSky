@@ -6,7 +6,10 @@ import { defineConfig } from 'vite';
 
 // `npm run dev` serves http://localhost:5173 (desktop + IWER headset emulation).
 // `npm run dev -- --mode https` adds a self-signed certificate so a Quest on the LAN can open the room.
+// SAMESKY_BASE serves the build under a sub-path, e.g. SAMESKY_BASE=/SameSky/ for GitHub Pages
+// (.github/workflows/pages.yml). Code reaches public files through src/shared/paths.ts so it follows.
 export default defineConfig(({ mode }) => ({
+  base: process.env.SAMESKY_BASE ?? '/',
   plugins: [
     react(),
     ...(mode === 'https' ? [basicSsl()] : []),

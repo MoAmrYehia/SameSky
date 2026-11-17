@@ -2,6 +2,7 @@
 // rest of the app (inviting someone, saying when you're usually free). Every step can be skipped and nothing is
 // shared or sent until the person chooses it; an invite link goes only where they send it themselves.
 
+import { BASE } from '../../shared/paths';
 import { useEffect, useState } from 'react';
 import type { Room, WeeklyRule } from '../../shared/contracts';
 import { COMMON_ZONES, detectZone } from '../../shared/tz';
@@ -23,7 +24,7 @@ export function InviteCard({ room, title, body }: { room: Room; title?: string; 
     setBusy(true);
     try {
       const inv = await ds.invite(room.id);
-      setUrl(`${location.origin}/#/join/${inv.token}`);
+      setUrl(`${location.origin}${BASE}#/join/${inv.token}`);
       setCode(inv.code ?? null);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create an invite.');

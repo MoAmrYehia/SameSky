@@ -4,6 +4,7 @@
 //                   Edits live in isolated local storage (+ IndexedDB for media) and can be reset.
 //                   It has no route to real rooms and never sends real notifications.
 
+import { SAMPLE_ONLY } from './paths';
 import type {
   AudienceResolution, Award, AvatarAssetInfo, AvatarConsentInfo, AvatarDefinition, AvatarJobInfo, AvatarScope, AvatarSourceInfo,
   AvatarStudio, AvatarView, InboxItem, MediaInfo, Me, Moment, MomentKind, MyAvailability, OpportunityResult, ReactionKind, Recap, RecapPlan, Reply,
@@ -757,10 +758,12 @@ const MODE_KEY = 'samesky.mode';
 
 export function currentMode(): 'sample' | 'live' | null {
   const param = new URLSearchParams(location.search).get('mode');
-  if (param === 'sample' || param === 'live') return param;
+  if (param === 'sample') return 'sample';
+  // the hosted judges' build has no server: it never starts a signed-in session
+  if (param === 'live' && !SAMPLE_ONLY) return 'live';
   const stored = safeStorage()?.getItem(MODE_KEY);
   if (stored === 'sample') return 'sample';
-  if (stored === 'live' && storedToken()) return 'live';
+  if (stored === 'live' && storedToken() && !SAMPLE_ONLY) return 'live';
   return null;
 }
 

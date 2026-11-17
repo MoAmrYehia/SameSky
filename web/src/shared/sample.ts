@@ -4,6 +4,12 @@
 
 import type { Award, AvatarDefinition, InboxItem, Moment, Recap, Reply, Room, SourceDevice, WeeklyRule } from './contracts';
 
+/**
+ * A file in web/public under Vite's base ("/SameSky/" on GitHub Pages; see shared/paths.ts). Kept local because
+ * scripts/native/export_sample.mjs runs this file in plain Node, which has no import.meta.env: there it is "/".
+ */
+const pub = (path: string) => (import.meta.env?.BASE_URL ?? '/') + path;
+
 export const SAMPLE_DAY = '2026-11-06';
 export const ME = 'sample-adam';
 
@@ -52,19 +58,19 @@ interface SeedMoment {
 
 const SEED: SeedMoment[] = [
   { id: 'm-maya-park', roomId: 'sample-direct', owner: 'sample-maya', kind: 'photo', caption: 'A quiet walk after work.', at: '2026-11-06T10:40:00Z', audience: ['sample-adam'],
-    media: { url: '/assets/sample/maya-park.jpg', thumbUrl: '/assets/sample/maya-park-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: Iurie Nistor · CC0 · Wikimedia Commons', width: 1600, height: 1000 } },
+    media: { url: pub('assets/sample/maya-park.jpg'), thumbUrl: pub('assets/sample/maya-park-thumb.jpg'), kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: Iurie Nistor · CC0 · Wikimedia Commons', width: 1600, height: 1000 } },
   { id: 'm-maya-voice', roomId: 'sample-direct', owner: 'sample-maya', kind: 'voice', caption: 'Saved you a seat.', at: '2026-11-06T12:55:00Z', audience: ['sample-adam'],
-    media: { url: '/assets/sample/maya-voice.m4a', kind: 'audio', device: 'phone', origin: 'synthesized', durationMs: 9300, captionsUrl: '/assets/sample/maya-voice.vtt' },
+    media: { url: pub('assets/sample/maya-voice.m4a'), kind: 'audio', device: 'phone', origin: 'synthesized', durationMs: 9300, captionsUrl: pub('assets/sample/maya-voice.vtt') },
     transcript: 'Saved you a seat. The bench by the big oak, same as always. Tell me about your sunset when you get home.' },
   { id: 'm-adam-waterfront', roomId: 'sample-direct', owner: 'sample-adam', kind: 'photo', caption: 'An evening walk by the harbour.', at: '2026-11-06T13:20:00Z', audience: ['sample-maya'],
-    media: { url: '/assets/sample/adam-waterfront.jpg', thumbUrl: '/assets/sample/adam-waterfront-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: kallerna · CC0 · Wikimedia Commons', width: 1600, height: 1000 } },
+    media: { url: pub('assets/sample/adam-waterfront.jpg'), thumbUrl: pub('assets/sample/adam-waterfront-thumb.jpg'), kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: kallerna · CC0 · Wikimedia Commons', width: 1600, height: 1000 } },
   { id: 'm-adam-ride', roomId: 'sample-direct', owner: 'sample-adam', kind: 'clip', caption: 'Crossing the creek this afternoon.', at: '2026-11-06T11:10:00Z', audience: ['sample-maya'],
-    media: { url: '/assets/sample/adam-clip.mp4', kind: 'video', device: 'camera', origin: 'stock', credit: 'Footage: 54t4n0d · CC BY 3.0 · Wikimedia Commons', durationMs: 8500, thumbUrl: '/assets/sample/adam-clip-thumb.jpg', posterUrl: '/assets/sample/adam-clip-poster.jpg', width: 1280, height: 720 } },
+    media: { url: pub('assets/sample/adam-clip.mp4'), kind: 'video', device: 'camera', origin: 'stock', credit: 'Footage: 54t4n0d · CC BY 3.0 · Wikimedia Commons', durationMs: 8500, thumbUrl: pub('assets/sample/adam-clip-thumb.jpg'), posterUrl: pub('assets/sample/adam-clip-poster.jpg'), width: 1280, height: 720 } },
   { id: 'f-maya-text', roomId: 'sample-family', owner: 'sample-maya', kind: 'text', caption: 'Made dumplings for the whole office. Saving the recipe for our next family dinner.', at: '2026-11-06T04:30:00Z', audience: ['sample-adam', 'sample-lina'] },
   { id: 'f-adam-dunes', roomId: 'sample-family', owner: 'sample-adam', kind: 'photo', caption: 'Desert hills before sunset — thinking of you all.', at: '2026-11-06T11:50:00Z', audience: ['sample-maya', 'sample-lina'],
-    media: { url: '/assets/sample/adam-desert.jpg', thumbUrl: '/assets/sample/adam-desert-thumb.jpg', kind: 'image', device: 'camera', origin: 'stock', credit: 'Photo: Lxs · CC BY 4.0 · Wikimedia Commons', width: 1600, height: 1000 } },
+    media: { url: pub('assets/sample/adam-desert.jpg'), thumbUrl: pub('assets/sample/adam-desert-thumb.jpg'), kind: 'image', device: 'camera', origin: 'stock', credit: 'Photo: Lxs · CC BY 4.0 · Wikimedia Commons', width: 1600, height: 1000 } },
   { id: 'f-lina-lanterns', roomId: 'sample-family', owner: 'sample-lina', kind: 'photo', caption: 'A quiet evening in the courtyard garden.', at: '2026-11-06T18:30:00Z', audience: ['sample-adam', 'sample-maya'],
-    media: { url: '/assets/sample/lina-courtyard.jpg', thumbUrl: '/assets/sample/lina-courtyard-thumb.jpg', kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: Pseudopanax · public domain · Wikimedia Commons', width: 1600, height: 1000 } },
+    media: { url: pub('assets/sample/lina-courtyard.jpg'), thumbUrl: pub('assets/sample/lina-courtyard-thumb.jpg'), kind: 'image', device: 'phone', origin: 'stock', credit: 'Photo: Pseudopanax · public domain · Wikimedia Commons', width: 1600, height: 1000 } },
 ];
 
 export function seedMoments(): Moment[] {

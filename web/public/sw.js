@@ -6,7 +6,7 @@ self.addEventListener('push', (event) => {
   } catch {
     /* keep the generic text */
   }
-  event.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: '/icon.svg', badge: '/icon.svg', tag: data.kind || 'samesky' }));
+  event.waitUntil(self.registration.showNotification(data.title, { body: data.body, icon: 'icon.svg', badge: 'icon.svg', tag: data.kind || 'samesky' }));
 });
 
 self.addEventListener('notificationclick', (event) => {
@@ -15,7 +15,7 @@ self.addEventListener('notificationclick', (event) => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const existing = clients.find((c) => new URL(c.url).origin === self.location.origin);
       if (existing) return existing.focus();
-      return self.clients.openWindow('/#/inbox');
+      return self.clients.openWindow('./#/inbox');
     }),
   );
 });

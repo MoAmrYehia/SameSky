@@ -1,3 +1,4 @@
+import { publicUrl } from '../../shared/paths';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AudienceResolution, Moment, MomentKind, SourceDevice } from '../../shared/contracts';
 import { useApp } from '../App';
@@ -185,12 +186,12 @@ export function Share() {
     setError(null);
     setBusy('Loading the sample clip…');
     try {
-      const res = await fetch('/assets/sample/adam-clip.mp4');
+      const res = await fetch(publicUrl('assets/sample/adam-clip.mp4'));
       const blob = await res.blob();
       setDevice('camera');
       setCaption('Crossing the creek this afternoon.');
       setTrim([3000, 8000]);
-      setDraft({ blob, name: 'sample-creek-crossing.mp4', kind: 'clip', url: URL.createObjectURL(blob), durationMs: 8500, poster: '/assets/sample/adam-clip-poster.jpg', origin: 'stock' });
+      setDraft({ blob, name: 'sample-creek-crossing.mp4', kind: 'clip', url: URL.createObjectURL(blob), durationMs: 8500, poster: publicUrl('assets/sample/adam-clip-poster.jpg'), origin: 'stock' });
     } catch {
       setError('The sample clip could not be loaded.');
     } finally {

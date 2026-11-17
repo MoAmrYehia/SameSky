@@ -2,6 +2,7 @@
 // Two clones of one cached model sit side by side with different poses: verifies skeleton isolation,
 // seated legs, arm IK onto a table, chin rest, head turn and morph blinks. Not part of the production build.
 //   /dev/rig.html?view=front|side|three
+import { publicUrl } from '../shared/paths';
 import { BoxGeometry, Color, DirectionalLight, HemisphereLight, Mesh, MeshStandardMaterial, NeutralToneMapping, PerspectiveCamera, PMREMGenerator, Quaternion, Scene, SRGBColorSpace, Vector3, WebGLRenderer } from 'three';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { acquireAvatarModel, SkinnedAvatar } from '../shared/avatarRig';
@@ -18,7 +19,7 @@ document.body.appendChild(renderer.domElement);
 const scene = new Scene();
 scene.background = new Color('#d8d3cc');
 const pmrem = new PMREMGenerator(renderer);
-scene.environment = pmrem.fromEquirectangular(await new HDRLoader().loadAsync('/assets/env/lounge_1k.hdr')).texture;
+scene.environment = pmrem.fromEquirectangular(await new HDRLoader().loadAsync(publicUrl('assets/env/lounge_1k.hdr'))).texture;
 scene.environmentIntensity = 0.6;
 scene.add(new HemisphereLight(0xffffff, 0x777777, 0.5));
 const key = new DirectionalLight(0xffffff, 1.8);

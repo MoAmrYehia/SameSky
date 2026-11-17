@@ -14,6 +14,7 @@
 // one bounded soft shadow light, unlit (toneMapped:false) interface panels, sRGB-tagged colour textures.
 // Per-frame code is allocation-free; canvases are redrawn only when their content changes.
 
+import { BASE, publicUrl, SAMPLE_ONLY } from '../shared/paths';
 import '@fontsource-variable/figtree';
 import {
   AudioSource, AudioUtils, createSystem, type Entity, Grabbed, Hovered, IBLTexture,
@@ -58,7 +59,7 @@ declare global {
 }
 
 const params = new URLSearchParams(location.search);
-const mode: 'sample' | 'live' = params.get('mode') === 'sample' ? 'sample' : params.get('mode') === 'live' || (currentMode() === 'live' && storedToken()) ? 'live' : 'sample';
+const mode: 'sample' | 'live' = params.get('mode') === 'sample' ? 'sample' : !SAMPLE_ONLY && (params.get('mode') === 'live' || (currentMode() === 'live' && storedToken())) ? 'live' : 'sample';
 const ds = dataSource(mode);
 const debug = params.has('debug');
 /** Deterministic captures: idle animation runs at a fixed time and nobody blinks mid-shot. */
@@ -134,7 +135,7 @@ async function boot() {
     $('load').hidden = true;
     enter2d.disabled = false;
     enter2d.textContent = 'Try the sample room';
-    enter2d.onclick = () => { location.href = '/room.html?mode=sample'; };
+    enter2d.onclick = () => { location.href = publicUrl('room.html?mode=sample'); };
     return;
   }
 
@@ -188,7 +189,7 @@ async function boot() {
   renderer.shadowMap.type = PCFSoftShadowMap;
   world.scene.background = new Color(0x24221f);
   // Image-based light: a CC0 interior HDR, prefiltered through PMREM by IWSDK's EnvironmentSystem.
-  world.activeLevel.value.addComponent(IBLTexture, { src: '/assets/env/lounge_1k.hdr', intensity: 0.6 });
+  world.activeLevel.value.addComponent(IBLTexture, { src: publicUrl('assets/env/lounge_1k.hdr'), intensity: 0.6 });
 
   try {
     [env, kit] = await assets;
@@ -1531,7 +1532,7 @@ function exitRoom() {
   stopVoice();
   live?.leave();
   if (world.renderer.xr.isPresenting) world.exitXR();
-  else location.href = '/';
+  else location.href = BASE;
 }
 
 // ---------------------------------------------------------------------------
