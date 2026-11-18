@@ -232,7 +232,13 @@ them out; the label under the cup showed through panels standing at the table ed
    Unity Play mode, which runs the app's code on the Editor's Mono runtime. The APK is an IL2CPP build of the same
    code: it compiles and packages without errors, but it has not been run, so faults that only a built player shows
    (code or shader variants stripped from the build, Android-only behaviour) can't be ruled out from here.
-2. **The unsigned desktop build is blocked** by Smart App Control. The simulator runs use Play mode instead.
+2. **Smart App Control blocks more and more of Unity on this PC.** The unsigned desktop build was always blocked; the
+   simulator runs went through Play mode instead. From 16 November 2026 it also blocks Unity's OpenXR plugin
+   (`UnityOpenXR.dll`: the app can't start in the simulator any more) and the Android build's helper library
+   (`NiceIO.dll`: no APK can be built). It is a security setting and has not been changed. Nothing already built is
+   affected: the release APK of 13 November can still be signed (`scripts/native/release.ps1 -Resign`). New simulator
+   footage can't be recorded here until the block lifts; the screen-recording demo ([demo/SCREEN_RECORDING.md](demo/SCREEN_RECORDING.md))
+   is cut from the recordings of 13 November.
 3. **Flows outside the acceptance checks aren't simulator-tested yet**: first-run setup, invite and join with a
    code, and with an account: sharing, Together, the inbox and the avatar review. They need the keyboard and more
    targets in the automation, and Together needs two app instances. The sample's versions of these screens are

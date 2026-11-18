@@ -3,9 +3,14 @@
 #
 #   powershell -ExecutionPolicy Bypass -File scripts/native/release.ps1 -SampleOnly
 #   powershell -ExecutionPolicy Bypass -File scripts/native/release.ps1 -ApiUrl https://api.example.com
+#   powershell -ExecutionPolicy Bypass -File scripts/native/release.ps1 -Resign
 #
 #   -SampleOnly   no server: the build offers the sample day only (what judges get while the API isn't hosted)
 #   -ApiUrl       the hosted API (https) the build talks to, instead of -SampleOnly
+#   -Resign       don't build: sign the release APK that a build already left behind (the sample-only one made on
+#                 13 November 2026), with your key, after checking it again (resign.ps1). For when Unity can't build
+#                 on this PC: Windows Smart App Control blocks the unsigned helper libraries of its Android build
+#   -Apk          with -Resign: another APK to sign instead of the one in Unity's Gradle output
 #   -Keystore     where your signing keystore is, or is to be made. Default: .samesky\samesky-release.keystore in
 #                 your user folder, outside the repository. It is never copied anywhere
 #   -Alias        the key's name inside the keystore (default: samesky)
@@ -24,6 +29,8 @@
 param(
   [string]$ApiUrl = '',
   [switch]$SampleOnly,
+  [switch]$Resign,
+  [string]$Apk = '',
   [string]$Keystore = '',
   [string]$Alias = 'samesky',
   [int]$VersionCode = 0
@@ -31,14 +38,18 @@ param(
 $requestedApi = $ApiUrl
 . "$PSScriptRoot/common.ps1"   # sets $ApiUrl to this PC's local address, which a release build never uses
 $ApiUrl = $requestedApi
-if ($SampleOnly -and $ApiUrl) { throw 'Give -SampleOnly or -ApiUrl, not both.' }
-if (-not $SampleOnly -and $ApiUrl -notmatch '^https://') { throw 'Say which build this is: -SampleOnly (no server, the sample day only) or -ApiUrl https://...' }
+if ($Resign -and ($SampleOnly -or $ApiUrl -or $VersionCode)) { throw '-Resign signs a build that exists: it takes no -SampleOnly, -ApiUrl or -VersionCode.' }
+if ($Apk -and -not $Resign) { throw '-Apk goes with -Resign.' }
+if (-not $Resign) {
+  if ($SampleOnly -and $ApiUrl) { throw 'Give -SampleOnly or -ApiUrl, not both.' }
+  if (-not $SampleOnly -and $ApiUrl -notmatch '^https://') { throw 'Say which build this is: -SampleOnly (no server, the sample day only) or -ApiUrl https://...' }
+}
 if (-not $Keystore) { $Keystore = Join-Path $env:USERPROFILE '.samesky/samesky-release.keystore' }
 $Keystore = [IO.Path]::GetFullPath($Keystore)
 if ($Keystore.StartsWith($Repo, [StringComparison]::OrdinalIgnoreCase)) { throw 'Keep the keystore outside the repository folder, so it can never be committed.' }
 $keytool = Join-Path (Split-Path $Unity) 'Data/PlaybackEngines/AndroidPlayer/OpenJDK/bin/keytool.exe'
 if (-not (Test-Path $keytool)) { throw "keytool was not found in Unity's Android module ($keytool)." }
-if (Get-Process Unity -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 }) { throw 'Close the Unity Editor first: the build needs the project to itself.' }
+if (-not $Resign -and (Get-Process Unity -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowHandle -ne 0 })) { throw 'Close the Unity Editor first: the build needs the project to itself.' }
 
 function Read-Secret([string]$Prompt) {
   $secure = Read-Host -Prompt $Prompt -AsSecureString
@@ -86,10 +97,17 @@ try {
   $env:SAMESKY_KEY_PASS = $password
   $password = $null
 
-  $buildArgs = @{ Target = 'Android'; Release = $true }
-  if ($SampleOnly) { $buildArgs.SampleOnly = $true } else { $buildArgs.ApiUrl = $ApiUrl }
-  if ($VersionCode -gt 0) { $buildArgs.VersionCode = $VersionCode }
-  & "$PSScriptRoot/build.ps1" @buildArgs
+  if ($Resign) {
+    $signArgs = @{}
+    if ($Apk) { $signArgs.Apk = $Apk }
+    & "$PSScriptRoot/resign.ps1" @signArgs
+  }
+  else {
+    $buildArgs = @{ Target = 'Android'; Release = $true }
+    if ($SampleOnly) { $buildArgs.SampleOnly = $true } else { $buildArgs.ApiUrl = $ApiUrl }
+    if ($VersionCode -gt 0) { $buildArgs.VersionCode = $VersionCode }
+    & "$PSScriptRoot/build.ps1" @buildArgs
+  }
 }
 finally {
   $password = $null
