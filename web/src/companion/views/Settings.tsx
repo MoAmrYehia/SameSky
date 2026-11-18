@@ -1,3 +1,4 @@
+import { BASE } from '../../shared/paths';
 import { useEffect, useState } from 'react';
 import type { WeeklyRule } from '../../shared/contracts';
 import { SampleSource } from '../../shared/data';
@@ -157,7 +158,7 @@ function Rooms() {
   const makeInvite = async (roomId: string) => {
     try {
       const inv = await ds.invite(roomId);
-      setInvite({ roomId, url: `${location.origin}/#/join/${inv.token}` });
+      setInvite({ roomId, url: `${location.origin}${BASE}#/join/${inv.token}` });
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not create an invite.');
     }

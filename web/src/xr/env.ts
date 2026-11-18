@@ -6,6 +6,7 @@
 // World layout (metres): the viewer sits at the origin facing -Z. Everything that people place lives in
 // the table's own coordinate frame (TABLE), so serialized object positions are independent of visuals.
 
+import { publicUrl } from '../shared/paths';
 import {
   BackSide, Box3, BoxGeometry, CanvasTexture, CircleGeometry, Color, CylinderGeometry, DirectionalLight, Group,
   HemisphereLight, LatheGeometry, type LoadingManager, Mesh, MeshBasicMaterial, MeshPhysicalMaterial, MeshStandardMaterial, type Object3D,
@@ -48,7 +49,7 @@ function pbr(loader: TextureLoader, name: string, repeat: number, keys: PbrKey[]
   const out: Partial<Record<PbrKey, Texture>> = {};
   for (const key of keys) {
     const [file, srgb] = PBR_FILES[key];
-    const t = loader.load(`/assets/textures/${name}/${file}`);
+    const t = loader.load(publicUrl(`assets/textures/${name}/${file}`));
     t.wrapS = t.wrapT = RepeatWrapping;
     t.repeat.set(repeat, repeat);
     t.anisotropy = 4;
@@ -192,7 +193,7 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   root.add(ceiling);
 
   // --- window: a correctly projected cylindrical skyline plate, framed by a walnut-dark window wall ---
-  const plate = tex.load('/assets/sample/window-skyline.jpg');
+  const plate = tex.load(publicUrl('assets/sample/window-skyline.jpg'));
   plate.colorSpace = SRGBColorSpace;
   const R = 9;
   const latTop = Math.tan((30 * Math.PI) / 180);
@@ -239,7 +240,7 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   root.add(transom);
 
   // --- the shared table (CC0 model) ---
-  const tableModel = await loadModel(gltf, '/assets/models/props/table.glb', true);
+  const tableModel = await loadModel(gltf, publicUrl('assets/models/props/table.glb'), true);
   satin(tableModel);
   const tableFit = fit(tableModel, TABLE.radius * 2);
   TABLE.y = tableFit.height;
@@ -253,7 +254,7 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   root.add(underTable, table);
 
   // --- partner's upholstered armchair (CC0 model, real-world scale), facing the table centre ---
-  const chairModel = await loadModel(gltf, '/assets/models/props/armchair.glb');
+  const chairModel = await loadModel(gltf, publicUrl('assets/models/props/armchair.glb'));
   const chairFit = fit(chairModel, 0.85);
   const partnerChair = chairFit.holder;
   const cx = Math.sin(PARTNER_CHAIR.angle) * PARTNER_CHAIR.distance;
@@ -279,7 +280,7 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   const seat = { x: probe.x - TABLE.x, y: seatY - TABLE.y, z: probe.z - TABLE.z, yaw: chairYaw };
 
   // --- side table with the lamp, a ceramic and a plant (CC0 models) ---
-  const sideModel = await loadModel(gltf, '/assets/models/props/side-table.glb');
+  const sideModel = await loadModel(gltf, publicUrl('assets/models/props/side-table.glb'));
   satin(sideModel);
   const sideFit = fit(sideModel, 0.52);
   const sideTable = new Group();
@@ -292,13 +293,13 @@ export async function buildEnvironment(manager?: LoadingManager): Promise<RoomEn
   lampGroup.position.set(0.06, sideFit.height, -0.08);
   sideTable.add(lampGroup);
   lamp.position.set(sideTable.position.x + 0.06, sideFit.height + 0.36, sideTable.position.z - 0.08);
-  const vase = await loadModel(gltf, '/assets/models/props/vase.glb');
+  const vase = await loadModel(gltf, publicUrl('assets/models/props/vase.glb'));
   const vaseFit = fit(vase, 0.13);
   vaseFit.holder.position.set(-0.15, sideFit.height, -0.06);
   sideTable.add(vaseFit.holder);
   root.add(sideShadow, sideTable);
   // two potted plants standing on the window sill
-  const plant = await loadModel(gltf, '/assets/models/props/plant.glb');
+  const plant = await loadModel(gltf, publicUrl('assets/models/props/plant.glb'));
   const onSill = (theta: number) => [Math.sin(theta) * (wallR - 0.09), 0.64, TABLE.z + Math.cos(theta) * (wallR - 0.09)] as const;
   const plantFit = fit(plant, 0.3);
   plantFit.holder.position.set(...onSill(Math.PI + 0.42));

@@ -1,22 +1,31 @@
 # Devpost submission text (draft)
 
-Drafted on 13 November 2026 for the Meta VR Start Developer Competition form. The rules ask for "a text description
-that explains your inspiration, how you built it, future plans for improvement and a target launch date". Everything
+Drafted on 13 November 2026 for the Meta VR Start Developer Competition form; updated on 17 November 2026, when
+the WebXR room went live on GitHub Pages and became the project link. The rules ask for "a text description that
+explains your inspiration, how you built it, future plans for improvement and a target launch date". Everything
 below is written to be true of the repository as it stands on that date; [REQUIREMENTS_MAP.md](REQUIREMENTS_MAP.md)
 has the evidence behind each claim.
 
 ## Before you paste
 
-The text is complete. Three things are worth a look first:
+The text is complete. Four things are worth a look first:
 
-1. **The target launch date** at the end of *What's next* says March 2027. That date was picked for you; change it if
+1. **The project link is the hosted WebXR room**, so the description and the testing instructions describe what a
+   judge sees there. The native Quest app is described as the second client. If you submit the native app's
+   release channel instead, use the native testing instructions and the upload steps at the end.
+2. **The video shows the native app** in Meta XR Simulator, not the web room. The rules accept simulator footage,
+   and its description says which client it shows, but a judge will see differences (the web room has no Market,
+   and its replies are chosen phrases rather than typed). A short clip of the web room in Meta's Immersive Web
+   Emulator ([EMULATOR.md](EMULATOR.md)) would close that gap.
+3. **The target launch date** at the end of *What's next* says March 2027. That date was picked for you; change it if
    you plan otherwise.
-2. **How it was built, the last bullet,** says the app was built with Claude Code as the coding agent, directed by
+4. **How it was built, the last bullet,** says the app was built with Claude Code as the coding agent, directed by
    your brief and visual references. That is what the repository's history shows; word your own part as you see it.
-3. **Anything that changes before you submit.** The text says nothing has run on a headset and the service isn't
-   hosted. If you run it on a Quest first, change those lines to what you measured.
 
-The two links (release channel and video) are the only blanks, marked **[in bold brackets]**.
+The text also says nothing has run on a headset. Open the link on a Quest before you submit, and if you measure
+anything there, change those lines to what you measured.
+
+The video link is the only blank, marked **[in bold brackets]**.
 
 ## Form fields
 
@@ -26,7 +35,7 @@ The two links (release channel and video) are the only blanks, marked **[in bold
 | Tagline (Devpost allows 200 characters; this is 155) | Your day, side by side. A shared room where a cup holds a voice note from someone far away, and your reply waits on the table for them. Hands only, seated. |
 | Track | Entertainment |
 | Division | New Experience (built from scratch; the repository's first commit is from 6 November 2026) |
-| Link to the project | **[the Competition release channel's invite URL, from the Meta developer dashboard]** |
+| Link to the project (the form: "For WebXR projects provide your hosted URL") | https://moamryehia.github.io/SameSky/room.html |
 | Video | **[the YouTube or Vimeo link of the 2:11 demo, "I Saved You a Seat"]** |
 | Repository (optional) | https://github.com/MoAmrYehia/SameSky |
 
@@ -46,52 +55,65 @@ leave is still there when they sit down.
 
 ## What it does
 
-You sit at a round table in a lounge at dusk. The chair opposite is empty, and a cup on the table holds a voice note.
-Pick the cup up with your hand and the note plays from it, with captions. Type a few words, and your reply stands on
-the table as a folded card for the other person to find.
+You sit at a round table by a window at golden hour, with Maya across from you. A cup on the table is glowing: it
+holds her voice note. Reach out and pinch it, or point at it from your seat and pinch, and the note plays from the
+cup, with captions. Choose a reply, and a folded note appears beside the cup for her to find. It is still there
+when you come back.
 
 Around that moment:
 
-- **Our day:** a short story made from the photos, clips and voice notes two people chose to share, played on the
-  room's screen.
-- **Together:** both local times, and the next stretch of the day you both usually have free.
+- **Our day:** a one-to-two-minute story made from the photos, clip and voice note two people chose to share,
+  played on the room's screen. Every line says where it came from: their caption, their words, or an AI
+  interpretation.
+- **Things on the table:** photo frames and a postcard open on the shared screen when you pinch them.
 - **Keepsakes:** small objects on a shelf, earned by sharing days, with the next one in progress.
-- **Market:** restyle the room you share: table, chairs, rug, lamp, plant, walls, floor. Nothing is sold.
-- **A phone companion** for sharing a moment with one person or with a family circle. A moment goes only to the
-  people you name.
+- **A phone companion** at the same address, for sharing a moment with one person or with a family circle (a
+  moment goes only to the people you name), and **Together**: both local times, and the next stretch of the day you
+  both usually have free.
+- **A native Quest app** (Unity) on the same service and the same sample day, which adds typed replies on a
+  spatial keyboard and a **Market** to restyle the room you share. Nothing is sold.
 
 Everything is done with your hands. No controller is needed at any point. It is made to be used seated, for a few
-minutes at a time.
+minutes at a time, and the dock in reach has captions, sound, recenter, reset and exit.
 
-**What you will run.** The build in the release channel is the sample day. It needs no account and no network. The
-people in it are fictional, its photos and clip are stock, and its voice is synthesized; the app labels each of
-them, and labels Maya sitting down opposite you as simulated presence. Accounts, sharing from the phone and live
-two-person sessions are built and were tested against a local server, not on headsets. They are not in this build
-because the service isn't hosted yet.
+**What you will run.** The link opens the room's sample day in Quest Browser: press **Enter in VR**. It needs no
+account and no install, and nothing you do leaves the browser. On a desktop or phone the same page works with clicks.
+The people in it are fictional, its photos and clip are stock, and its voice is synthesized; the room labels each of
+them, and labels Maya as simulated. Accounts, sharing from the phone and live two-person sessions are built and were
+tested against a local server, not on headsets. They are not in this build because the service isn't hosted yet.
 
 ## How I built it
 
+- **WebXR room:** Meta's Immersive Web SDK on three.js, in TypeScript. Built for hands: pinch to select and grab,
+  point and pinch from the seat, and a dock you poke. It is a static site on GitHub Pages; the hosted build is the
+  sample day, so it needs no server.
 - **Headset app:** Unity 6 with Meta's XR Core SDK and Interaction SDK (209) over OpenXR. Built for hands: poke,
   point and pinch, hand grab and distance grab. The tracked hands are drawn with skin in a tone you choose, take the
   room's light and cast their shadow on the table.
 - **Service:** FastAPI and SQLAlchemy with a background worker. Every shared moment carries the list of people it
   was shared with, and that list is checked on every read. A time-zone engine works out when two people overlap.
   82 automated tests cover privacy, withdrawal, retries and daylight-saving edges.
-- **Companion and web room:** React, and a WebXR version of the room built with Meta's Immersive Web SDK.
-- **Testing without a headset:** an acceptance run drives the app in Meta XR Simulator with simulated hands. It
-  presses the dock, picks up the cup, types a reply, restarts the app and the server, and drops hand tracking in the
-  middle of a press. A check passes only on what the app itself reports. Nine checks, run before each merge.
-- **Assets:** characters from Microsoft's Rocketbox library (MIT); sample photos and footage from Wikimedia Commons
-  (credited in the app); textures, the room's light and a few props from Poly Haven (CC0); the Figtree typeface (OFL)
-  and Lucide icons (ISC). The room and its furniture are generated in code from those textures.
+- **Companion:** React, on the same service, with the same sample day built in.
+- **Testing without a headset:** an automated run drives the web room in Meta's Immersive Web Emulator (an
+  emulated Quest 3) with emulated hands and controllers: it enters VR, pokes the dock, points at the cup and pinches,
+  drops hand tracking, plays the story with a controller and leaves. Thirteen checks; it found five bugs, one of which
+  would have locked both hands on a real Quest. For the native app, an acceptance run in Meta XR Simulator presses
+  the dock, picks up the cup, types a reply, restarts the app and the server, and drops hand tracking in the middle
+  of a press. A check passes only on what the app itself reports.
+- **Assets:** in the web room, original characters sculpted by a script in the repository; in the native app,
+  characters from Microsoft's Rocketbox library (MIT). Sample photos and footage from Wikimedia Commons (credited in
+  the app); textures, the room's light and a few props from Poly Haven (CC0); the Figtree typeface (OFL) and Lucide
+  icons (ISC). The room and its furniture are generated in code from those textures.
 - **Tools:** I directed the work with a written product brief and visual references, and built the app with Claude
   Code as the coding agent, merging each round after its tests and simulator checks passed.
 
 ## Challenges
 
-- **No headset.** Everything was checked in Meta XR Simulator and Meta's Immersive Web Emulator. Nothing has run on
-  a device yet, and frame rate on a Quest is unmeasured. The simulator still found real faults: a button that fired
-  when a hand lost tracking in the middle of a press, and a keyboard that opened on top of the dock.
+- **No headset.** Everything was checked in Meta's Immersive Web Emulator and Meta XR Simulator. Nothing has run on
+  a device yet, and frame rate on a Quest is unmeasured. The emulators still found real faults: an invisible
+  one-metre touch volume that held both hands in "select" so nothing else could be reached, table objects that no
+  ray could select from the seat, and in the native app a button that fired when a hand lost tracking in the middle
+  of a press.
 - **Honest presence.** A room like this could easily fake a person. Every state is labelled instead: not here now,
   recorded message, simulated (in the sample), live.
 - **Privacy that doesn't depend on the interface.** A moment shared with one person must never surface in a family
@@ -99,15 +121,16 @@ because the service isn't hosted yet.
 
 ## What I'm proud of
 
-- **The first minute.** A voice note playing from a cup you picked up yourself, 33 seconds after a cold start in the
-  simulator.
+- **The first minute.** The first thing you do in the room is pick up a cup and hear a voice note play from it.
 - **A reason to come back.** What you leave on the table is there next time, and so is what was left for you.
-- **Presses that forgive.** A press counts when the finger lifts, and is cancelled if tracking drops before then.
+- **Hands that forgive.** Losing hand tracking in the middle of a reach or a press triggers nothing.
+- **One link.** The room opens from a web address in Quest Browser, with no install and no account.
 
 ## What's next
 
 - Run it on a Quest 3 and 3S, measure it, and tune it to a steady 72 Hz.
-- Host the service, so the release build can sign in: live two-person sessions, and sharing from the phone.
+- Host the service, so the hosted room and the native app can sign in: live two-person sessions, and sharing from
+  the phone.
 - Mixed reality: the shared table placed on your own table.
 - Voice in live sessions, and English and Arabic.
 - **Target launch: March 2027, as an early-access release on Meta's store.**
@@ -117,6 +140,24 @@ because the service isn't hosted yet.
 ## Testing instructions
 
 For the form's testing field. The full version is [JUDGE_GUIDE.md](JUDGE_GUIDE.md).
+
+**If the project link is the hosted WebXR room** (https://moamryehia.github.io/SameSky/room.html):
+
+> Meta Quest 3 or 3S, Quest Browser, seated, hands only. About three minutes. No account is needed.
+>
+> 1. Open https://moamryehia.github.io/SameSky/room.html and press **Enter in VR**.
+> 2. A cup on the table is glowing: reach out and pinch-grab it, or point at it and pinch. Maya's voice note plays
+>    from the cup, with captions.
+> 3. Pinch **Reply** on the dock and choose a phrase. A folded note appears beside the cup, and is still there the
+>    next time you open the room.
+> 4. Pinch a photo frame or the postcard to open it on the shared screen; pinch **Our day** for the recap; pinch a
+>    keepsake on the shelf.
+> 5. On the dock: **Captions**, **Sound**, **Recenter**, **Reset**, **Exit**.
+>
+> On a desktop or phone the same page works with clicks. Everything in this build is the sample day: fictional
+> people, stock photos and footage and a synthesized voice, all labelled in the room.
+
+**If the project link is the native app's release channel:**
 
 > Meta Quest 3 or 3S, seated, hands only. About three minutes. No account or network is needed.
 >
@@ -179,9 +220,8 @@ Description
 > hand tracking, no controllers), recorded on 13 November 2026 and shown as it was. The text beside the window says what
 > you are looking at: stretches where the simulator moves a hand slowly are time-lapsed and marked ×N, and screens tagged
 > "test hook" were opened by the app's test hook, not by hand. The last chapter, tagged live mode, is the same app
-> signed in to a local server; it is not part of the build for judges, which has no server and runs the sample day
-> only. Adam and Maya are fictional, Maya's voice note is a synthesized voice, and her presence in the chair is
-> simulated.
+> signed in to a local server; it is not part of what judges open, which has no server and runs the sample day only.
+> Adam and Maya are fictional, Maya's voice note is a synthesized voice, and her presence in the chair is simulated.
 >
 > Code: https://github.com/MoAmrYehia/SameSky
 >
@@ -189,6 +229,8 @@ Description
 > Characters: Microsoft Rocketbox (MIT). Room textures and props: Poly Haven (CC0).
 
 ## Putting the build in the release channel
+
+Only if you submit the native app instead of the hosted WebXR room.
 
 The command-line route, after `scripts/native/release.ps1 -Resign` has signed the APK (it asks for a keystore password;
 `-Resign` because Windows Smart App Control now stops Unity from building on this PC; see NATIVE_QUICKSTART.md)
@@ -212,4 +254,4 @@ The command-line route, after `scripts/native/release.ps1 -Resign` has signed th
 ## Built with
 
 `unity` `c#` `meta-xr-sdk` `meta-interaction-sdk` `openxr` `hand-tracking` `python` `fastapi` `sqlalchemy` `react`
-`typescript` `webxr` `immersive-web-sdk` `meta-xr-simulator`
+`typescript` `webxr` `immersive-web-sdk` `three.js` `immersive-web-emulator` `meta-xr-simulator` `github-pages`

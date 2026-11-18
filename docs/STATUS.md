@@ -42,9 +42,11 @@ Each row stands on its own evidence; none is proved by another (details in `docs
 
 ## Not yet verified (needs hardware, credentials or deployment)
 
-- **Nothing is hosted.** There is no public URL for the web room, the companion or the API, so the hosted route of
-  the competition (a link judges open in the Quest Browser) isn't available yet; see
-  [REQUIREMENTS_MAP.md](REQUIREMENTS_MAP.md) for where each submission requirement stands.
+- **The API is not hosted.** The web room and the companion are on GitHub Pages since 17 November 2026
+  (https://moamryehia.github.io/SameSky/room.html), as a sample-only build: the room loaded all its assets and the
+  cup's voice note played there in desktop Chromium, but it has not been opened on a Quest. Without a hosted API
+  there are no accounts or live sessions at that address; see [REQUIREMENTS_MAP.md](REQUIREMENTS_MAP.md) for where
+  each submission requirement stands.
 
 - **Photo-to-avatar generation** with the real MetaPerson service (needs Avatar SDK client credentials on the Pro
   plan), including MetaPerson’s actual bone and blendshape names in a real export.

@@ -1,3 +1,4 @@
+import { publicUrl } from '../../shared/paths';
 import { useCallback, useEffect, useState } from 'react';
 import type { Award, Moment, OpportunityResult, WeeklyRule } from '../../shared/contracts';
 import { cityOf, formatTime } from '../../shared/tz';
@@ -70,7 +71,7 @@ export function Together() {
             <span className="muted small">You’ve set {myRules.length} weekly {myRules.length === 1 ? 'window' : 'windows'}. <a href="#/settings">Change them in Settings</a>.</span>
           ) : <QuickTimes room={room} onSaved={() => void ds.availability(room.id).then((a) => setMyRules(a.rules))} />}
           <div className="row wrap">
-            <a className="btn btn-outline" href={`/room.html?room=${room.id}`}><Icon name="headset" />Look around our room</a>
+            <a className="btn btn-outline" href={publicUrl(`room.html?room=${room.id}`)}><Icon name="headset" />Look around our room</a>
           </div>
         </section>
       </>
@@ -144,7 +145,7 @@ export function Together() {
         {myRules && !myRules.length && ds.mode === 'live' && !next ? <div style={{ marginTop: 12 }}><QuickTimes room={room} compact onSaved={() => void load()} /></div> : null}
         {result?.statusMessage && !dismissed ? <div style={{ marginTop: 12 }}><Notice>{result.statusMessage}{result.simulated ? ' Other people’s Free now is simulated in the sample.' : ''}</Notice></div> : null}
         <div className="connect-row">
-          <a className="btn btn-primary btn-lg" href={`/room.html?room=${room.id}`} style={{ minWidth: 250 }}><Icon name="users" />Open our room</a>
+          <a className="btn btn-primary btn-lg" href={publicUrl(`room.html?room=${room.id}`)} style={{ minWidth: 250 }}><Icon name="users" />Open our room</a>
           <button className="btn btn-quiet btn-lg" onClick={() => { setDismissed(true); toast('Okay — no suggestion for now.'); }}>Not now</button>
           <span className="divider-v" />
           <button className="btn btn-outline" aria-pressed={!!freeUntil} onClick={() => void toggleFree()}>
@@ -204,13 +205,13 @@ function WatchTogether() {
   }, [ds, room]);
   if (!room) return null;
   if (ds.mode === 'sample') {
-    return <a className="btn btn-outline" href={`/room.html?mode=sample&room=${room.id}&watch=1`} title="Maya's avatar is a labelled simulation in the sample"><Icon name="play" />Watch together (simulated)</a>;
+    return <a className="btn btn-outline" href={publicUrl(`room.html?mode=sample&room=${room.id}&watch=1`)} title="Maya's avatar is a labelled simulation in the sample"><Icon name="play" />Watch together (simulated)</a>;
   }
   const partner = room.members.find((m) => m.id !== me.id)?.id ?? '';
   const start = async () => {
     try {
       const s = await ds.createSession(room.id, momentId, partner);
-      location.href = `/room.html?room=${room.id}&session=${s.id}`;
+      location.href = publicUrl(`room.html?room=${room.id}&session=${s.id}`);
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Could not start a session.');
     }
@@ -220,7 +221,7 @@ function WatchTogether() {
       <summary className="btn btn-outline"><Icon name="play" />Watch together</summary>
       <div className="card-inner stack" style={{ marginTop: 8, gap: 8, minWidth: 280 }}>
         {sessions.map((s) => (
-          <a key={s.id} className="btn btn-primary" href={`/room.html?room=${room.id}&session=${s.id}`}>Join {room.members.find((m) => m.id === s.hostId)?.displayName ?? 'the'}'s session</a>
+          <a key={s.id} className="btn btn-primary" href={publicUrl(`room.html?room=${room.id}&session=${s.id}`)}>Join {room.members.find((m) => m.id === s.hostId)?.displayName ?? 'the'}'s session</a>
         ))}
         <select className="input" value={momentId} onChange={(e) => setMomentId(e.target.value)} aria-label="Moment to watch">
           {moments.map((m) => <option key={m.id} value={m.id}>{m.ownerName}: {m.caption || m.kind}</option>)}

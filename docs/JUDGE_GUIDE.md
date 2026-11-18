@@ -54,7 +54,8 @@ sessions are in the app and were tested against a local server in the simulator 
 
 Quest Browser on the headset; the same pages work on a desktop or phone with a click.
 
-1. Open the build URL + `/room.html?mode=sample` (or open the build URL and press **Enter the room in VR**).
+1. Open **https://moamryehia.github.io/SameSky/room.html** (or open https://moamryehia.github.io/SameSky/ and
+   press **Enter the room in VR**). This hosted build is the sample day only: no account and no server.
 2. Press **Enter in VR**. You're seated at a round table by a window at golden hour. Maya (a fictional person)
    sits across from you; her label says **Simulated (sample)** — this is not a live person.
 3. **The defining moment:** a cup is glowing and a hint says *Something is waiting — pinch the glowing cup*.

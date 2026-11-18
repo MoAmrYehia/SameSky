@@ -1,4 +1,5 @@
 // Dev-only lineup for iterating on the sculpted character kit (not part of the production build).
+import { publicUrl } from '../shared/paths';
 import { ACESFilmicToneMapping, Color, DirectionalLight, Group, HemisphereLight, NeutralToneMapping, PerspectiveCamera, PMREMGenerator, Quaternion, Scene, SRGBColorSpace, Vector3, WebGLRenderer } from 'three';
 import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { CharacterModel, loadCharacterKit } from '../shared/character';
@@ -15,7 +16,7 @@ document.body.appendChild(renderer.domElement);
 const scene = new Scene();
 scene.background = new Color('#d9cbb6');
 const pmrem = new PMREMGenerator(renderer);
-const hdr = await new HDRLoader().loadAsync('/assets/env/lounge_1k.hdr');
+const hdr = await new HDRLoader().loadAsync(publicUrl('assets/env/lounge_1k.hdr'));
 scene.environment = pmrem.fromEquirectangular(hdr).texture;
 scene.environmentIntensity = 0.8;
 scene.add(new HemisphereLight(0xfff1e0, 0x5a4636, 0.4));
